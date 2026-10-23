@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<title>جدولي المرن</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#b8862b">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="جدولي الأسبوعي">
+
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap">
+<style>
+:root {
+  --bg: #f7f3ec; --surface: #fffdf9; --ink: #221d28; --muted: #756d7d; --line: #e6dfd3;
+  --accent: #b8862b; --accent2: #d9a84a; --on-accent: #ffffff; --danger: #b44a4a;
+  --shadow: 0 12px 30px -20px rgba(60, 40, 10, 0.35);
+  --c-uni: #8666b2; --c-work: #bd7b43; --c-online: #4d95a0; --c-study: #6785bf;
+  --c-food: #43866d; --c-rest: #839099; --c-sleep: #bd6688;
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  --bg: #0f0d16; --surface: #191623; --ink: #f4efe4; --muted: #a39db2; --line: #2e2a3b;
+  --accent: #e6c169; --accent2: #f7dc95; --on-accent: #17120a; --danger: #f08a8a;
+  --shadow: 0 14px 36px -18px rgba(0, 0, 0, 0.8);
+  --c-uni: #a78bfa; --c-work: #fbbf24; --c-online: #22d3ee; --c-study: #60a5fa;
+  --c-food: #34d399; --c-rest: #94a3b8; --c-sleep: #f472b6;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; min-height: 100vh; min-height: 100dvh;
+  padding-block: 18px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  font: 14px/1.6 "Cairo", system-ui, sans-serif; color: var(--ink); background: var(--bg);
+  -webkit-text-size-adjust: 100%;
+}
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+[hidden] { display: none !important; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wrap { max-width: 980px; margin: 0 auto; min-width: 0; }
+
+.topbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.brand-mark {
+  width: 46px; height: 46px; border-radius: 15px; display: grid; place-items: center; flex: none;
+  background: linear-gradient(135deg, var(--accent2), var(--accent)); color: var(--on-accent); font-size: 22px;
+}
+h1 { margin: 0; font-size: 26px; font-weight: 900; line-height: 1.2; }
+.brand p { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+.top-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.icon-button, .quiet-button, .primary-button, .ghost-button {
+  min-height: 44px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface);
+  padding: 0 14px; font-weight: 800; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; justify-content: center;
+}
+.icon-button { width: 44px; padding: 0; font-size: 18px; }
+.quiet-button { color: var(--danger); }
+.primary-button { border: 0; background: linear-gradient(135deg, var(--accent2), var(--accent)); color: var(--on-accent); box-shadow: 0 8px 18px -10px var(--accent); }
+.ghost-button { color: var(--ink); }
+.local-note { margin: 10px 0 16px; font-size: 12px; color: var(--muted); display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+
+.summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+.stat-panel {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: 16px; box-shadow: var(--shadow);
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; text-align: start; min-width: 0;
+}
+.stat-label { font-size: 12px; color: var(--muted); font-weight: 700; }
+.stat-value { font-size: 26px; font-weight: 900; color: var(--accent); }
+.stat-value small { font-size: 14px; }
+.stat-icon { width: 42px; height: 42px; border-radius: 14px; display: grid; place-items: center; background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); flex: none; }
+button.stat-panel { color: inherit; width: 100%; }
+
+.day-strip { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; margin-bottom: 16px; }
+.day-chip {
+  min-height: 62px; padding: 6px 2px; border-radius: 16px; border: 1px solid var(--line); background: var(--surface);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; overflow: hidden;
+}
+.day-chip strong { font-size: 12px; font-weight: 800; }
+.day-chip span { font-size: 10px; color: var(--muted); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.day-chip.today { border-color: var(--accent); }
+.day-chip.selected { background: linear-gradient(135deg, var(--accent2), var(--accent)); border-color: transparent; }
+.day-chip.selected strong, .day-chip.selected span { color: var(--on-accent); }
+
+.content-grid { display: grid; grid-template-columns: 1fr; gap: 16px; align-items: start; }
+@media (min-width: 860px) { .content-grid { grid-template-columns: 1.4fr 1fr; } }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 24px; padding: 18px; box-shadow: var(--shadow); min-width: 0; }
+.section-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 12px; }
+.section-head h2 { margin: 0; font-size: 20px; font-weight: 900; }
+.section-head p { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+.tag-pill {
+  font-size: 12px; font-weight: 800; padding: 4px 10px; border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); white-space: nowrap;
+}
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-bottom: 14px; font-size: 12px; color: var(--muted); font-weight: 700; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 9px; height: 9px; border-radius: 50%; background: var(--event-color); }
+
+.response-box {
+  margin-bottom: 12px; padding: 12px 14px; border-radius: 16px; font-size: 13px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent); border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+}
+.response-box strong { display: block; color: var(--accent); margin-bottom: 4px; }
+.response-box p { margin: 0; }
+.response-box ul { margin: 6px 0 0; padding-inline-start: 18px; }
+
+.timeline { display: grid; gap: 10px; }
+.event-row {
+  display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 18px; cursor: pointer;
+  background: var(--bg); border: 1px solid var(--line); border-inline-start: 4px solid var(--event-color); min-width: 0;
+}
+.event-row.now { box-shadow: 0 0 0 2px var(--accent); }
+.event-check { width: 22px; height: 22px; flex: none; accent-color: var(--accent); margin: 0; }
+.event-copy { flex: 1; min-width: 0; }
+.event-title { font-weight: 800; font-size: 15px; overflow-wrap: anywhere; }
+.event-detail { font-size: 12px; color: var(--muted); margin-top: 2px; overflow-wrap: anywhere; }
+.event-time {
+  flex: none; direction: ltr; white-space: nowrap; font-size: 12px; font-weight: 800; padding: 4px 10px; border-radius: 999px;
+  color: var(--event-color); background: color-mix(in srgb, var(--event-color) 14%, transparent);
+}
+.event-row.done .event-title, .event-row.done .event-detail { text-decoration: line-through; opacity: 0.5; }
+
+.side-stack { display: grid; gap: 12px; }
+details.panel { padding: 0; }
+details.panel > summary {
+  list-style: none; cursor: pointer; min-height: 54px; padding: 14px 18px;
+  display: flex; justify-content: space-between; align-items: center; font-weight: 900; font-size: 15px;
+}
+details.panel > summary::-webkit-details-marker { display: none; }
+details.panel > summary::after { content: "▾"; color: var(--muted); }
+details[open].panel > summary::after { content: "▴"; }
+.panel-body { padding: 0 18px 18px; font-size: 13px; }
+.panel-body p { margin: 0 0 8px; }
+.panel-body ul { margin: 0; padding-inline-start: 18px; }
+.panel-body li { margin-bottom: 6px; }
+.kv { display: flex; justify-content: space-between; gap: 10px; padding: 10px 12px; border-radius: 14px; background: var(--bg); margin-bottom: 8px; }
+.kv b { color: var(--accent); direction: ltr; }
+.alt { padding: 10px 12px; border-radius: 14px; background: var(--bg); margin-bottom: 8px; }
+.alt strong { display: block; color: var(--accent); margin-bottom: 2px; }
+.scenario-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.scenario-grid button {
+  min-height: 52px; padding: 8px 10px; border-radius: 14px; border: 1px solid var(--line); background: var(--bg);
+  font-size: 12px; font-weight: 800; text-align: start;
+}
+.row-form { display: flex; gap: 8px; margin-top: 10px; }
+.field {
+  width: 100%; min-height: 44px; padding: 10px 12px; border-radius: 14px; border: 1px solid var(--line);
+  background: var(--bg); font-size: 16px;
+}
+.field:focus { outline: none; border-color: var(--accent); }
+
+.modal {
+  position: fixed; inset: 0; z-index: 50; background: rgba(10, 8, 14, 0.55);
+  display: flex; align-items: center; justify-content: center; padding: 16px;
+}
+.sheet {
+  width: 100%; max-width: 480px; max-height: 88dvh; overflow-y: auto;
+  background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 24px; padding: 20px; box-shadow: var(--shadow);
+}
+.sheet-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; padding-bottom: 12px; margin-bottom: 14px; border-bottom: 1px solid var(--line); }
+.sheet-head h3 { margin: 0; font-size: 18px; font-weight: 900; color: var(--accent); }
+.sheet-head p { margin: 2px 0 0; font-size: 12px; color: var(--muted); }
+.close { min-width: 44px; min-height: 44px; border: 0; background: none; color: var(--muted); font-size: 18px; }
+.sheet label { display: block; font-size: 12px; font-weight: 800; color: var(--muted); margin-bottom: 6px; }
+.metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.metric { padding: 12px; border-radius: 16px; background: var(--bg); text-align: center; }
+.metric b { display: block; font-size: 22px; font-weight: 900; color: var(--c-food); }
+.metric span { font-size: 12px; color: var(--muted); font-weight: 700; }
+.sub { font-weight: 900; font-size: 14px; margin: 14px 0 8px; }
+.list { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 6px; }
+.li {
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; padding: 8px 10px;
+  border-radius: 12px; background: var(--bg); font-size: 13px; overflow-wrap: anywhere;
+}
+.li .del { flex: none; min-width: 32px; min-height: 32px; border: 0; background: none; color: var(--danger); font-weight: 900; }
+.empty { font-size: 13px; color: var(--muted); padding: 6px 2px; }
+.confirm-row { display: flex; gap: 8px; margin-top: 16px; }
+.confirm-row > * { flex: 1; }
+.confirm-text { font-size: 15px; font-weight: 800; margin: 0 0 4px; }
+
+.toast {
+  position: fixed; left: 50%; bottom: max(20px, env(safe-area-inset-bottom, 0px)); z-index: 60;
+  transform: translate(-50%, 20px); opacity: 0; transition: opacity 0.25s, transform 0.25s; pointer-events: none;
+  max-width: calc(100% - 40px); padding: 10px 16px; border-radius: 14px; font-size: 13px; font-weight: 800;
+  background: var(--ink); color: var(--bg); text-align: center;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+@media (max-width: 380px) {
+  .summary-grid, .metrics, .scenario-grid { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+
+</head>
+<body>
+<div class="wrap" dir="rtl">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">📅</div>
+      <div>
+        <h1>جدولي الأسبوعي</h1>
+        <p>مساحة مرنة لليوم الذي تعيشه، لا لليوم المثالي فقط.</p>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button type="button" class="icon-button" id="themeBtn" aria-label="تبديل المظهر">🌙</button>
+      <button type="button" class="quiet-button" id="resetBtn">↺ <span>إعادة ضبط اليوم</span></button>
+    </div>
+  </header>
+
+  <p class="local-note"><span id="syncStatus">جارٍ تحميل بياناتك…</span></p>
+
+  <section class="summary-grid" aria-label="ملخص الأسبوع">
+    <div class="stat-panel">
+      <div>
+        <div class="stat-label">أيام الالتزام المستمر</div>
+        <div class="stat-value"><span id="streak">0</span> <small>أيام</small></div>
+        <div class="top-actions" style="margin-top:10px">
+          <button type="button" class="primary-button" id="checkinBtn">وثّق التزام اليوم</button>
+          <button type="button" class="quiet-button" id="undoBtn" hidden>إلغاء التوثيق</button>
+        </div>
+      </div>
+      <div class="stat-icon" aria-hidden="true">🔥</div>
+    </div>
+    <button type="button" class="stat-panel" id="monthBtn">
+      <div>
+        <div class="stat-label" id="monthLabel"></div>
+        <div class="stat-value" style="font-size:21px">تقرير إنجازك</div>
+        <div class="stat-label" style="margin-top:5px">التوثيق والتعديلات المسجلة</div>
+      </div>
+      <div class="stat-icon" aria-hidden="true">‹</div>
+    </button>
+  </section>
+
+  <nav class="day-strip" id="strip" aria-label="اختيار اليوم"></nav>
+
+  <div class="content-grid">
+    <section class="panel" aria-live="polite">
+      <div class="section-head">
+        <div>
+          <h2 id="dayTitle"></h2>
+          <p id="dayTag"></p>
+        </div>
+        <span class="tag-pill" id="dayCount"></span>
+      </div>
+      <div class="legend" id="legend"></div>
+      <div id="override"></div>
+      <div class="timeline" id="timeline"></div>
+    </section>
+
+    <aside class="side-stack">
+      <details class="panel" open>
+        <summary>🎯 الأهداف اليومية</summary>
+        <div class="panel-body">
+          <div class="kv"><span>السعرات الحرارية</span><b>1800 – 2000 kcal</b></div>
+          <div class="kv"><span>البروتين</span><b>130 – 160 g</b></div>
+          <div class="kv"><span>الماء اليومي</span><b>2 – 3 L</b></div>
+        </div>
+      </details>
+
+      <details class="panel">
+        <summary>🍱 الوجبة المحمولة (الثلاثاء والخميس)</summary>
+        <div class="panel-body">
+          <p style="color:var(--c-food);font-weight:800">400 سعرة · 30غ بروتين · تُؤكل في استراحة الشغل 7:00 PM</p>
+          <ul>
+            <li>صدر دجاج مشوي (100غ بعد الطبخ) + رغيف عربي صغير (60غ) + خضار</li>
+            <li>سندويشة دجاج بخبز عربي صغير (60غ) + خضار طازجة</li>
+          </ul>
+        </div>
+      </details>
+
+      <details class="panel">
+        <summary>🔄 البدائل المتاحة للوجبات</summary>
+        <div class="panel-body" id="alts"></div>
+      </details>
+
+      <details class="panel" open>
+        <summary>⚡ مخرج الطوارئ (لليوم فقط)</summary>
+        <div class="panel-body">
+          <p>اختر ما حدث معك اليوم للحصول على خطة مرنة. هذا التعديل خاص باليوم، ويعود الجدول لأصله تلقائياً غداً.</p>
+          <div class="scenario-grid" id="scenarioGrid"></div>
+          <div class="row-form">
+            <input class="field" id="customInput" type="text" placeholder="أو اكتب ما حدث بالتفصيل…">
+            <button type="button" class="primary-button" id="customBtn">حفظ</button>
+          </div>
+          <div id="scenarioResult" style="margin-top:12px"></div>
+        </div>
+      </details>
+    </aside>
+  </div>
+</div>
+
+<!-- Check-in -->
+<div class="modal" id="checkinModal" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="checkinTitle">
+    <div class="sheet-head">
+      <div><h3 id="checkinTitle">🔥 توثيق الالتزام</h3><p>سجّل وزنك اليوم لمتابعة التقدم، أو وثّق الالتزام فقط.</p></div>
+      <button type="button" class="close" data-close="checkinModal" aria-label="إغلاق">✕</button>
+    </div>
+    <label for="weightInput">الوزن الحالي (كغم)</label>
+    <input class="field" id="weightInput" type="number" inputmode="decimal" step="0.1" placeholder="مثلاً: 93.5">
+    <p class="empty" style="margin-top:10px">📉 النزول المتوقع لليوم حوالي 80 غرام، وشهرياً حوالي 2.0 – 2.5 كغم.</p>
+    <div class="confirm-row"><button type="button" class="primary-button" id="saveCheckinBtn">تأكيد وحفظ</button></div>
+  </div>
+</div>
+
+<!-- Monthly report -->
+<div class="modal" id="monthModal" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="monthTitle">
+    <div class="sheet-head">
+      <div><h3 id="monthTitle">📊 تقرير إنجازك</h3><p id="monthSub"></p></div>
+      <button type="button" class="close" data-close="monthModal" aria-label="إغلاق">✕</button>
+    </div>
+    <div class="metrics">
+      <div class="metric"><b id="monthRate">0%</b><span>نسبة الالتزام بالشهر</span></div>
+      <div class="metric"><b id="monthDays">0</b><span>أيام التوثيق</span></div>
+    </div>
+    <div class="sub">✅ الإنجازات</div>
+    <ul class="list" id="achList"></ul>
+    <div class="row-form"><input class="field" id="achInput" type="text" placeholder="أضف إنجازاً"><button type="button" class="primary-button" id="addAchBtn">إضافة</button></div>
+    <div class="sub">⚖️ سجل الوزن</div>
+    <ul class="list" id="weightList"></ul>
+    <div class="sub">⚠️ التجاوزات والتعديلات</div>
+    <ul class="list" id="incList"></ul>
+    <div class="sub">📝 ملاحظات</div>
+    <ul class="list" id="noteList"></ul>
+    <div class="row-form"><input class="field" id="noteInput" type="text" placeholder="أضف ملاحظة"><button type="button" class="primary-button" id="addNoteBtn">إضافة</button></div>
+  </div>
+</div>
+
+<!-- Confirm (browser confirm() is blocked in some previews) -->
+<div class="modal" id="confirmModal" hidden>
+  <div class="sheet" role="alertdialog" aria-modal="true">
+    <p class="confirm-text" id="confirmText"></p>
+    <div class="confirm-row">
+      <button type="button" class="ghost-button" id="confirmNo">إلغاء</button>
+      <button type="button" class="primary-button" id="confirmYes">تأكيد</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+
+
+<script>
+// ---------- Data ----------
+const MEAL = {
+  bf: 'بيضتان متوسطتان + خبز عربي أسمر صغير (60غ) + جبنة قليلة الدسم (30غ) + خيار متوسط وبندورة متوسطة + شاي بدون سكر · 380 سعرة · 22غ بروتين',
+  sn: 'زبادي غير محلى (170–200غ) + تفاحة متوسطة · 150 سعرة · 8غ بروتين',
+  lu: 'صدر دجاج مشوي (180غ بعد الطبخ) + أرز (150غ مطبوخ) + سلطة (كوب) + ملعقة شاي زيت زيتون · 550 سعرة · 50غ بروتين',
+  sa: 'سندويشة بخبز أسمر (50–60غ) + جبنة قليلة الدسم (40غ) + خيار أو خس · 230 سعرة · 12غ بروتين',
+  di: 'دجاج أو لحم قليل الدهن (150غ بعد الطبخ) + بطاطا بالفرن (200غ) + سلطة (كوب) + علبة لبن صغيرة (150غ) · 500 سعرة · 40غ بروتين'
+};
+const ev = (time, title, type, detail) => ({ time, title, type, detail });
+const campus = [
+  ev('7:15 AM','استيقاظ','rest'), ev('9:00 AM','محاضرة المنطق الرقمي','uni'), ev('10:00 AM','محاضرة الجبر الخطي','uni'),
+  ev('11:00 AM','فطور (وقت الفراغ بعد الجبر)','food',MEAL.bf), ev('11:15 AM','سناك','food',MEAL.sn)
+];
+const workTuesday = [
+  ...campus,
+  ev('11:50 AM','راحة وتجهيز للمحاضرة التالية','rest'), ev('1:00 PM','محاضرة البرمجة الكينونية','uni'),
+  ev('2:00 PM','سناك بعد الجامعة','food','سندويشة صغيرة بخبز أسمر + جبنة قليلة الدسم · 230 سعرة'),
+  ev('2:15 PM','انتقال إلى الشغل','rest','45 دقيقة'), ev('3:00 PM','شغل (3:00 PM – 11:00 PM)','work'),
+  ev('5:00–7:00 PM','غداء (بعد الجامعة في استراحة الشغل)','food',MEAL.lu),
+  ev('7:00 PM','وجبة محمولة (في الاستراحة)','food','صدر دجاج مشوي (100غ بعد الطبخ) + رغيف عربي صغير (60غ) + خضار · 400 سعرة · 30غ بروتين'),
+  ev('11:00 PM','العودة إلى البيت (5–10 دقائق)','rest'),
+  ev('11:10 PM','عشاء خفيف','food','بيضة مسلوقة (حبة) + لبن قليل الدسم أو زبادي غير محلى (150غ) · 200 سعرة · 15غ بروتين'),
+  ev('11:30 PM','تحضير للنوم','rest'), ev('12:30 AM','نوم','sleep')
+];
+const homeWorkday = (studyTitle, studyDetail, extraSlot) => [
+  ev('8:30 AM','استيقاظ','rest'), ev('9:00 AM','شغل حتى 7:00 PM','work'),
+  ...(extraSlot ? [ev('11:00 AM','التربية الوطنية أونلاين','online','أثناء الشغل')] : []),
+  ev('12:00 PM','فطور متأخر (في الاستراحة)','food',MEAL.bf),
+  ev('4:30 PM','سناك عصري (في الاستراحة)','food','سندويشة جبنة قليلة الدسم + خضار'),
+  ev('5:00 PM','مهارات الحاسوب الاستدراكي أونلاين','online','أثناء الشغل'),
+  ev('7:00 PM','انتقال إلى البيت، ثم غداء في البيت','food',MEAL.lu),
+  ev('8:15 PM', studyTitle, 'study', studyDetail),
+  ev('9:45 PM','عشاء (بعد المذاكرة)','food',MEAL.di),
+  ev('10:15 PM','سناك (زبادي + تفاحة)','food',MEAL.sn),
+  ev('10:45 PM','وقت شخصي','rest'), ev('12:00 AM','نوم','sleep')
+];
+const DAYS = [
+  { name:'الأحد', tag:'جامعة بدون شغل', total:'1810 سعرة · 132غ بروتين', items:[
+    ...campus, ev('1:00 PM','محاضرة البرمجة الكينونية','uni'), ev('2:00 PM','مختبر البرمجة الكينونية','uni'),
+    ev('4:00 PM','سناك عصري','food',MEAL.sa), ev('4:30 PM','مذاكرة البرمجة الكينونية','study','كتابة أكواد باليد'),
+    ev('5:00–7:00 PM','غداء (بعد الجامعة)','food',MEAL.lu), ev('7:30 PM','مذاكرة الجبر الخطي','study','تمارين'),
+    ev('9:00 PM','مراجعة أسبوعية','study','الإنجازات والواجبات والاختبارات'), ev('9:30 PM','وقت شخصي','rest'), ev('12:00 AM','نوم','sleep')
+  ]},
+  { name:'الاثنين', tag:'شغل صباحي + أونلاين', total:'1810 سعرة · 132غ بروتين', items: homeWorkday('مذاكرة البرمجة الكينونية','ساعة ونصف', true) },
+  { name:'الثلاثاء', tag:'جامعة ثم شغل حتى 11 PM', total:'1910 سعرة · 137غ بروتين', items: workTuesday },
+  { name:'الأربعاء', tag:'شغل صباحي + أونلاين', total:'1810 سعرة · 132غ بروتين', items: homeWorkday('مذاكرة المنطق الرقمي','ساعة ونصف', true) },
+  { name:'الخميس', tag:'جامعة ثم شغل حتى 11 PM', total:'1910 سعرة · 137غ بروتين', items: workTuesday },
+  { name:'الجمعة', tag:'شغل بدون محاضرات', total:'1810 سعرة · 132غ بروتين', items: homeWorkday('مذاكرة البرمجة الكينونية','ساعة ونصف', false) },
+  { name:'السبت', tag:'شغل + تربية وطنية أونلاين', total:'1810 سعرة · 132غ بروتين', items: [
+    ev('8:30 AM','استيقاظ','rest'), ev('9:00 AM','شغل حتى 7:00 PM','work'), ev('11:00 AM','التربية الوطنية أونلاين','online','أثناء الشغل'),
+    ev('12:00 PM','فطور متأخر (في الاستراحة)','food',MEAL.bf), ev('4:30 PM','سناك عصري (في الاستراحة)','food','سندويشة جبنة قليلة الدسم + خضار'),
+    ev('5:00 PM','مهارات الحاسوب الاستدراكي أونلاين','online','أثناء الشغل'), ev('7:00 PM','انتقال إلى البيت، ثم غداء في البيت','food',MEAL.lu),
+    ev('8:15 PM','مذاكرة الجبر الخطي','study','ساعة'), ev('9:15 PM','وقت شخصي','rest'), ev('9:45 PM','عشاء (بعد المذاكرة)','food',MEAL.di),
+    ev('10:15 PM','سناك (زبادي + تفاحة)','food',MEAL.sn), ev('12:00 AM','نوم','sleep')
+  ]}
+];
+const TYPE_LABELS = [['uni','جامعة'],['work','شغل'],['online','أونلاين'],['study','مذاكرة'],['food','وجبة'],['rest','راحة'],['sleep','نوم']];
+const ALTERNATIVES = [
+  ['الفطور','فول مطبوخ (150غ) مع خبز عربي معتدل · أو شوفان (60غ) مع حليب قليل الدسم (250مل) وموزة صغيرة · أو بيضتان مسلوقتان مع لبنة قليلة الدسم (50غ) وخبز أسمر صغير'],
+  ['السناك الصباحي','موزة صغيرة مع 10غ لوز · أو حليب قليل الدسم مع فاكهة صغيرة · أو بيضة مسلوقة مع فاكهة'],
+  ['الغداء','لحم قليل الدهن (150غ) مع بطاطا بالفرن (200غ) وسلطة · أو سمك مشوي (150غ) مع أرز (150غ) وسلطة · أو مجدّرة (250غ) مع لبن (200غ) وسلطة'],
+  ['السناك العصري','موزة مع حليب قليل الدسم · أو زبادي غير محلى مع مكسرات (15غ) · أو سندويشة بيضة مسلوقة مع خضار'],
+  ['العشاء','سندويشة دجاج (100غ) بخبز عربي صغير (60غ) مع لبن وخضار · أو بيضتان مسلوقتان مع لبنة قليلة الدسم (60غ) وخبز أسمر · أو سمك مشوي (150غ) مع أرز (150غ) وسلطة']
+];
+const SCENARIOS = [
+  { id:'overeat', title:'تناولت وجبة إضافية أو أكلت أكثر من المعتاد', advice:['لا تحتاج إلى تعويض قاسٍ أو تخطي وجبات؛ عد إلى وجبتك التالية المعتادة.','اختر ماءً ووجبة متوازنة عندما يحين وقتها، واترك مساحة لمرونة اليوم.','إن كان مناسباً لك، خذ استراحة قصيرة أو مشياً هادئاً.'] },
+  { id:'missed_lecture', title:'فاتتني محاضرة', advice:['تواصل مع زميل لطلب الملاحظات أو التسجيل.','اختر 30–45 دقيقة في وقت متاح لمراجعة النقاط الأساسية.'] },
+  { id:'missed_study', title:'لم أتمكن من المذاكرة', advice:['اليوم لم يضع؛ اختر خطوة صغيرة الآن أو انقل جزءاً واحداً لوقت أهدأ.','ابدأ بـ 15 دقيقة أو ثلاثة أسئلة، ثم قرر إن كنت تريد المتابعة.'] },
+  { id:'late_sleep', title:'سهرت أو لم أستيقظ في الوقت المخطط', advice:['تعامل مع بقية اليوم بهدوء، واختر موعد نوم واقعي الليلة.','عدّل التوقعات لليوم بدلاً من محاولة تعويض كل شيء دفعة واحدة.'] }
+];
+const DEFAULT_ACHIEVEMENTS = ['الالتزام بجلسات المذاكرة المحددة في الجدول الأسبوعي','المحافظة على نظام التغذية المستهدف (1800–2000 سعرة)','التوفيق بين دوام الشغل والمحاضرات اليومية والأونلاين'];
+
+// ---------- Helpers ----------
+const $ = (id) => document.getElementById(id);
+const pad = (n) => String(n).padStart(2, '0');
+const dateKey = (d) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const dateFromKey = (k) => { const [y,m,d] = k.split('-').map(Number); return new Date(y, m-1, d); };
+const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const eventStart = (time) => {
+  const m = time.match(/(\d{1,2}):(\d{2})/);
+  if (!m) return -1;
+  let h = Number(m[1]);
+  const ap = (time.match(/(AM|PM)/i) || [])[1];
+  if (ap && ap.toUpperCase() === 'PM' && h < 12) h += 12;
+  if (ap && ap.toUpperCase() === 'AM' && h === 12) h = 0;
+  return h * 60 + Number(m[2]);
+};
+const TYPE_COLORS = { uni:'var(--c-uni)', work:'var(--c-work)', online:'var(--c-online)', study:'var(--c-study)', food:'var(--c-food)', rest:'var(--c-rest)', sleep:'var(--c-sleep)' };
+
+// ---------- State ----------
+const EMPTY = () => ({ done:{}, checkins:[], weights:[], incidents:[], achievements:[...DEFAULT_ACHIEVEMENTS], notes:[], overrides:{}, theme:'light' });
+const LOCAL_KEY = 'weekly-planner-v1';
+let state = EMPTY();
+let selected = new Date().getDay();
+let saveTimer = null;
+
+function normalize(x) {
+  const e = EMPTY();
+  if (x && typeof x === 'object') for (const k of Object.keys(e)) if (x[k] !== undefined) e[k] = x[k];
+  return e;
+}
+function setSync(text) { $('syncStatus').textContent = text; }
+let db = null, dbDoc = null;
+function saveLocal() { try { localStorage.setItem(LOCAL_KEY, JSON.stringify(state)); } catch (e) {} }
+function scheduleSave() {
+  saveLocal();
+  setSync('يُحفظ على هذا الجهاز فقط ✓');
+}
+function commit(fn) { state = fn(state); scheduleSave(); render(); }
+async function loadState() {
+  try { const raw = localStorage.getItem(LOCAL_KEY); if (raw) state = normalize(JSON.parse(raw)); } catch (e) {}
+  applyTheme(); render();
+  setSync('يُحفظ على هذا الجهاز فقط ✓');
+}
+
+// ---------- Derived values ----------
+function derived() {
+  const today = new Date();
+  const todayKey = dateKey(today);
+  const weekStart = addDays(today, -today.getDay());
+  const selectedDate = addDays(weekStart, selected);
+  const selectedKey = dateKey(selectedDate);
+  const sorted = [...new Set(state.checkins)].sort();
+  const yesterday = dateKey(addDays(today, -1));
+  let streak = 0;
+  let cursor = sorted.includes(todayKey) ? todayKey : (sorted.includes(yesterday) ? yesterday : '');
+  while (cursor && sorted.includes(cursor)) { streak++; cursor = dateKey(addDays(dateFromKey(cursor), -1)); }
+  const monthPrefix = `${today.getFullYear()}-${pad(today.getMonth()+1)}`;
+  return { today, todayKey, weekStart, selectedDate, selectedKey, sorted, streak, monthPrefix,
+    monthCheckins: sorted.filter(d => d.startsWith(monthPrefix)).length,
+    daysInMonth: new Date(today.getFullYear(), today.getMonth()+1, 0).getDate() };
+}
+function currentEventIndex(items, isToday, now) {
+  if (!isToday) return -1;
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  let best = -1, bestStart = -1;
+  items.forEach((it, i) => {
+    const s = eventStart(it.time);
+    if (s >= 0 && s <= nowMin && s >= bestStart) { best = i; bestStart = s; }
+  });
+  return best;
+}
+
+// ---------- Render ----------
+function render() {
+  const d = derived();
+  const isDark = state.theme === 'dark';
+  $('themeBtn').textContent = isDark ? '☀️' : '🌙';
+  $('monthLabel').textContent = new Intl.DateTimeFormat('ar', { month:'long', year:'numeric' }).format(d.today);
+
+  $('streak').textContent = d.streak;
+  const checkedToday = state.checkins.includes(d.todayKey);
+  $('checkinBtn').hidden = checkedToday;
+  $('undoBtn').hidden = !checkedToday;
+
+  // Day strip
+  $('strip').innerHTML = DAYS.map((day, i) => {
+    const date = addDays(d.weekStart, i);
+    return `<button type="button" class="day-chip ${i === d.today.getDay() ? 'today' : ''} ${i === selected ? 'selected' : ''}" aria-pressed="${i === selected}" data-day="${i}">
+      <strong>${esc(day.name)}</strong><span>${new Intl.DateTimeFormat('ar',{day:'numeric'}).format(date)} ${esc(day.tag.split(' ')[0])}</span></button>`;
+  }).join('');
+
+  const plan = DAYS[selected];
+  const isToday = d.selectedKey === d.todayKey;
+  const doneCount = plan.items.reduce((n, _it, i) => n + (state.done[`${d.selectedKey}-${i}`] ? 1 : 0), 0);
+  const cur = currentEventIndex(plan.items, isToday, d.today);
+  $('dayTitle').textContent = `${plan.name}، ${new Intl.DateTimeFormat('ar',{day:'numeric', month:'long'}).format(d.selectedDate)}`;
+  $('dayTag').textContent = plan.tag + (isToday ? ' · هذا اليوم' : '');
+  $('dayCount').textContent = `${doneCount} من ${plan.items.length} مهام`;
+  $('legend').innerHTML = TYPE_LABELS.map(([t,l]) => `<span><i style="--event-color:${TYPE_COLORS[t]}"></i>${l}</span>`).join('');
+
+  const ov = state.overrides[d.selectedKey];
+  $('override').innerHTML = ov ? `<div class="response-box"><strong>خطة مرنة لهذا اليوم</strong><p>${esc(ov)} — يعود الجدول الأصلي تلقائياً غداً.</p></div>` : '';
+
+  $('timeline').innerHTML = plan.items.map((it, i) => {
+    const done = !!state.done[`${d.selectedKey}-${i}`];
+    return `<label class="event-row ${done ? 'done' : ''} ${cur === i ? 'now' : ''}" style="--event-color:${TYPE_COLORS[it.type]}">
+      <input type="checkbox" class="event-check" data-task="${i}" ${done ? 'checked' : ''} aria-label="إنجاز: ${esc(it.title)}">
+      <div class="event-copy"><div class="event-title">${esc(it.title)}${cur === i ? ' <span class="tag-pill">الآن</span>' : ''}</div>${it.detail ? `<div class="event-detail">${esc(it.detail)}</div>` : ''}</div>
+      <span class="event-time">${esc(it.time)}</span></label>`;
+  }).join('');
+
+  $('alts').innerHTML = ALTERNATIVES.map(([t, x]) => `<div class="alt"><strong>${esc(t)}</strong>${esc(x)}</div>`).join('');
+  $('scenarioGrid').innerHTML = SCENARIOS.map(s => `<button type="button" data-scenario="${s.id}">${esc(s.title)}</button>`).join('');
+}
+
+// ---------- Modals & toast ----------
+function openModal(id) { $(id).hidden = false; }
+function closeModal(id) { $(id).hidden = true; }
+document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => closeModal(b.dataset.close));
+document.querySelectorAll('.modal').forEach(m => m.addEventListener('click', (e) => {
+  if (e.target !== m) return;
+  if (m.id === 'confirmModal') closeConfirm(false); else m.hidden = true;
+}));
+let toastTimer;
+function toast(msg) {
+  const t = $('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+let confirmResolve = null;
+function askConfirm(msg) {
+  return new Promise((resolve) => {
+    confirmResolve = resolve;
+    $('confirmText').textContent = msg;
+    openModal('confirmModal');
+  });
+}
+function closeConfirm(value) {
+  closeModal('confirmModal');
+  if (confirmResolve) { const r = confirmResolve; confirmResolve = null; r(value); }
+}
+$('confirmYes').onclick = () => closeConfirm(true);
+$('confirmNo').onclick = () => closeConfirm(false);
+
+function applyTheme() { document.documentElement.dataset.theme = state.theme === 'dark' ? 'dark' : 'light'; }
+
+// ---------- Actions ----------
+document.addEventListener('change', (e) => {
+  const cb = e.target.closest('.event-check');
+  if (!cb) return;
+  const d = derived();
+  const key = `${d.selectedKey}-${cb.dataset.task}`;
+  commit(s => ({ ...s, done: { ...s.done, [key]: cb.checked } }));
+});
+document.addEventListener('click', (e) => {
+  const day = e.target.closest('[data-day]');
+  if (day) { selected = Number(day.dataset.day); render(); $('scenarioResult').innerHTML = ''; return; }
+  const sc = e.target.closest('[data-scenario]');
+  if (sc) { const s = SCENARIOS.find(x => x.id === sc.dataset.scenario); applyScenario(s, null); }
+});
+
+function applyScenario(s, custom) {
+  const d = derived();
+  const text = (custom && custom.trim()) || s.title;
+  const advice = custom ? ['خذ نفساً؛ ليس عليك معالجة كل شيء الآن.', 'اختر خطوة صغيرة واقعية، ثم عد إلى جدولك عندما يناسبك.'] : s.advice;
+  commit(st => ({
+    ...st,
+    incidents: [...st.incidents, { id: `${Date.now()}-${Math.random().toString(36).slice(2,7)}`, date: d.selectedKey, text }],
+    overrides: { ...st.overrides, [d.selectedKey]: text }
+  }));
+  $('scenarioResult').innerHTML = `<div class="response-box"><strong>${esc(text)}</strong><ul>${advice.map(a => `<li>${esc(a)}</li>`).join('')}</ul></div>`;
+  toast('تم حفظ خطة اليوم فقط');
+}
+$('customBtn').onclick = () => {
+  const t = $('customInput').value.trim();
+  if (!t) return toast('اكتب ما حدث أولاً');
+  applyScenario(null, t);
+  $('customInput').value = '';
+};
+
+$('themeBtn').onclick = () => {
+  commit(s => ({ ...s, theme: s.theme === 'dark' ? 'light' : 'dark' }));
+  applyTheme();
+};
+
+$('resetBtn').onclick = async () => {
+  if (!(await askConfirm('إعادة ضبط علامات هذا اليوم وإلغاء أي تعديل له؟'))) return;
+  const d = derived();
+  commit(s => {
+    const done = { ...s.done };
+    Object.keys(done).forEach(k => { if (k.startsWith(`${d.selectedKey}-`)) delete done[k]; });
+    const overrides = { ...s.overrides }; delete overrides[d.selectedKey];
+    return { ...s, done, overrides };
+  });
+  $('scenarioResult').innerHTML = '';
+  toast('عاد اليوم إلى جدوله الأصلي');
+};
+
+$('checkinBtn').onclick = () => {
+  const d = derived();
+  const w = state.weights.find(x => x.date === d.todayKey);
+  $('weightInput').value = w ? w.value : '';
+  openModal('checkinModal');
+};
+$('saveCheckinBtn').onclick = () => {
+  const d = derived();
+  const v = parseFloat($('weightInput').value);
+  commit(s => ({
+    ...s,
+    checkins: [...new Set([...s.checkins, d.todayKey])],
+    weights: v > 0 ? [...s.weights.filter(x => x.date !== d.todayKey), { date: d.todayKey, value: v }] : s.weights
+  }));
+  closeModal('checkinModal');
+  toast('تم توثيق اليوم');
+};
+$('undoBtn').onclick = () => {
+  const d = derived();
+  commit(s => ({ ...s, checkins: s.checkins.filter(x => x !== d.todayKey), weights: s.weights.filter(x => x.date !== d.todayKey) }));
+  toast('تم إلغاء توثيق اليوم');
+};
+
+$('monthBtn').onclick = () => { renderMonth(); openModal('monthModal'); };
+function renderMonth() {
+  const d = derived();
+  $('monthSub').textContent = 'كل ما تم توثيقه ورصده خلال الشهر';
+  $('monthRate').textContent = Math.min(100, Math.round(d.monthCheckins / d.daysInMonth * 100)) + '%';
+  $('monthDays').textContent = d.monthCheckins;
+
+  const achItems = [
+    ...state.achievements.map((t, i) => ({ t, i })),
+  ];
+  $('achList').innerHTML = achItems.length
+    ? achItems.map(({t,i}) => `<li class="li"><span>✨ ${esc(t)}</span><button type="button" class="del" data-del="achievements" data-idx="${i}" aria-label="حذف">✕</button></li>`).join('')
+    : '<li class="empty">لا توجد إنجازات مسجلة.</li>';
+
+  const weights = state.weights.filter(w => w.date.startsWith(d.monthPrefix));
+  $('weightList').innerHTML = weights.length
+    ? weights.map(w => `<li class="li"><span>📅 ${esc(w.date)} — ⚖️ ${esc(w.value)} كغم</span></li>`).join('')
+    : '<li class="empty">لم يتم تسجيل أي وزن هذا الشهر.</li>';
+
+  const incs = state.incidents.filter(x => x.date.startsWith(d.monthPrefix));
+  $('incList').innerHTML = incs.length
+    ? incs.map(x => `<li class="li"><span>📌 ${esc(x.date)}: ${esc(x.text)}</span><button type="button" class="del" data-del="incidents" data-idx="${state.incidents.indexOf(x)}" aria-label="حذف">✕</button></li>`).join('')
+    : '<li class="empty">لا توجد تجاوزات مرصودة هذا الشهر. عمل ممتاز! 🎉</li>';
+
+  $('noteList').innerHTML = state.notes.length
+    ? state.notes.map((n, i) => `<li class="li"><span>${esc(n)}</span><button type="button" class="del" data-del="notes" data-idx="${i}" aria-label="حذف">✕</button></li>`).join('')
+    : '<li class="empty">لا توجد ملاحظات.</li>';
+}
+$('addAchBtn').onclick = () => {
+  const t = $('achInput').value.trim(); if (!t) return;
+  commit(s => ({ ...s, achievements: [...s.achievements, t] }));
+  $('achInput').value = ''; renderMonth();
+};
+$('addNoteBtn').onclick = () => {
+  const t = $('noteInput').value.trim(); if (!t) return;
+  commit(s => ({ ...s, notes: [...s.notes, t] }));
+  $('noteInput').value = ''; renderMonth();
+};
+$('monthModal').addEventListener('click', async (e) => {
+  const b = e.target.closest('[data-del]');
+  if (!b) return;
+  if (!(await askConfirm('هل تريد حذف هذا السطر؟'))) return;
+  const list = b.dataset.del, idx = Number(b.dataset.idx);
+  commit(s => ({ ...s, [list]: s[list].filter((_, i) => i !== idx) }));
+  renderMonth();
+});
+
+// ---------- Start ----------
+loadState();
+setInterval(render, 60000);
+</script>
+
+<script>
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) { window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {})); }
+</script>
+
+</body>
+</html>
