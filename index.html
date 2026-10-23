@@ -700,5 +700,58 @@ setInterval(render, 60000);
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) { window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {})); }
 </script>
 
+<!-- مخرج الطوارئ الذكي -->
+<section id="smartEmergency" style="margin:24px 0;padding:20px;border-radius:18px;background:var(--surface);border:1px solid #b8862b;">
+  <h2 style="margin-top:0">مخرج الطوارئ الذكي</h2>
+  <p>واجهت مشكلة بجدولك؟ اكتبها لتحصل على خطة عملية تناسب وقتك.</p>
+  <textarea id="emergencyProblem" rows="4" maxlength="8000" placeholder="مثال: تراكمت عليّ دراسة البرمجة وعندي دوام بكرا..." style="width:100%;box-sizing:border-box;padding:12px;border-radius:12px;font:inherit"></textarea>
+  <button id="emergencySolve" type="button" style="margin-top:12px;padding:12px 18px;border:0;border-radius:12px;background:#b8862b;color:white;font:inherit">اقترح خطة</button>
+  <p id="emergencyStatus" role="status" aria-live="polite"></p>
+  <div id="emergencyAnswer" style="white-space:pre-wrap;line-height:1.8"></div>
+</section>
+<script>
+(() => {
+  const endpoint = "https://jadwali-ai.mohammedtareqabugosh.workers.dev";
+  const button = document.getElementById("emergencySolve");
+  const problemInput = document.getElementById("emergencyProblem");
+  const status = document.getElementById("emergencyStatus");
+  const answer = document.getElementById("emergencyAnswer");
+
+  button.addEventListener("click", async () => {
+    const problem = problemInput.value.trim();
+    answer.textContent = "";
+
+    if (!problem) {
+      status.textContent = "اكتب المشكلة أولًا.";
+      return;
+    }
+
+    button.disabled = true;
+    status.textContent = "جاري إعداد الخطة...";
+
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ problem, context: {} })
+      });
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error || "تعذّر الحصول على الخطة.");
+      }
+
+      answer.textContent = data.answer;
+      status.textContent = "هذه خطة مقترحة؛ لن يتغيّر جدولك تلقائيًا.";
+    } catch (error) {
+      status.textContent =
+        "تعذّر الاتصال بالخادم. تأكد من رابط الخادم وحاول مرة أخرى.";
+    } finally {
+      button.disabled = false;
+    }
+  });
+})();
+</script>
+
 </body>
 </html>
