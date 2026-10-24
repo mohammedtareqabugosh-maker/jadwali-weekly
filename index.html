@@ -772,6 +772,45 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
 
   if (!button || !problemInput || !status || !answer) return;
 
+  function checkSuggestion(sg) {
+    const day = DAYS.findIndex(d => d.name === sg.day);
+    const s = eventStart(String(sg.start || ""));
+    const e = eventStart(String(sg.end || ""));
+    if (day < 0 || s < 0 || e < 0 || e <= s) return { ok: false, note: "اليوم أو الوقت غير صالح" };
+    const items = DAYS[day].items;
+    const hits = items
+      .map((_, i) => rangeOf(items, i))
+      .filter(r => r && r.explicit && s < r.e && r.s < e)
+      .map(r => r.it.title);
+    return hits.length
+      ? { ok: false, note: "يتعارض مع: " + hits.join("، ") }
+      : { ok: true, note: "لا يتعارض مع مهام الجدول" };
+  }
+  function renderAnswer(text, schedule) {
+    let clean = String(text);
+    let suggestions = [];
+    const m = clean.match(/```json\s*([\s\S]*?)```/);
+    if (m) {
+      clean = clean.replace(m[0], "").trim();
+      try { suggestions = JSON.parse(m[1]).suggestions || []; } catch (e) { suggestions = []; }
+    }
+    answer.textContent = clean;
+    if (!suggestions.length) return;
+    const box = document.createElement("div");
+    box.style.marginTop = "14px";
+    const title = document.createElement("strong");
+    title.textContent = "فحص الاقتراحات على الجدول:";
+    box.appendChild(title);
+    suggestions.forEach(sg => {
+      const r = checkSuggestion(sg);
+      const row = document.createElement("div");
+      row.style.margin = "6px 0";
+      row.textContent = (r.ok ? "✅ " : "⚠️ ") + sg.day + " " + sg.start + "–" + sg.end + ": " + (sg.title || "") + " — " + r.note;
+      box.appendChild(row);
+    });
+    answer.appendChild(box);
+  }
+
   button.addEventListener("click", async () => {
     const problem = problemInput.value.trim();
 
@@ -861,6 +900,8 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
           "استخدم قائمة التعارضات والفترات المتاحة المحسوبة لكل يوم كما هي، ولا تقدّر أوقاتاً غير موجودة فيها.",
           "احسب مجموع المدد بنفسك بدقة قبل ذكر أي مدة إجمالية، وتأكد من صحة الجمع.",
           "ابنِ اقتراحك على الجدول الحالي كما هو في البيانات، ولا تفترض وجود مشكلة إلا إذا ظهرت فعلاً في بيانات الجدول أو في وصف المستخدم.",
+          "في نهاية ردك أضف كتلة JSON داخل ```json وتحتوي على قائمة suggestions، وكل عنصر فيها له day و title و start و end بنفس صيغة أوقات الجدول، وهذه الكتلة للتحقق فقط.",
+          "وجبات الجدول ثابتة ولا تُنقل إلى وقت يتقاطع مع مهمة أخرى؛ فغداء الأحد ثابت بين 5:00 و7:00 مساءً، ولا تقترح مذاكرة أو أي مهمة داخل هذه الفترة.",
           "قبل أن تقترح وقتاً لأي مهمة، تحقّق من أنه لا يتقاطع مع أي مهمة أخرى في اليوم نفسه، ومن أنه داخل إحدى الفترات المتاحة.",
           "التنقل من الجامعة إلى الشغل 45 دقيقة، والعودة من الشغل إلى البيت 5–10 دقائق كما هو مذكور في الجدول.",
           "اقترح خطة واقعية حسب الوقت المتاح والأولوية والموعد النهائي.",
@@ -896,7 +937,7 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
         );
       }
 
-      answer.textContent = data.answer;
+      renderAnswer(data.answer, weeklySchedule);
       status.textContent =
         "تم إرسال جدولك المحفوظ للتحليل. الخطة مقترحة فقط ولن يتغير جدولك تلقائيًا.";
 
