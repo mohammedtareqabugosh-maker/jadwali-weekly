@@ -281,9 +281,9 @@ details[open].panel > summary::after { content: "▴"; }
       </details>
 
       <details class="panel" open>
-        <summary>⚡ مخرج الطوارئ (لليوم فقط)</summary>
+        <summary>⚡ مخرج الطوارئ (ليوم محدد)</summary>
         <div class="panel-body">
-          <p>اختر ما حدث معك اليوم للحصول على خطة مرنة. هذا التعديل خاص باليوم، ويعود الجدول لأصله تلقائياً غداً.</p>
+          <p>اختر ما حدث معك في اليوم الذي تريده. الخطة تُسجّل لذلك اليوم فقط ولا تغيّر الجدول الأصلي.</p>
           <div class="scenario-grid" id="scenarioGrid"></div>
           <div class="row-form">
             <input class="field" id="customInput" type="text" placeholder="أو اكتب ما حدث بالتفصيل…">
@@ -358,7 +358,7 @@ const MEAL = {
   sa: 'سندويشة بخبز أسمر (50–60غ) + جبنة قليلة الدسم (40غ) + خيار أو خس · 230 سعرة · 12غ بروتين',
   di: 'دجاج أو لحم قليل الدهن (150غ بعد الطبخ) + بطاطا بالفرن (200غ) + سلطة (كوب) + علبة لبن صغيرة (150غ) · 500 سعرة · 40غ بروتين'
 };
-const ev = (time, title, type, detail) => ({ time, title, type, detail });
+const ev = (time, title, type, detail, dur) => ({ time, title, type, detail, dur });
 const campus = [
   ev('7:15 AM','استيقاظ','rest'), ev('9:00 AM','محاضرة المنطق الرقمي','uni'), ev('10:00 AM','محاضرة الجبر الخطي','uni'),
   ev('11:00 AM','فطور (وقت الفراغ بعد الجبر)','food',MEAL.bf), ev('11:15 AM','سناك','food',MEAL.sn)
@@ -367,7 +367,7 @@ const workTuesday = [
   ...campus,
   ev('11:50 AM','راحة وتجهيز للمحاضرة التالية','rest'), ev('1:00 PM','محاضرة البرمجة الكينونية','uni'),
   ev('2:00 PM','سناك بعد الجامعة','food','سندويشة صغيرة بخبز أسمر + جبنة قليلة الدسم · 230 سعرة'),
-  ev('2:15 PM','انتقال إلى الشغل','rest','45 دقيقة'), ev('3:00 PM','شغل (3:00 PM – 11:00 PM)','work'),
+  ev('2:15 PM','انتقال إلى الشغل','rest','45 دقيقة', 45), ev('3:00–11:00 PM','شغل (3:00 PM – 11:00 PM)','work'),
   ev('5:00–7:00 PM','غداء (بعد الجامعة في استراحة الشغل)','food',MEAL.lu),
   ev('7:00 PM','وجبة محمولة (في الاستراحة)','food','صدر دجاج مشوي (100غ بعد الطبخ) + رغيف عربي صغير (60غ) + خضار · 400 سعرة · 30غ بروتين'),
   ev('11:00 PM','العودة إلى البيت (5–10 دقائق)','rest'),
@@ -375,13 +375,13 @@ const workTuesday = [
   ev('11:30 PM','تحضير للنوم','rest'), ev('12:30 AM','نوم','sleep')
 ];
 const homeWorkday = (studyTitle, studyDetail, extraSlot) => [
-  ev('8:30 AM','استيقاظ','rest'), ev('9:00 AM','شغل حتى 7:00 PM','work'),
+  ev('8:30 AM','استيقاظ','rest'), ev('9:00 AM–7:00 PM','شغل حتى 7:00 PM','work'),
   ...(extraSlot ? [ev('11:00 AM','التربية الوطنية أونلاين','online','أثناء الشغل')] : []),
   ev('12:00 PM','فطور متأخر (في الاستراحة)','food',MEAL.bf),
   ev('4:30 PM','سناك عصري (في الاستراحة)','food','سندويشة جبنة قليلة الدسم + خضار'),
   ev('5:00 PM','مهارات الحاسوب الاستدراكي أونلاين','online','أثناء الشغل'),
   ev('7:00 PM','انتقال إلى البيت، ثم غداء في البيت','food',MEAL.lu),
-  ev('8:15 PM', studyTitle, 'study', studyDetail),
+  ev('8:15 PM', studyTitle, 'study', studyDetail, 90),
   ev('9:45 PM','عشاء (بعد المذاكرة)','food',MEAL.di),
   ev('10:15 PM','سناك (زبادي + تفاحة)','food',MEAL.sn),
   ev('10:45 PM','وقت شخصي','rest'), ev('12:00 AM','نوم','sleep')
@@ -389,9 +389,9 @@ const homeWorkday = (studyTitle, studyDetail, extraSlot) => [
 const DAYS = [
   { name:'الأحد', tag:'جامعة بدون شغل', total:'1810 سعرة · 132غ بروتين', items:[
     ...campus, ev('1:00 PM','محاضرة البرمجة الكينونية','uni'), ev('2:00 PM','مختبر البرمجة الكينونية','uni'),
-    ev('4:00 PM','سناك عصري','food',MEAL.sa), ev('4:30 PM','مذاكرة البرمجة الكينونية','study','كتابة أكواد باليد'),
-    ev('5:00–7:00 PM','غداء (بعد الجامعة)','food',MEAL.lu), ev('7:30 PM','مذاكرة الجبر الخطي','study','تمارين'),
-    ev('9:00 PM','مراجعة أسبوعية','study','الإنجازات والواجبات والاختبارات'), ev('9:30 PM','وقت شخصي','rest'), ev('12:00 AM','نوم','sleep')
+    ev('4:00 PM','سناك عصري','food',MEAL.sa), ev('7:15 PM','مذاكرة البرمجة الكينونية','study','ساعة · كتابة أكواد باليد', 60),
+    ev('5:00–7:00 PM','غداء (بعد الجامعة)','food',MEAL.lu), ev('8:30 PM','مذاكرة الجبر الخطي','study','تمارين · 45 دقيقة', 45),
+    ev('9:15 PM','مراجعة أسبوعية','study','الإنجازات والواجبات والاختبارات', 15), ev('9:30 PM','وقت شخصي','rest'), ev('12:00 AM','نوم','sleep')
   ]},
   { name:'الاثنين', tag:'شغل صباحي + أونلاين', total:'1810 سعرة · 132غ بروتين', items: homeWorkday('مذاكرة البرمجة الكينونية','ساعة ونصف', true) },
   { name:'الثلاثاء', tag:'جامعة ثم شغل حتى 11 PM', total:'1910 سعرة · 137غ بروتين', items: workTuesday },
@@ -399,10 +399,10 @@ const DAYS = [
   { name:'الخميس', tag:'جامعة ثم شغل حتى 11 PM', total:'1910 سعرة · 137غ بروتين', items: workTuesday },
   { name:'الجمعة', tag:'شغل بدون محاضرات', total:'1810 سعرة · 132غ بروتين', items: homeWorkday('مذاكرة البرمجة الكينونية','ساعة ونصف', false) },
   { name:'السبت', tag:'شغل + تربية وطنية أونلاين', total:'1810 سعرة · 132غ بروتين', items: [
-    ev('8:30 AM','استيقاظ','rest'), ev('9:00 AM','شغل حتى 7:00 PM','work'), ev('11:00 AM','التربية الوطنية أونلاين','online','أثناء الشغل'),
+    ev('8:30 AM','استيقاظ','rest'), ev('9:00 AM–7:00 PM','شغل حتى 7:00 PM','work'), ev('11:00 AM','التربية الوطنية أونلاين','online','أثناء الشغل'),
     ev('12:00 PM','فطور متأخر (في الاستراحة)','food',MEAL.bf), ev('4:30 PM','سناك عصري (في الاستراحة)','food','سندويشة جبنة قليلة الدسم + خضار'),
     ev('5:00 PM','مهارات الحاسوب الاستدراكي أونلاين','online','أثناء الشغل'), ev('7:00 PM','انتقال إلى البيت، ثم غداء في البيت','food',MEAL.lu),
-    ev('8:15 PM','مذاكرة الجبر الخطي','study','ساعة'), ev('9:15 PM','وقت شخصي','rest'), ev('9:45 PM','عشاء (بعد المذاكرة)','food',MEAL.di),
+    ev('8:15 PM','مذاكرة الجبر الخطي','study','ساعة', 60), ev('9:15 PM','وقت شخصي','rest'), ev('9:45 PM','عشاء (بعد المذاكرة)','food',MEAL.di),
     ev('10:15 PM','سناك (زبادي + تفاحة)','food',MEAL.sn), ev('12:00 AM','نوم','sleep')
   ]}
 ];
@@ -439,6 +439,54 @@ const eventStart = (time) => {
   return h * 60 + Number(m[2]);
 };
 const TYPE_COLORS = { uni:'var(--c-uni)', work:'var(--c-work)', online:'var(--c-online)', study:'var(--c-study)', food:'var(--c-food)', rest:'var(--c-rest)', sleep:'var(--c-sleep)' };
+
+const fmtTime = (m) => { const h = Math.floor(m / 60) % 24, mm = m % 60; return `${h % 12 || 12}:${String(mm).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`; };
+const rangeOf = (items, i) => {
+  const it = items[i];
+  let s = eventStart(it.time);
+  if (s < 0) return null;
+  if (s < 360) s += 1440;
+  const ap = (it.time.match(/(AM|PM)/i) || [''])[0];
+  let end = null, explicit = false;
+  const parts = it.time.split('–');
+  if (parts.length === 2) {
+    const endTxt = /(AM|PM)/i.test(parts[1]) ? parts[1] : parts[1] + ' ' + ap;
+    const e = eventStart(endTxt);
+    if (e >= 0) { end = e < 360 ? e + 1440 : e; explicit = true; }
+  }
+  if (end === null && it.dur) { end = s + it.dur; explicit = true; }
+  if (end === null) end = s + 30; // unknown length: count as a short task, not a conflict
+  return { s, e: end, explicit, it };
+};
+function analyzeDay(items) {
+  const ranges = items.map((_, i) => rangeOf(items, i)).filter(Boolean);
+  const conflicts = [];
+  for (let i = 0; i < ranges.length; i++) {
+    for (let j = i + 1; j < ranges.length; j++) {
+      const a = ranges[i], b = ranges[j];
+      if (!a.explicit || !b.explicit) continue;
+      if (a.it.type === 'work' || b.it.type === 'work') continue;
+      if (a.s < b.e && b.s < a.e) conflicts.push(`${a.it.title} (${a.it.time}) يتعارض مع ${b.it.title} (${b.it.time})`);
+    }
+  }
+  const busy = ranges.map(r => [r.s, r.e]).sort((x, y) => x[0] - y[0]);
+  const merged = [];
+  busy.forEach(([s, e]) => {
+    const last = merged[merged.length - 1];
+    if (last && s <= last[1]) last[1] = Math.max(last[1], e); else merged.push([s, e]);
+  });
+  const WINDOW_START = 420, WINDOW_END = 1380; // 7:00 AM to 11:00 PM
+  const freeSlots = [];
+  let cursor = WINDOW_START;
+  merged.forEach(([s, e]) => {
+    const to = Math.min(s, WINDOW_END);
+    if (to - cursor >= 30) freeSlots.push(`${fmtTime(cursor)} – ${fmtTime(to)}`);
+    cursor = Math.max(cursor, e);
+  });
+  if (WINDOW_END - cursor >= 30) freeSlots.push(`${fmtTime(cursor)} – ${fmtTime(WINDOW_END)}`);
+  return { conflicts, freeSlots };
+}
+
 
 // ---------- State ----------
 const EMPTY = () => ({ done:{}, checkins:[], weights:[], incidents:[], achievements:[...DEFAULT_ACHIEVEMENTS], notes:[], overrides:{}, theme:'light' });
@@ -523,7 +571,7 @@ function render() {
   $('legend').innerHTML = TYPE_LABELS.map(([t,l]) => `<span><i style="--event-color:${TYPE_COLORS[t]}"></i>${l}</span>`).join('');
 
   const ov = state.overrides[d.selectedKey];
-  $('override').innerHTML = ov ? `<div class="response-box"><strong>خطة مرنة لهذا اليوم</strong><p>${esc(ov)} — يعود الجدول الأصلي تلقائياً غداً.</p></div>` : '';
+  $('override').innerHTML = ov ? `<div class="response-box"><strong>خطة مرنة لهذا اليوم</strong><p>${esc(ov)} — تُسجّل لهذا اليوم فقط ولا تغيّر الجدول الأصلي.</p></div>` : '';
 
   $('timeline').innerHTML = plan.items.map((it, i) => {
     const done = !!state.done[`${d.selectedKey}-${i}`];
@@ -594,7 +642,7 @@ function applyScenario(s, custom) {
     overrides: { ...st.overrides, [d.selectedKey]: text }
   }));
   $('scenarioResult').innerHTML = `<div class="response-box"><strong>${esc(text)}</strong><ul>${advice.map(a => `<li>${esc(a)}</li>`).join('')}</ul></div>`;
-  toast('تم حفظ خطة اليوم فقط');
+  toast('تم حفظ الخطة لهذا اليوم فقط');
 }
 $('customBtn').onclick = () => {
   const t = $('customInput').value.trim();
@@ -609,7 +657,7 @@ $('themeBtn').onclick = () => {
 };
 
 $('resetBtn').onclick = async () => {
-  if (!(await askConfirm('إعادة ضبط علامات هذا اليوم وإلغاء أي تعديل له؟'))) return;
+  if (!(await askConfirm(`إعادة ضبط ${DAYS[selected].name} وإلغاء أي تعديل له؟`))) return;
   const d = derived();
   commit(s => {
     const done = { ...s.done };
@@ -748,8 +796,11 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
         const dayDate = addDays(d.weekStart, dayIndex);
         const key = dateKey(dayDate);
 
+        const analysis = analyzeDay(day.items);
         return {
           day: day.name,
+          conflicts: analysis.conflicts,
+          freeSlots: analysis.freeSlots,
           date: key,
           description: day.tag,
           nutritionTarget: day.total,
@@ -777,7 +828,8 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
 
       const context = {
         app: "جدولي الأسبوعي",
-        currentDateTime: now.toISOString(),
+        currentDateTime: `${todayKey} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`,
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         currentDay: DAYS[now.getDay()].name,
         selectedDay: DAYS[selected].name,
         selectedDate: selectedSchedule.date,
@@ -806,6 +858,8 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
           "استخدم أوقات المهام كما هي في الجدول، ولا تخترع مواعيد ثابتة.",
           "راعِ الجامعة والشغل والمحاضرات الأونلاين والتنقل والوجبات والنوم.",
           "انتبه إلى أن بعض المهام قد تتداخل في أوقاتها؛ نبّه المستخدم إلى التعارض بدل إخفائه.",
+          "استخدم قائمة التعارضات والفترات المتاحة المحسوبة لكل يوم كما هي، ولا تقدّر أوقاتاً غير موجودة فيها.",
+          "التنقل من الجامعة إلى الشغل 45 دقيقة، والعودة من الشغل إلى البيت 5–10 دقائق كما هو مذكور في الجدول.",
           "اقترح خطة واقعية حسب الوقت المتاح والأولوية والموعد النهائي.",
           "لا تقترح تعويض الطعام بتجويع النفس أو تخطي الوجبات.",
           "لا تدّعِ أنك عدّلت الجدول أو حفظت أي تغيير.",
