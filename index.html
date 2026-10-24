@@ -358,7 +358,11 @@ const MEAL = {
   sa: 'سندويشة بخبز أسمر (50–60غ) + جبنة قليلة الدسم (40غ) + خيار أو خس · 230 سعرة · 12غ بروتين',
   di: 'دجاج أو لحم قليل الدهن (150غ بعد الطبخ) + بطاطا بالفرن (200غ) + سلطة (كوب) + علبة لبن صغيرة (150غ) · 500 سعرة · 40غ بروتين'
 };
-const ev = (time, title, type, detail, dur) => ({ time, title, type, detail, dur });
+const ev = (time, title, type, detail, dur) => ({
+  time, title, type, detail,
+  // lectures last 1 hour; the programming lab lasts 2 hours
+  dur: dur ?? (type === 'uni' ? (title.includes('مختبر') ? 120 : 60) : undefined)
+});
 const campus = [
   ev('7:15 AM','استيقاظ','rest'), ev('9:00 AM','محاضرة المنطق الرقمي','uni'), ev('10:00 AM','محاضرة الجبر الخطي','uni'),
   ev('11:00 AM','فطور (وقت الفراغ بعد الجبر)','food',MEAL.bf), ev('11:15 AM','سناك','food',MEAL.sn)
@@ -875,6 +879,7 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
             task: item.title,
             category: item.type,
             details: item.detail || "",
+            duration: item.dur ? item.dur + " دقيقة" : "غير محددة",
             completed: Boolean(state.done[`${key}-${index}`])
           })),
           temporaryPlan: state.overrides[key] || null
@@ -926,6 +931,7 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
           "انتبه إلى أن بعض المهام قد تتداخل في أوقاتها؛ نبّه المستخدم إلى التعارض بدل إخفائه.",
           "استخدم قائمة التعارضات والفترات المتاحة المحسوبة لكل يوم كما هي، ولا تقدّر أوقاتاً غير موجودة فيها.",
           "احسب مجموع المدد بنفسك بدقة قبل ذكر أي مدة إجمالية، وتأكد من صحة الجمع.",
+          "كل محاضرة جامعية مدتها ساعة، ومختبر البرمجة الكينونية مدته ساعتان؛ استخدم هذه المدد في حساب الفترات والتعارضات.",
           "اكتب بالعربية فقط، ولا تذكر أسماء الحقول الداخلية مثل schedule_context أو conflicts أو events أو أي مفاتيح تقنية.",
           "ابنِ اقتراحك على الجدول الحالي كما هو في البيانات، ولا تفترض وجود مشكلة إلا إذا ظهرت فعلاً في بيانات الجدول أو في وصف المستخدم.",
           "في نهاية ردك أضف كتلة JSON داخل ```json وتحتوي على قائمة suggestions، وكل عنصر فيها له day و title و start و end بنفس صيغة أوقات الجدول، وهذه الكتلة للتحقق فقط.",
