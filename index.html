@@ -772,19 +772,35 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
 
   if (!button || !problemInput || !status || !answer) return;
 
+  function extractRanges(text, dayName) {
+    const out = [];
+    const re = /(\d{1,2}):(\d{2})\s*(?:–|-|إلى)\s*(\d{1,2}):(\d{2})\s*(صباحاً|صباحا|صباح|مساءً|مساءا|مساء)?/g;
+    let m;
+    while ((m = re.exec(text)) && out.length < 6) {
+      const period = m[5] ? (m[5].startsWith("ص") ? "AM" : "PM") : "PM";
+      out.push({
+        day: dayName,
+        start: m[1] + ":" + m[2] + " " + period,
+        end: m[3] + ":" + m[4] + " " + period,
+        title: "وقت مذكور في الرد"
+      });
+    }
+    return out;
+  }
   function checkSuggestion(sg) {
     const day = DAYS.findIndex(d => d.name === sg.day);
     const s = eventStart(String(sg.start || ""));
     const e = eventStart(String(sg.end || ""));
     if (day < 0 || s < 0 || e < 0 || e <= s) return { ok: false, note: "اليوم أو الوقت غير صالح" };
     const items = DAYS[day].items;
-    const hits = items
+    const overlapping = items
       .map((_, i) => rangeOf(items, i))
-      .filter(r => r && r.explicit && s < r.e && r.s < e)
-      .map(r => r.it.title);
-    return hits.length
-      ? { ok: false, note: "يتعارض مع: " + hits.join("، ") }
-      : { ok: true, note: "لا يتعارض مع مهام الجدول" };
+      .filter(r => r && r.explicit && s < r.e && r.s < e);
+    const same = overlapping.filter(r => r.s === s && r.e === e).map(r => r.it.title);
+    const hits = overlapping.filter(r => !(r.s === s && r.e === e)).map(r => r.it.title);
+    if (hits.length) return { ok: false, note: "يتعارض مع: " + hits.join("، ") };
+    if (same.length) return { ok: true, note: "هذه المهمة موجودة بالفعل في الجدول (" + same.join("، ") + ")" };
+    return { ok: true, note: "لا يتعارض مع مهام الجدول" };
   }
   function renderAnswer(text, schedule) {
     let clean = String(text);
@@ -795,11 +811,22 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
       try { suggestions = JSON.parse(m[1]).suggestions || []; } catch (e) { suggestions = []; }
     }
     answer.textContent = clean;
-    if (!suggestions.length) return;
+    let fromText = false;
+    if (!suggestions.length) {
+      suggestions = extractRanges(clean, DAYS[selected].name);
+      fromText = true;
+    }
+    if (!suggestions.length) {
+      const note = document.createElement("div");
+      note.style.marginTop = "14px";
+      note.textContent = "لم يذكر الرد وقتاً محدداً (مثل 7:15–8:15 مساءً)، فلا يوجد ما يُفحص.";
+      answer.appendChild(note);
+      return;
+    }
     const box = document.createElement("div");
     box.style.marginTop = "14px";
     const title = document.createElement("strong");
-    title.textContent = "فحص الاقتراحات على الجدول:";
+    title.textContent = fromText ? "فحص الأوقات المذكورة في الرد على جدول اليوم المختار:" : "فحص الاقتراحات على الجدول:";
     box.appendChild(title);
     suggestions.forEach(sg => {
       const r = checkSuggestion(sg);
@@ -899,6 +926,7 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
           "انتبه إلى أن بعض المهام قد تتداخل في أوقاتها؛ نبّه المستخدم إلى التعارض بدل إخفائه.",
           "استخدم قائمة التعارضات والفترات المتاحة المحسوبة لكل يوم كما هي، ولا تقدّر أوقاتاً غير موجودة فيها.",
           "احسب مجموع المدد بنفسك بدقة قبل ذكر أي مدة إجمالية، وتأكد من صحة الجمع.",
+          "اكتب بالعربية فقط، ولا تذكر أسماء الحقول الداخلية مثل schedule_context أو conflicts أو events أو أي مفاتيح تقنية.",
           "ابنِ اقتراحك على الجدول الحالي كما هو في البيانات، ولا تفترض وجود مشكلة إلا إذا ظهرت فعلاً في بيانات الجدول أو في وصف المستخدم.",
           "في نهاية ردك أضف كتلة JSON داخل ```json وتحتوي على قائمة suggestions، وكل عنصر فيها له day و title و start و end بنفس صيغة أوقات الجدول، وهذه الكتلة للتحقق فقط.",
           "وجبات الجدول ثابتة ولا تُنقل إلى وقت يتقاطع مع مهمة أخرى؛ فغداء الأحد ثابت بين 5:00 و7:00 مساءً، ولا تقترح مذاكرة أو أي مهمة داخل هذه الفترة.",
