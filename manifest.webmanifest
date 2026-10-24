@@ -1,33 +1,17 @@
 {
-  "id": "./",
   "name": "جدولي الأسبوعي",
   "short_name": "جدولي",
-  "description": "جدولك الأسبوعي المرن للجامعة والشغل والمذاكرة والوجبات والراحة.",
+  "description": "جدول أسبوعي مرن للدراسة والعمل والتغذية، يُحفظ على جهازك.",
   "lang": "ar",
   "dir": "rtl",
-  "start_url": "./index.html",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#f7f3ec",
   "theme_color": "#b8862b",
   "icons": [
-    {
-      "src": "icons/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icons/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icons/apple-touch-icon.png",
-      "sizes": "180x180",
-      "type": "image/png",
-      "purpose": "any"
-    }
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
   ]
 }
