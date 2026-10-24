@@ -709,9 +709,154 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
   <p id="emergencyStatus" role="status" aria-live="polite"></p>
   <div id="emergencyAnswer" style="white-space:pre-wrap;line-height:1.8"></div>
 </section>
+
 <script>
 (() => {
-  const endpoint = "https://jadwali-ai.mohammedtareqabugosh.workers.dev";
+  "use strict";
+
+  const endpoint =
+    "https://jadwali-ai.mohammedtareqabugosh.workers.dev";
+
+  const button = document.getElementById("emergencySolve");
+  const problemInput = document.getElementById("emergencyProblem");
+  const status = document.getElementById("emergencyStatus");
+  const answer = document.getElementById("emergencyAnswer");
+
+  if (!button || !problemInput || !status || !answer) return;
+
+  button.addEventListener("click", async () => {
+    const problem = problemInput.value.trim();
+
+    answer.textContent = "";
+
+    if (!problem) {
+      status.textContent = "اكتب المشكلة أولًا.";
+      problemInput.focus();
+      return;
+    }
+
+    button.disabled = true;
+    status.textContent = "جاري تحليل جدولك المحفوظ وإعداد الخطة...";
+
+    try {
+      const d = derived();
+      const now = new Date();
+      const todayKey = dateKey(now);
+
+      // استخراج الجدول الأسبوعي الفعلي من بيانات التطبيق
+      const weeklySchedule = DAYS.map((day, dayIndex) => {
+        const dayDate = addDays(d.weekStart, dayIndex);
+        const key = dateKey(dayDate);
+
+        return {
+          day: day.name,
+          date: key,
+          description: day.tag,
+          nutritionTarget: day.total,
+          events: day.items.map((item, index) => ({
+            time: item.time,
+            task: item.title,
+            category: item.type,
+            details: item.detail || "",
+            completed: Boolean(state.done[`${key}-${index}`])
+          })),
+          temporaryPlan: state.overrides[key] || null
+        };
+      });
+
+      const todaySchedule = weeklySchedule[now.getDay()];
+      const selectedSchedule = weeklySchedule[selected];
+
+      // إرسال أسماء المهام المكتملة بدل مفاتيح التخزين الداخلية
+      const completedToday = todaySchedule.events
+        .filter(event => event.completed)
+        .map(event => ({
+          time: event.time,
+          task: event.task
+        }));
+
+      const context = {
+        app: "جدولي الأسبوعي",
+        currentDateTime: now.toISOString(),
+        currentDay: DAYS[now.getDay()].name,
+        selectedDay: DAYS[selected].name,
+        selectedDate: selectedSchedule.date,
+
+        todaySchedule,
+        selectedSchedule,
+        weeklySchedule,
+
+        savedData: {
+          completedToday,
+          todayCheckin: state.checkins.includes(todayKey),
+          todayWeight:
+            state.weights.find(item => item.date === todayKey)?.value ?? null,
+
+          todayIncidents: state.incidents
+            .filter(item => item.date === todayKey),
+
+          todayNotes: state.notes,
+
+          todayTemporaryPlan: state.overrides[todayKey] || null
+        },
+
+        rules: [
+          "أجب باللغة العربية وبأسلوب واضح وعملي.",
+          "حلّل المشكلة بالاستناد إلى الجدول الأسبوعي المرسل، لا إلى جدول افتراضي.",
+          "استخدم أوقات المهام كما هي في الجدول، ولا تخترع مواعيد ثابتة.",
+          "راعِ الجامعة والشغل والمحاضرات الأونلاين والتنقل والوجبات والنوم.",
+          "انتبه إلى أن بعض المهام قد تتداخل في أوقاتها؛ نبّه المستخدم إلى التعارض بدل إخفائه.",
+          "اقترح خطة واقعية حسب الوقت المتاح والأولوية والموعد النهائي.",
+          "لا تقترح تعويض الطعام بتجويع النفس أو تخطي الوجبات.",
+          "لا تدّعِ أنك عدّلت الجدول أو حفظت أي تغيير.",
+          "لا تغيّر البيانات المحفوظة على الجهاز.",
+          "إذا كانت معلومة ضرورية ناقصة، اسأل عنها أو وضّح الافتراض."
+        ]
+      };
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          problem,
+          context
+        })
+      });
+
+      let data;
+
+      try {
+        data = await response.json();
+      } catch {
+        throw new Error("وصل رد غير مفهوم من الخادم.");
+      }
+
+      if (!response.ok || !data.ok || !data.answer) {
+        throw new Error(
+          data.error || "تعذّر الحصول على الخطة من الخادم."
+        );
+      }
+
+      answer.textContent = data.answer;
+      status.textContent =
+        "تم إرسال جدولك المحفوظ للتحليل. الخطة مقترحة فقط ولن يتغير جدولك تلقائيًا.";
+
+    } catch (error) {
+      console.error("Smart emergency error:", error);
+
+      status.textContent =
+        error.message ||
+        "تعذّر الاتصال بالخادم. تحقق من الاتصال وحاول مرة أخرى.";
+
+    } finally {
+      button.disabled = false;
+    }
+  });
+})();
+</script>
+
   const button = document.getElementById("emergencySolve");
   const problemInput = document.getElementById("emergencyProblem");
   const status = document.getElementById("emergencyStatus");
