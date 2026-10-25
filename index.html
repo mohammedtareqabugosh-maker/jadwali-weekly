@@ -369,7 +369,7 @@ const ev = (time, title, type, detail, dur) => ({
 // Each day builds its own item objects (factories), so Tuesday and Thursday never share state.
 const campusItems = () => [
   ev('7:15 AM','استيقاظ','rest'), ev('9:00 AM','محاضرة المنطق الرقمي','uni'), ev('10:00 AM','محاضرة الجبر الخطي','uni'),
-  ev('11:00 AM','فطور (وقت الفراغ بعد الجبر)','food',MEAL.bf), ev('11:15 AM','سناك','food',MEAL.sn)
+  ev('11:00 AM','فطور (وقت الفراغ بعد الجبر)','food',MEAL.bf)
 ];
 const workTuesdayItems = () => [
   ...campusItems(),
@@ -395,16 +395,16 @@ const homeWorkday = (studyTitle, studyDetail, extraSlot) => [
   ev('10:45 PM','وقت شخصي','rest'), ev('12:00 AM','نوم','sleep')
 ];
 const DAYS = [
-  { name:'الأحد', tag:'جامعة بدون شغل', total:'1810 سعرة · 132غ بروتين', items:[
+  { name:'الأحد', tag:'جامعة بدون شغل', total:'1660 سعرة · 124غ بروتين', items:[
     ...campusItems(), ev('1:00 PM','محاضرة البرمجة الكينونية','uni'), ev('2:00 PM','مختبر البرمجة الكينونية','uni'),
     ev('4:00 PM','سناك عصري','food',MEAL.sa), ev('7:15 PM','مذاكرة البرمجة الكينونية','study','ساعة · كتابة أكواد باليد', 60),
     ev('5:00–7:00 PM','غداء (بعد الجامعة)','food',MEAL.lu), ev('8:30 PM','مذاكرة الجبر الخطي','study','تمارين · 45 دقيقة', 45),
-    ev('9:15 PM','مراجعة أسبوعية','study','الإنجازات والواجبات والاختبارات', 15), ev('9:30 PM','وقت شخصي','rest'), ev('12:00 AM','نوم','sleep')
+    ev('9:15 PM','مراجعة أسبوعية','study','الإنجازات والواجبات والاختبارات', 15), ev('9:30 PM','وقت شخصي','rest'), ev('9:45 PM','عشاء (بعد المراجعة)','food',MEAL.di), ev('12:00 AM','نوم','sleep')
   ]},
   { name:'الاثنين', tag:'شغل صباحي + أونلاين', total:'1810 سعرة · 132غ بروتين', items: homeWorkday('مذاكرة البرمجة الكينونية','ساعة ونصف', true) },
-  { name:'الثلاثاء', tag:'جامعة ثم شغل حتى 11 PM', total:'1910 سعرة · 137غ بروتين', items: workTuesdayItems() },
+  { name:'الثلاثاء', tag:'جامعة ثم شغل حتى 11 PM', total:'1760 سعرة · 129غ بروتين', items: workTuesdayItems() },
   { name:'الأربعاء', tag:'شغل صباحي + أونلاين', total:'1810 سعرة · 132غ بروتين', items: homeWorkday('مذاكرة المنطق الرقمي','ساعة ونصف', true) },
-  { name:'الخميس', tag:'جامعة ثم شغل حتى 11 PM', total:'1910 سعرة · 137غ بروتين', items: workTuesdayItems() },
+  { name:'الخميس', tag:'جامعة ثم شغل حتى 11 PM', total:'1760 سعرة · 129غ بروتين', items: workTuesdayItems() },
   { name:'الجمعة', tag:'شغل بدون محاضرات', total:'1810 سعرة · 132غ بروتين', items: homeWorkday('مذاكرة البرمجة الكينونية','ساعة ونصف', false) },
   { name:'السبت', tag:'شغل + تربية وطنية أونلاين', total:'1810 سعرة · 132غ بروتين', items: [
     ev('8:30 AM','استيقاظ','rest'), ev('9:00 AM–7:00 PM','شغل حتى 7:00 PM','work'), ev('11:00 AM','التربية الوطنية أونلاين','online','أثناء الشغل'),
@@ -835,210 +835,251 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
 }
 </script>
 
-<!-- مخرج الطوارئ الذكي -->
-<section id="smartEmergency" style="margin:24px 0;padding:20px;border-radius:18px;background:var(--surface);border:1px solid #b8862b;">
-  <h2 style="margin-top:0">مخرج الطوارئ الذكي</h2>
-  <p>واجهت مشكلة بجدولك؟ اكتبها لتحصل على خطة عملية تناسب وقتك. يُرسل التطبيق جدول الأسبوع (الأوقات والمدد فقط) مع مشكلتك، ولا يُرسل الوزن أو الملاحظات أو سجل الإنجازات.</p>
-  <textarea id="emergencyProblem" rows="4" maxlength="8000" placeholder="مثال: تراكمت عليّ دراسة البرمجة وعندي دوام بكرا..." style="width:100%;box-sizing:border-box;padding:12px;border-radius:12px;font:inherit"></textarea>
-  <button id="emergencySolve" type="button" style="margin-top:12px;padding:12px 18px;border:0;border-radius:12px;background:#b8862b;color:white;font:inherit">اقترح خطة</button>
-  <p id="emergencyStatus" role="status" aria-live="polite"></p>
-  <div id="emergencyAnswer" style="white-space:pre-wrap;line-height:1.8"></div>
+<!-- مخرج الطوارئ: محادثة محلية بقواعد مبرمجة (بدون إنترنت) -->
+<style>
+  .chat-log { display: grid; gap: 8px; max-height: 380px; overflow-y: auto; padding: 4px 2px; margin-bottom: 10px; }
+  .msg { max-width: 92%; padding: 10px 12px; border-radius: 16px; font-size: 14px; line-height: 1.7; white-space: pre-line; overflow-wrap: anywhere; }
+  .msg.bot { justify-self: start; background: var(--bg); border: 1px solid var(--line); }
+  .msg.user { justify-self: end; background: color-mix(in srgb, var(--accent) 18%, transparent); border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent); }
+  .chat-options { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+  .chat-opt { min-height: 44px; padding: 8px 12px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); font-weight: 800; font-size: 13px; }
+  .chat-opt:hover { border-color: var(--accent); }
+</style>
+<section class="panel" id="emergencyChat" aria-labelledby="chatTitle" style="margin:24px 0">
+  <div class="section-head">
+    <div>
+      <h2 id="chatTitle">⚡ مخرج الطوارئ: محادثة</h2>
+      <p>أجب خطوة بخطوة، وتُحسب الخطة من جدولك على هذا الجهاز. تعمل بدون إنترنت، ولا تُرسل بياناتك إلى أي مكان.</p>
+    </div>
+  </div>
+  <div class="chat-log" id="chatLog" aria-live="polite"></div>
+  <div class="chat-options" id="chatOptions"></div>
+  <div class="row-form">
+    <input class="field" id="chatFree" type="text" placeholder="أو اكتب ما حدث باختصار…" maxlength="200">
+    <button type="button" class="primary-button" id="chatSend">إرسال</button>
+  </div>
+  <div class="row-form">
+    <button type="button" class="ghost-button" id="chatRestart">ابدأ من جديد</button>
+  </div>
 </section>
 
 <script>
 (() => {
   "use strict";
+  const $c = (id) => document.getElementById(id);
+  const log = $c("chatLog"), opts = $c("chatOptions"), freeIn = $c("chatFree");
+  if (!log || !opts || !freeIn) return;
 
-  const endpoint = "https://jadwali-ai.mohammedtareqabugosh.workers.dev";
-  const TIMEOUT_MS = 45000;
+  const PROBLEMS = [
+    { id: "study", label: "ما ذاكرت / متأخر بالمذاكرة" },
+    { id: "lecture", label: "فاتتني محاضرة" },
+    { id: "time", label: "ما عندي وقت لليوم" },
+    { id: "sleep", label: "سهرت أو نمت متأخراً" },
+    { id: "food", label: "أكلت أكثر من المعتاد" }
+  ];
+  const KEYWORDS = [
+    ["lecture", /محاضر/],
+    ["sleep", /نوم|نمت|سهر|استيقظ/],
+    ["food", /أكل|اكل|وجبة|شبعان/],
+    ["study", /ذاكر|دراس|واجب|امتحان|تمرين|مراجع/],
+    ["time", /وقت|دوام|شغل|مشغول|ضغط/]
+  ];
+  const MINUTES = [30, 60, 90, 120];
+  const MAX_BLOCK = 60;   // one block is at most one hour, then a break
+  const MIN_BLOCK = 15;
+  const NEEDS_MINUTES = { study: true, lecture: true, time: true, sleep: false, food: false };
+  const LABEL = Object.fromEntries(PROBLEMS.map(p => [p.id, p.label]));
 
-  const button = document.getElementById("emergencySolve");
-  const problemInput = document.getElementById("emergencyProblem");
-  const status = document.getElementById("emergencyStatus");
-  const answer = document.getElementById("emergencyAnswer");
+  let flow = null;
 
-  if (!button || !problemInput || !status || !answer) return;
-
-  function extractRanges(text, dayName) {
-    const out = [];
-    const re = /(\d{1,2}):(\d{2})\s*(?:–|-|إلى)\s*(\d{1,2}):(\d{2})\s*(صباحاً|صباحا|صباح|مساءً|مساءا|مساء)?/g;
-    let m;
-    while ((m = re.exec(text)) && out.length < 6) {
-      const period = m[5] ? (m[5].startsWith("ص") ? "AM" : "PM") : "PM";
-      out.push({
-        day: dayName,
-        start: m[1] + ":" + m[2] + " " + period,
-        end: m[3] + ":" + m[4] + " " + period,
-        title: "وقت مذكور في الرد"
-      });
-    }
-    return out;
+  function say(text) {
+    const div = document.createElement("div");
+    div.className = "msg bot";
+    div.textContent = text;
+    log.appendChild(div);
+    log.scrollTop = log.scrollHeight;
   }
-  function checkSuggestion(sg) {
-    const day = DAYS.findIndex(d => d.name === sg.day);
-    const s = eventStart(String(sg.start || ""));
-    const e = eventStart(String(sg.end || ""));
-    if (day < 0 || s < 0 || e < 0 || e <= s) return { ok: false, note: "اليوم أو الوقت غير صالح" };
-    const items = DAYS[day].items;
-    const overlapping = items
-      .map((_, i) => rangeOf(items, i))
-      .filter(r => r && r.explicit && s < r.e && r.s < e);
-    const same = overlapping.filter(r => r.s === s && r.e === e).map(r => r.it.title);
-    const hits = overlapping.filter(r => !(r.s === s && r.e === e)).map(r => r.it.title);
-    if (hits.length) return { ok: false, note: "يتعارض مع: " + hits.join("، ") };
-    if (same.length) return { ok: true, note: "هذه المهمة موجودة بالفعل في الجدول (" + same.join("، ") + ")" };
-    return { ok: true, note: "لا يتعارض مع مهام الجدول" };
+  function tell(text) {
+    const div = document.createElement("div");
+    div.className = "msg user";
+    div.textContent = text;
+    log.appendChild(div);
+    log.scrollTop = log.scrollHeight;
   }
-  function renderAnswer(text) {
-    let clean = String(text);
-    let suggestions = [];
-    const m = clean.match(/```json\s*([\s\S]*?)```/);
-    if (m) {
-      clean = clean.replace(m[0], "").trim();
-      try { suggestions = JSON.parse(m[1]).suggestions || []; } catch (e) { suggestions = []; }
-    }
-    answer.textContent = clean;
-    let fromText = false;
-    if (!Array.isArray(suggestions) || !suggestions.length) {
-      suggestions = extractRanges(clean, DAYS[selected].name);
-      fromText = true;
-    }
-    if (!suggestions.length) {
-      const note = document.createElement("div");
-      note.style.marginTop = "14px";
-      note.textContent = "لم يذكر الرد وقتاً محدداً (مثل 7:15–8:15 مساءً)، فلا يوجد ما يُفحص.";
-      answer.appendChild(note);
-      return;
-    }
-    const box = document.createElement("div");
-    box.style.marginTop = "14px";
-    const title = document.createElement("strong");
-    title.textContent = fromText ? "فحص الأوقات المذكورة في الرد على جدول اليوم المختار:" : "فحص الاقتراحات على الجدول:";
-    box.appendChild(title);
-    suggestions.forEach(sg => {
-      const r = checkSuggestion(sg);
-      const row = document.createElement("div");
-      row.style.margin = "6px 0";
-      row.textContent = (r.ok ? "✅ " : "⚠️ ") + sg.day + " " + sg.start + "–" + sg.end + ": " + (sg.title || "") + " — " + r.note;
-      box.appendChild(row);
+  function options(list) {
+    opts.innerHTML = "";
+    list.forEach((o) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "chat-opt";
+      b.textContent = o.label;
+      b.addEventListener("click", () => { tell(o.label); o.run(); });
+      opts.appendChild(b);
     });
-    answer.appendChild(box);
+  }
+  function ask(text, list) { say(text); options(list); }
+
+  // Free slots of a day as minute ranges (from the same analyzer the page uses).
+  function slotsOf(dayIndex) {
+    return analyzeDay(DAYS[dayIndex].items).freeSlots.map((txt) => {
+      const [a, b] = txt.split(" – ");
+      return { s: eventStart(a), e: eventStart(b) };
+    }).filter((x) => x.s >= 0 && x.e > x.s);
+  }
+  // Takes at most one block per free slot, never longer than MAX_BLOCK, never shorter than MIN_BLOCK.
+  function planBlocks(slots, need) {
+    const blocks = [];
+    let remaining = need;
+    for (const slot of slots) {
+      if (remaining <= 0) break;
+      const len = Math.min(remaining, MAX_BLOCK, slot.e - slot.s);
+      if (len < MIN_BLOCK) continue;
+      blocks.push({ s: slot.s, e: slot.s + len });
+      remaining -= len;
+    }
+    return blocks;
+  }
+  function totalMinutes(slots) { return slots.reduce((n, x) => n + (x.e - x.s), 0); }
+  function bestDay(exclude) {
+    let best = null;
+    DAYS.forEach((_, i) => {
+      if (i === exclude) return;
+      const t = totalMinutes(slotsOf(i));
+      if (!best || t > best.total) best = { i, total: t };
+    });
+    return best;
   }
 
-  button.addEventListener("click", async () => {
-    const problem = problemInput.value.trim();
+  function start() {
+    log.innerHTML = "";
+    flow = { problem: null, day: new Date().getDay(), minutes: null };
+    freeIn.value = "";
+    ask("مرحباً! أنا أساعدك على إعادة ترتيب يومك خطوة بخطوة. ما الذي حدث؟ اختر من الأزرار أو اكتب باختصار.",
+      PROBLEMS.map((p) => ({ label: p.label, run: () => chooseProblem(p.id) })));
+  }
 
-    answer.textContent = "";
+  function chooseProblem(id) {
+    flow.problem = id;
+    askDay();
+  }
 
-    if (!problem) {
-      status.textContent = "اكتب المشكلة أولًا.";
-      problemInput.focus();
-      return;
+  function askDay() {
+    ask("في أي يوم؟", DAYS.map((d, i) => ({ label: d.name, run: () => { flow.day = i; afterDay(); } })));
+  }
+
+  function afterDay() {
+    if (NEEDS_MINUTES[flow.problem]) {
+      ask("كم دقيقة تقدر تخصص لذلك في هذا اليوم؟",
+        MINUTES.map((m) => ({ label: m + " دقيقة", run: () => { flow.minutes = m; finish(); } })));
+    } else {
+      finish();
     }
-    if (!navigator.onLine) {
-      status.textContent = "أنت غير متصل بالإنترنت. المساعد الذكي يحتاج اتصالاً لإرسال طلبك؛ بقية التطبيق تعمل بدونه.";
-      return;
+  }
+
+  function finish() {
+    const p = flow.problem;
+    const day = DAYS[flow.day];
+    const slots = slotsOf(flow.day);
+    const lines = [];
+    let plan = null; // text saved to the day when the user applies it
+
+    if (p === "study" || p === "time") {
+      const need = p === "time" ? Math.min(flow.minutes, 45) : flow.minutes;
+      const blocks = planBlocks(slots, need);
+      const got = blocks.reduce((n, b) => n + (b.e - b.s), 0);
+      if (blocks.length) {
+        lines.push(`خطة ${day.name}:`);
+        blocks.forEach((b) => lines.push(`• مذاكرة من ${fmtTime(b.s)} إلى ${fmtTime(b.e)} (${b.e - b.s} دقيقة)`));
+        if (got < need) lines.push(`لم تتسع الفترات المتاحة إلا لـ ${got} دقيقة من ${need}.`);
+        lines.push("المهام الثابتة في الجدول لم تتغير.");
+        plan = `مذاكرة إضافية: ` + blocks.map((b) => `${fmtTime(b.s)}–${fmtTime(b.e)}`).join("، ");
+      } else {
+        lines.push(`لا توجد فترة متاحة كافية في ${day.name}.`);
+        const alt = bestDay(flow.day);
+        if (alt && alt.total >= MIN_BLOCK) {
+          lines.push(`أفضل يوم لذلك: ${DAYS[alt.i].name}، فيه ${alt.total} دقيقة متاحة.`);
+        } else {
+          lines.push("لا توجد فترة متاحة في الأسبوع كله. خذ خطوة صغيرة لعشر دقائق، أو انقل جزءاً من المذاكرة إلى يوم آخر.");
+        }
+      }
+      if (p === "time") lines.push("لم نضف إلا جزءاً صغيراً حتى لا يزيد الضغط.");
+    } else if (p === "lecture") {
+      const need = Math.min(flow.minutes, 45);
+      const blocks = planBlocks(slots, need);
+      lines.push("1) تواصل مع زميل للحصول على الملاحظات أو التسجيل.");
+      if (blocks.length) {
+        lines.push(`2) مراجعة النقاط الأساسية في ${day.name}: من ${fmtTime(blocks[0].s)} إلى ${fmtTime(blocks[0].e)}.`);
+        plan = `مراجعة المحاضرة: ${fmtTime(blocks[0].s)}–${fmtTime(blocks[0].e)}`;
+      } else {
+        lines.push(`2) لا توجد فترة مناسبة في ${day.name} للمراجعة. اختر يوماً آخر.`);
+      }
+    } else if (p === "sleep") {
+      lines.push("لا نضيف مذاكرة الليلة، حتى تحصل على نومك.");
+      lines.push("ابدأ الغد بالترتيب المعتاد، ولا تحاول تعويض كل شيء دفعة واحدة.");
+      const next = (flow.day + 1) % 7;
+      const ns = slotsOf(next);
+      if (ns.length) lines.push(`أول فترة متاحة يوم ${DAYS[next].name}: من ${fmtTime(ns[0].s)} إلى ${fmtTime(ns[0].e)}.`);
+      plan = "ليلة متأخرة: لا تعويض ليلاً، والبداية غداً بالجدول المعتاد";
+    } else if (p === "food") {
+      lines.push("لا تتخطَّ وجبتك التالية ولا تعوّض بالجوع.");
+      lines.push("عد إلى وجبتك التالية كما هي في الجدول، واشرب ماءً.");
+      if (slots.length) lines.push(`إن كان مناسباً، امشِ 15 دقيقة في أول فترة متاحة: ${fmtTime(slots[0].s)}.`);
+      plan = "أكل أكثر من المعتاد: العودة إلى الوجبة التالية كما في الجدول";
     }
 
-    button.disabled = true;
-    status.textContent = "جاري تحليل جدولك وإعداد الخطة...";
+    say(lines.join("\n"));
+    const actions = [];
+    if (plan) {
+      actions.push({ label: "طبّق على " + day.name + " فقط", run: () => apply(plan) });
+    }
+    actions.push({ label: "اختر يوماً آخر", run: () => askDay() });
+    actions.push({ label: "ابدأ من جديد", run: () => start() });
+    options(actions);
+  }
 
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
-
-    try {
-      const now = new Date();
-      const todayKey = dateKey(now);
-      const d = derived();
-
-      // Only the schedule goes out: times, durations, computed conflicts and free slots.
-      // Weight, notes, achievements, incidents and completion records stay on this device.
-      const weeklySchedule = DAYS.map((day, dayIndex) => {
-        const key = dateKey(addDays(d.weekStart, dayIndex));
-        const analysis = analyzeDay(day.items);
-        return {
-          day: day.name,
-          date: key,
-          description: day.tag,
-          nutritionTarget: day.total,
-          conflicts: analysis.conflicts,
-          freeSlots: analysis.freeSlots,
-          events: day.items.map(item => ({
-            time: item.time,
-            task: item.title,
-            category: item.type,
-            details: item.detail || "",
-            duration: item.dur ? item.dur + " دقيقة" : "غير محددة"
-          }))
-        };
-      });
-
-      const context = {
-        app: "جدولي الأسبوعي",
-        currentDateTime: `${todayKey} ${pad(now.getHours())}:${pad(now.getMinutes())}`,
-        currentDay: DAYS[now.getDay()].name,
-        selectedDay: DAYS[selected].name,
-        weeklySchedule,
-        rules: [
-          "أجب باللغة العربية وبأسلوب واضح وعملي.",
-          "حلّل المشكلة بالاستناد إلى الجدول الأسبوعي المرسل، لا إلى جدول افتراضي.",
-          "استخدم أوقات المهام كما هي في الجدول، ولا تخترع مواعيد ثابتة.",
-          "راعِ الجامعة والشغل والمحاضرات الأونلاين والتنقل والوجبات والنوم.",
-          "انتبه إلى أن بعض المهام قد تتداخل في أوقاتها؛ نبّه المستخدم إلى التعارض بدل إخفائه.",
-          "استخدم قائمة التعارضات والفترات المتاحة المحسوبة لكل يوم كما هي، ولا تقدّر أوقاتاً غير موجودة فيها.",
-          "احسب مجموع المدد بنفسك بدقة قبل ذكر أي مدة إجمالية، وتأكد من صحة الجمع.",
-          "كل محاضرة جامعية مدتها ساعة، ومختبر البرمجة الكينونية مدته ساعتان؛ استخدم هذه المدد في حساب الفترات والتعارضات.",
-          "اكتب بالعربية فقط، ولا تذكر أسماء الحقول الداخلية مثل schedule_context أو conflicts أو events أو أي مفاتيح تقنية.",
-          "ابنِ اقتراحك على الجدول الحالي كما هو في البيانات، ولا تفترض وجود مشكلة إلا إذا ظهرت فعلاً في بيانات الجدول أو في وصف المستخدم.",
-          "في نهاية ردك أضف كتلة JSON داخل ```json وتحتوي على قائمة suggestions، وكل عنصر فيها له day و title و start و end بنفس صيغة أوقات الجدول، وهذه الكتلة للتحقق فقط.",
-          "وجبات الجدول ثابتة ولا تُنقل إلى وقت يتقاطع مع مهمة أخرى؛ فغداء الأحد ثابت بين 5:00 و7:00 مساءً، ولا تقترح مذاكرة أو أي مهمة داخل هذه الفترة.",
-          "قبل أن تقترح وقتاً لأي مهمة، تحقّق من أنه لا يتقاطع مع أي مهمة أخرى في اليوم نفسه، ومن أنه داخل إحدى الفترات المتاحة.",
-          "التنقل من الجامعة إلى الشغل 45 دقيقة، والعودة من الشغل إلى البيت 5–10 دقائق كما هو مذكور في الجدول.",
-          "اقترح خطة واقعية حسب الوقت المتاح والأولوية والموعد النهائي.",
-          "لا تقترح تعويض الطعام بتجويع النفس أو تخطي الوجبات.",
-          "لا تدّعِ أنك عدّلت الجدول أو حفظت أي تغيير.",
-          "إذا كانت معلومة ضرورية ناقصة، اسأل عنها أو وضّح الافتراض."
-        ]
+  // Saves the plan for that day only. The main schedule is never changed.
+  function apply(text) {
+    const d = derived();
+    const key = dateKey(addDays(d.weekStart, flow.day));
+    const incidentText = LABEL[flow.problem] || "طوارئ";
+    selected = flow.day; // show the day the plan was applied to
+    const ok = commit((s) => {
+      const exists = s.incidents.some((x) => x.date === key && x.text === incidentText);
+      return {
+        ...s,
+        incidents: exists ? s.incidents : [...s.incidents, { id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, date: key, text: incidentText }],
+        overrides: { ...s.overrides, [key]: text }
       };
+    });
+    if (ok) {
+      say(`تم حفظ الخطة ليوم ${DAYS[flow.day].name} فقط. جدولك الأصلي لم يتغير.`);
+      toast("تم حفظ الخطة لهذا اليوم فقط");
+    } else {
+      say("لم تُحفظ الخطة. راجع رسالة الحفظ أعلى الصفحة.");
+    }
+    options([{ label: "ابدأ من جديد", run: () => start() }]);
+  }
 
-      let response;
-      try {
-        response = await fetch(endpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ problem, context }),
-          signal: controller.signal
-        });
-      } catch (err) {
-        throw new Error(err && err.name === "AbortError"
-          ? "انتهت مهلة الانتظار من الخادم. حاول مرة أخرى."
-          : "تعذّر الاتصال بالخادم. تحقق من الإنترنت وحاول مرة أخرى.");
-      }
-
-      let data;
-      try {
-        data = await response.json();
-      } catch {
-        throw new Error("وصل رد غير مفهوم من الخادم.");
-      }
-
-      if (!response.ok || !data || !data.ok || !data.answer) {
-        throw new Error((data && data.error) || "تعذّر الحصول على الخطة من الخادم.");
-      }
-
-      renderAnswer(data.answer);
-      status.textContent = "تم استلام الخطة المقترحة. الخطة مقترحة فقط، ولم يتغير جدولك.";
-
-    } catch (error) {
-      console.error("Smart emergency error:", error);
-      status.textContent = error.message || "تعذّر الاتصال بالخادم. تحقق من الاتصال وحاول مرة أخرى.";
-    } finally {
-      clearTimeout(timer);
-      button.disabled = false;
+  $c("chatSend").addEventListener("click", () => {
+    const text = freeIn.value.trim();
+    if (!text) return;
+    freeIn.value = "";
+    tell(text);
+    if (!flow) start();
+    const hit = KEYWORDS.find(([, re]) => re.test(text));
+    if (hit && flow.problem === null) {
+      chooseProblem(hit[0]);
+    } else if (flow.problem === null) {
+      ask("لم أفهم ذلك. اختر ما يناسبك من الأزرار:", PROBLEMS.map((p) => ({ label: p.label, run: () => chooseProblem(p.id) })));
+    } else {
+      say("اختر من الأزرار أعلاه، أو ابدأ من جديد.");
     }
   });
+  freeIn.addEventListener("keydown", (e) => { if (e.key === "Enter") $c("chatSend").click(); });
+  $c("chatRestart").addEventListener("click", start);
+
+  start();
 })();
 </script>
-
 </body>
 </html>
