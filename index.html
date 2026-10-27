@@ -151,6 +151,7 @@ details[open].panel > summary::after { content: "▴"; }
   min-height: 52px; padding: 8px 10px; border-radius: 14px; border: 1px solid var(--line); background: var(--bg);
   font-size: 12px; font-weight: 800; text-align: start;
 }
+.scenario-grid button[aria-pressed="true"] { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
 .row-form { display: flex; gap: 8px; margin-top: 10px; }
 .field {
   width: 100%; min-height: 44px; padding: 10px 12px; border-radius: 14px; border: 1px solid var(--line);
@@ -262,9 +263,11 @@ details[open].panel > summary::after { content: "▴"; }
       <details class="panel" open>
         <summary>🎯 الأهداف اليومية</summary>
         <div class="panel-body">
-          <div class="kv"><span>السعرات الحرارية</span><b>1800 – 2000 kcal</b></div>
-          <div class="kv"><span>البروتين</span><b>130 – 160 g</b></div>
+          <div class="scenario-grid" id="goalGrid" role="group" aria-label="اختيار الهدف"></div>
+          <div class="kv"><span>السعرات الحرارية</span><b id="goalKcal"></b></div>
+          <div class="kv"><span>البروتين</span><b id="goalProt"></b></div>
           <div class="kv"><span>الماء اليومي</span><b>2 – 3 L</b></div>
+          <p class="empty" id="goalNote" style="padding:0"></p>
         </div>
       </details>
 
@@ -507,7 +510,12 @@ function analyzeDay(items) {
 }
 
 // ---------- State & storage ----------
-const EMPTY = () => ({ done:{}, checkins:[], weights:[], incidents:[], achievements:[...DEFAULT_ACHIEVEMENTS], notes:[], overrides:{}, theme:'light' });
+const GOALS = {
+  balanced: { title: 'متوازن: 1900–2000 سعرة', kcal: '1900 – 2000 kcal', prot: '135 – 150 g', note: 'نزول تدريجي حوالي 0.5–0.7 كغم أسبوعياً، مع حرمان أقل.' },
+  fast: { title: 'نزول أسرع: 1700–1850 سعرة', kcal: '1700 – 1850 kcal', prot: '135 – 150 g', note: 'نزول أسرع، لكن الجوع والتعب قد يكونان أكبر.' }
+};
+const DEFAULT_GOAL = 'balanced';
+const EMPTY = () => ({ done:{}, checkins:[], weights:[], incidents:[], achievements:[...DEFAULT_ACHIEVEMENTS], notes:[], overrides:{}, theme:'light', goal: DEFAULT_GOAL });
 const LOCAL_KEY = 'weekly-planner-v1';      // same key as before, so existing data is kept
 const BACKUP_KEY = 'weekly-planner-v1-backup';
 let state = EMPTY();
@@ -631,6 +639,12 @@ function render() {
   $('dayCount').textContent = `${doneCount} من ${plan.items.length} مهام`;
   $('legend').innerHTML = TYPE_LABELS.map(([t,l]) => `<span><i style="--event-color:${TYPE_COLORS[t]}"></i>${l}</span>`).join('');
 
+  const goal = GOALS[state.goal] ? state.goal : DEFAULT_GOAL;
+  $('goalGrid').innerHTML = Object.keys(GOALS).map(k => `<button type="button" data-goal="${k}" aria-pressed="${goal === k}">${esc(GOALS[k].title)}</button>`).join('');
+  $('goalKcal').textContent = GOALS[goal].kcal;
+  $('goalProt').textContent = GOALS[goal].prot;
+  $('goalNote').textContent = GOALS[goal].note;
+
   const analysis = analyzeDay(plan.items);
   $('conflicts').innerHTML = analysis.conflicts.length
     ? `<div class="response-box warn" role="alert"><strong>⚠️ تعارض حقيقي في ${esc(plan.name)}</strong><ul>${analysis.conflicts.map(c => `<li>${esc(c)}</li>`).join('')}</ul></div>`
@@ -699,6 +713,8 @@ document.addEventListener('change', (e) => {
   commit(s => ({ ...s, done: { ...s.done, [key]: cb.checked } }));
 });
 document.addEventListener('click', (e) => {
+  const goalBtn = e.target.closest('[data-goal]');
+  if (goalBtn && GOALS[goalBtn.dataset.goal]) { commit(s => ({ ...s, goal: goalBtn.dataset.goal })); return; }
   const day = e.target.closest('[data-day]');
   if (day) { selected = Number(day.dataset.day); render(); $('scenarioResult').innerHTML = ''; return; }
   const sc = e.target.closest('[data-scenario]');
