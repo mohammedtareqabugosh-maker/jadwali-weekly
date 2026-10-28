@@ -151,6 +151,7 @@ details[open].panel > summary::after { content: "▴"; }
   min-height: 52px; padding: 8px 10px; border-radius: 14px; border: 1px solid var(--line); background: var(--bg);
   font-size: 12px; font-weight: 800; text-align: start;
 }
+.scenario-grid button[aria-pressed="true"] { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
 .row-form { display: flex; gap: 8px; margin-top: 10px; }
 .field {
   width: 100%; min-height: 44px; padding: 10px 12px; border-radius: 14px; border: 1px solid var(--line);
@@ -262,8 +263,10 @@ details[open].panel > summary::after { content: "▴"; }
       <details class="panel" open>
         <summary>🎯 الأهداف اليومية</summary>
         <div class="panel-body">
-          <div class="kv"><span>السعرات الحرارية</span><b>1800 – 2000 kcal</b></div>
-          <div class="kv"><span>البروتين</span><b>130 – 160 g</b></div>
+          <div class="scenario-grid" id="goalGrid" role="group" aria-label="اختيار الهدف"></div>
+          <div class="kv"><span>السعرات الحرارية</span><b id="goalKcal"></b></div>
+          <div class="kv"><span>البروتين</span><b id="goalProt"></b></div>
+          <p class="empty" id="goalNote" style="padding:0"></p>
           <div class="kv"><span>الماء اليومي</span><b>2 – 3 L</b></div>
         </div>
       </details>
@@ -507,7 +510,12 @@ function analyzeDay(items) {
 }
 
 // ---------- State & storage ----------
-const EMPTY = () => ({ done:{}, checkins:[], weights:[], incidents:[], achievements:[...DEFAULT_ACHIEVEMENTS], notes:[], overrides:{}, theme:'light' });
+const GOALS = {
+  balanced: { title: 'متوازن: 1900–2000 سعرة', kcal: '1900 – 2000 kcal', prot: '135 – 150 g', note: 'نزول تدريجي حوالي 0.5–0.7 كغم أسبوعياً، مع حرمان أقل.' },
+  fast: { title: 'نزول أسرع: 1700–1850 سعرة', kcal: '1700 – 1850 kcal', prot: '135 – 150 g', note: 'نزول أسرع، لكن الجوع والتعب قد يكونان أكبر.' }
+};
+const DEFAULT_GOAL = 'balanced';
+const EMPTY = () => ({ done:{}, checkins:[], weights:[], incidents:[], achievements:[...DEFAULT_ACHIEVEMENTS], notes:[], overrides:{}, theme:'light', goal: DEFAULT_GOAL });
 const LOCAL_KEY = 'weekly-planner-v1';      // same key as before, so existing data is kept
 const BACKUP_KEY = 'weekly-planner-v1-backup';
 let state = EMPTY();
@@ -631,6 +639,12 @@ function render() {
   $('dayCount').textContent = `${doneCount} من ${plan.items.length} مهام`;
   $('legend').innerHTML = TYPE_LABELS.map(([t,l]) => `<span><i style="--event-color:${TYPE_COLORS[t]}"></i>${l}</span>`).join('');
 
+  const goal = GOALS[state.goal] ? state.goal : DEFAULT_GOAL;
+  $('goalGrid').innerHTML = Object.keys(GOALS).map(k => `<button type="button" data-goal="${k}" aria-pressed="${goal === k}">${esc(GOALS[k].title)}</button>`).join('');
+  $('goalKcal').textContent = GOALS[goal].kcal;
+  $('goalProt').textContent = GOALS[goal].prot;
+  $('goalNote').textContent = GOALS[goal].note;
+
   const analysis = analyzeDay(plan.items);
   $('conflicts').innerHTML = analysis.conflicts.length
     ? `<div class="response-box warn" role="alert"><strong>⚠️ تعارض حقيقي في ${esc(plan.name)}</strong><ul>${analysis.conflicts.map(c => `<li>${esc(c)}</li>`).join('')}</ul></div>`
@@ -699,6 +713,8 @@ document.addEventListener('change', (e) => {
   commit(s => ({ ...s, done: { ...s.done, [key]: cb.checked } }));
 });
 document.addEventListener('click', (e) => {
+  const goalBtn = e.target.closest('[data-goal]');
+  if (goalBtn && GOALS[goalBtn.dataset.goal]) { commit(s => ({ ...s, goal: goalBtn.dataset.goal })); return; }
   const day = e.target.closest('[data-day]');
   if (day) { selected = Number(day.dataset.day); render(); $('scenarioResult').innerHTML = ''; return; }
   const sc = e.target.closest('[data-scenario]');
@@ -1379,6 +1395,7 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
 
   <p id="food-sync-message" role="status">لم يتم تسجيل الدخول بعد.</p>
 
+  <ul id="food-sync-list" style="list-style:none;padding:0;margin:8px 0"></ul>
   <button id="food-sync-refresh">تحديث وجبات اليوم</button>
   <button id="food-sync-logout" hidden>تسجيل الخروج</button>
 </section>
@@ -1429,6 +1446,38 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
     $("food-sync-logout").hidden = !isLoggedIn;
   }
 
+  function dayRange() {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    return { from: start.toISOString(), to: end.toISOString() };
+  }
+
+  function timeText(iso) {
+    const d = new Date(iso);
+    return isNaN(d) ? "" : d.toLocaleTimeString("ar-JO", { hour: "2-digit", minute: "2-digit" });
+  }
+
+  function renderMeals(meals) {
+    const list = $("food-sync-list");
+    list.textContent = "";
+    meals.forEach(meal => {
+      const li = document.createElement("li");
+      li.style.cssText = "display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 10px;margin:6px 0;border-radius:12px;background:#f5f7f3";
+      const text = document.createElement("span");
+      text.textContent = (meal.meal_name || "وجبة") + " · " + (meal.meal_type || "") +
+        " · " + timeText(meal.meal_date) + " · " + (Number(meal.calories) || 0) + " سعرة · " +
+        (Number(meal.protein) || 0) + " غ بروتين";
+      const del = document.createElement("button");
+      del.type = "button";
+      del.textContent = "حذف";
+      del.dataset.id = String(meal.id);
+      del.style.cssText = "border:0;border-radius:10px;padding:6px 10px;background:#b44a4a;color:white;font:inherit";
+      li.append(text, del);
+      list.appendChild(li);
+    });
+  }
+
   async function loadToday() {
     const thisRequest = ++requestNumber;
 
@@ -1446,6 +1495,7 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
       showLoggedIn(false);
       $("food-sync-calories").textContent = "—";
       $("food-sync-protein").textContent = "—";
+      renderMeals([]);
       setMessage("سجّل الدخول باستخدام نفس حساب مساعدي الغذائي.");
       return;
     }
@@ -1453,42 +1503,65 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
     showLoggedIn(true);
     setMessage("جارٍ تحميل وجبات اليوم…");
 
+    const range = dayRange();
     const { data, error } = await client
       .from("meals")
-      .select("meal_name, calories, protein, meal_date")
+      .select("id, client_id, meal_name, meal_type, calories, protein, meal_date")
       .eq("user_id", user.id)
-      .eq("meal_date", localDateKey());
+      .gte("meal_date", range.from)
+      .lt("meal_date", range.to)
+      .order("meal_date", { ascending: true });
 
     if (thisRequest !== requestNumber) return;
 
     if (error) {
-      setMessage(
-        "تعذّر تحميل الوجبات. تحقق من سياسات RLS وصلاحية قراءة وجبات حسابك. التفاصيل: " +
-        error.message
-      );
+      setMessage("تعذّر تحميل الوجبات: " + error.message);
       return;
     }
 
     const meals = data || [];
-    const calories = meals.reduce(
-      (sum, meal) => sum + (Number(meal.calories) || 0), 0
-    );
-    const protein = meals.reduce(
-      (sum, meal) => sum + (Number(meal.protein) || 0), 0
-    );
+    const calories = meals.reduce((sum, meal) => sum + (Number(meal.calories) || 0), 0);
+    const protein = meals.reduce((sum, meal) => sum + (Number(meal.protein) || 0), 0);
 
-    $("food-sync-calories").textContent =
-      Math.round(calories).toLocaleString("en-US");
-
-    $("food-sync-protein").textContent =
-      Math.round(protein * 10) / 10;
+    $("food-sync-calories").textContent = Math.round(calories).toLocaleString("en-US");
+    $("food-sync-protein").textContent = Math.round(protein * 10) / 10;
+    renderMeals(meals);
 
     setMessage(
       meals.length
-        ? `تم تحميل ${meals.length} وجبة من حسابك لهذا اليوم.`
+        ? `تم تحميل ${meals.length} وجبة لهذا اليوم.`
         : "لا توجد وجبات مسجّلة لهذا اليوم في الحساب."
     );
   }
+
+  $("food-sync-list").addEventListener("click", async (e) => {
+    const btn = e.target.closest("[data-id]");
+    if (!btn) return;
+    if (!window.confirm("حذف هذه الوجبة من السحابة؟ ستختفي من مساعدي الغذائي عند مزامنته.")) return;
+
+    const { data: sessionData } = await client.auth.getSession();
+    const user = sessionData.session?.user;
+    if (!user) {
+      setMessage("سجّل الدخول أولاً.");
+      return;
+    }
+
+    btn.disabled = true;
+    const { error } = await client
+      .from("meals")
+      .delete()
+      .eq("user_id", user.id)
+      .eq("id", btn.dataset.id);
+
+    if (error) {
+      btn.disabled = false;
+      setMessage("تعذّر حذف الوجبة: " + error.message);
+      return;
+    }
+
+    setMessage("تم حذف الوجبة من السحابة.");
+    await loadToday();
+  });
 
   $("food-sync-login").addEventListener("click", async () => {
     const email = $("food-sync-email").value.trim();
