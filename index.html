@@ -728,8 +728,8 @@ $('day-ai-suggest').addEventListener('click', async () => {
       throw new Error((data && data.error) || 'تعذر الحصول على رد من المساعد.');
     }
     const answer = String(data.answer).replace(/\\n/g, '\n').replace(/\\r/g, '\r');
-    box.innerHTML = '<div class="response-box"><strong>اقتراح ذكي لليوم المحدد</strong><p style="white-space:pre-wrap"></p><p class="empty">هذا اقتراح فقط؛ لم يتغير جدولك ولم تُحذف أي مهمة.</p></div>';
-    box.querySelector('p').textContent = answer;
+    box.innerHTML = '<div class="response-box"><strong>اقتراح ذكي لليوم المحدد</strong><p class="ai-answer" style="white-space:pre-wrap"></p><p class="empty">هذا اقتراح فقط؛ لم يتغير جدولك ولم تُحذف أي مهمة.</p><button type="button" class="primary-button" id="ai-add-proposal" style="margin-top:10px">➕ إضافة الاقتراح إلى الجدول</button><p class="empty">قبل الإضافة ستدخل تفاصيل المهمة ووقتها للتأكد من صحتها وعدم تعارضها.</p></div>';
+    box.querySelector('.ai-answer').textContent = answer;
   } catch (err) {
     box.innerHTML = '<div class="response-box warn"></div>';
     box.querySelector('.response-box').textContent = err && err.name === 'AbortError'
@@ -741,7 +741,40 @@ $('day-ai-suggest').addEventListener('click', async () => {
     btn.textContent = 'تحليل المشكلة واقتراح تعديل';
   }
 });
-document.addEventListener('click',e=>{const mainDel=e.target.closest('[data-main-delete]');if(mainDel){const i=Number(mainDel.dataset.mainDelete),items=currentDayItems().slice();if(!Number.isInteger(i)||i<0||i>=items.length)return;if(!confirm('متأكد من حذف هذه المهمة من اليوم المحدد فقط؟'))return;items.splice(i,1);saveDayItems(items);toast('تم حذف المهمة من هذا اليوم فقط');return;}const mainEdit=e.target.closest('[data-main-edit]');if(mainEdit){const i=Number(mainEdit.dataset.mainEdit),items=currentDayItems().slice();if(!Number.isInteger(i)||i<0||i>=items.length)return;const it=items[i],title=prompt('اسم المهمة',it.title);if(title===null)return;if(!title.trim())return toast('اسم المهمة لا يمكن أن يكون فارغاً');const time=prompt('الوقت',it.time);if(time===null)return;if(!time.trim())return toast('الوقت لا يمكن أن يكون فارغاً');const detail=prompt('التفاصيل (اختياري)',it.detail||'');if(detail===null)return;items[i]={...it,title:title.trim(),time:time.trim(),detail:detail.trim()};saveDayItems(items);toast('تم تعديل المهمة لهذا اليوم فقط');return;}const del=e.target.closest('[data-day-remove]');if(del){const i=Number(del.dataset.dayRemove),items=currentDayItems().slice();items.splice(i,1);saveDayItems(items);$('day-ai-result').innerHTML='';toast('تم حذف المهمة من هذا اليوم فقط');return;}const edit=e.target.closest('[data-day-time]');if(edit){const i=Number(edit.dataset.dayTime),v=$('day-edit-time-'+i).value.trim();if(!v)return toast('أدخل الوقت الجديد');const items=currentDayItems().slice();items[i]={...items[i],time:v};saveDayItems(items);toast('تم تعديل وقت المهمة لهذا اليوم فقط');}});
+document.addEventListener('click',e=>{
+ const addProposal=e.target.closest('#ai-add-proposal');
+ if(addProposal){
+   const title=prompt('اسم المهمة التي تريد إضافتها');
+   if(title===null)return;
+   if(!title.trim())return toast('اسم المهمة مطلوب');
+   const startRaw=prompt('وقت البداية بصيغة مثل 6:00 PM');
+   if(startRaw===null)return;
+   const endRaw=prompt('وقت النهاية بصيغة مثل 7:00 PM');
+   if(endRaw===null)return;
+   const s=eventStart(startRaw.trim()),eMin=eventStart(endRaw.trim());
+   if(s<0||eMin<0||eMin<=s||eMin-s>1440)return toast('الوقت غير صالح؛ تحقق من البداية والنهاية');
+   const typeRaw=prompt('نوع المهمة: study أو work أو uni أو online أو food أو rest أو sleep','study');
+   if(typeRaw===null)return;
+   const allowed=['study','work','uni','online','food','rest','sleep'];
+   const type=typeRaw.trim().toLowerCase();
+   if(!allowed.includes(type))return toast('نوع المهمة غير معروف');
+   const detail=prompt('تفاصيل إضافية (اختياري)','')||'';
+   const items=currentDayItems();
+   const start=s<360?s+1440:s, end=eMin<360?eMin+1440:eMin;
+   for(let i=0;i<items.length;i++){
+     const r=rangeOf(items,i); if(!r)continue;
+     if(r.explicit && start<r.e && r.s<end)return toast('لم تتم الإضافة: يوجد تعارض مع «'+r.it.title+'»');
+     if(!r.explicit && r.s>=0 && r.s<end && r.s>=start)return toast('لم تتم الإضافة: توجد مهمة بمدة غير معروفة تبدأ خلال الوقت المقترح');
+   }
+   const task={time:fmtTime(s),title:title.trim(),type,detail:detail.trim(),dur:eMin-s};
+   if(!confirm('إضافة «'+task.title+'» يوم '+DAYS[selected].name+' من '+fmtTime(s)+' إلى '+fmtTime(eMin)+'؟'))return;
+   const ok=saveDayItems([...items,task]);
+   if(ok===false)return;
+   $('day-ai-result').innerHTML='<div class="response-box">تمت إضافة المهمة إلى جدول اليوم المحدد.</div>';
+   toast('تمت إضافة المهمة إلى الجدول');
+   return;
+ }
+ const mainDel=e.target.closest('[data-main-delete]');if(mainDel){const i=Number(mainDel.dataset.mainDelete),items=currentDayItems().slice();if(!Number.isInteger(i)||i<0||i>=items.length)return;if(!confirm('متأكد من حذف هذه المهمة من اليوم المحدد فقط؟'))return;items.splice(i,1);saveDayItems(items);toast('تم حذف المهمة من هذا اليوم فقط');return;}const mainEdit=e.target.closest('[data-main-edit]');if(mainEdit){const i=Number(mainEdit.dataset.mainEdit),items=currentDayItems().slice();if(!Number.isInteger(i)||i<0||i>=items.length)return;const it=items[i],title=prompt('اسم المهمة',it.title);if(title===null)return;if(!title.trim())return toast('اسم المهمة لا يمكن أن يكون فارغاً');const time=prompt('الوقت',it.time);if(time===null)return;if(!time.trim())return toast('الوقت لا يمكن أن يكون فارغاً');const detail=prompt('التفاصيل (اختياري)',it.detail||'');if(detail===null)return;items[i]={...it,title:title.trim(),time:time.trim(),detail:detail.trim()};saveDayItems(items);toast('تم تعديل المهمة لهذا اليوم فقط');return;}const del=e.target.closest('[data-day-remove]');if(del){const i=Number(del.dataset.dayRemove),items=currentDayItems().slice();items.splice(i,1);saveDayItems(items);$('day-ai-result').innerHTML='';toast('تم حذف المهمة من هذا اليوم فقط');return;}const edit=e.target.closest('[data-day-time]');if(edit){const i=Number(edit.dataset.dayTime),v=$('day-edit-time-'+i).value.trim();if(!v)return toast('أدخل الوقت الجديد');const items=currentDayItems().slice();items[i]={...items[i],time:v};saveDayItems(items);toast('تم تعديل وقت المهمة لهذا اليوم فقط');}});
 // ---------- Modals & toast ----------
 function openModal(id) { $(id).hidden = false; }
 function closeModal(id) { $(id).hidden = true; }
