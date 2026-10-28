@@ -35,3 +35,5 @@ drop policy if exists "Users can delete own shared schedule" on public.shared_sc
 create policy "Users can delete own shared schedule"
   on public.shared_schedule for delete to authenticated
   using (auth.uid() = user_id);
+
+grant select, insert, update, delete on table public.shared_schedule to authenticated;
