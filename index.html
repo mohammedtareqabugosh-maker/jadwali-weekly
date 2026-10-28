@@ -785,6 +785,21 @@ $('day-ai-suggest').addEventListener('click', async () => {
     btn.textContent = 'تحليل المشكلة واقتراح تعديل';
   }
 });
+// Start minute of a schedule row (times before 6 AM count as the night after). Unknown -> end of list.
+function rowStartKey(item) {
+  const first = String(item && item.time || '').split(/\s*[–—-]\s*/)[0];
+  const st = eventStart(first.trim());
+  if (st < 0) return Infinity;
+  return st < 360 ? st + 1440 : st;
+}
+// Puts a new task in chronological order; existing rows keep their own order.
+function insertChronological(list, task) {
+  const key = rowStartKey(task);
+  let idx = list.findIndex(row => rowStartKey(row) > key);
+  if (idx < 0) idx = list.length;
+  list.splice(idx, 0, task);
+  return list;
+}
 document.addEventListener('click',e=>{
  const addProposal=e.target.closest('#ai-add-proposal');
  if(addProposal){
@@ -818,7 +833,7 @@ document.addEventListener('click',e=>{
    // Preserve original-index targeting while applying edits/deletes.
    proposed=[];
    for(let i=0;i<original.length;i++){if(deletes.has(i))continue;proposed.push(updates.has(i)?updates.get(i).task:{...original[i]});}
-   adds.forEach(x=>proposed.push(x.task));
+   adds.forEach(x=>insertChronological(proposed,x.task));
    const check=analyzeDay(proposed);
    if(check.conflicts.length)return toast('لم تُنفّذ الخطة لوجود تعارض: '+check.conflicts[0]);
    const summary=actions.map(a=>a.type==='add'?'إضافة: '+a.title:a.type==='update'?'تعديل: '+original[a.index].title+' ← '+(a.title||original[a.index].title):'حذف: '+original[a.index].title).join('\n');
