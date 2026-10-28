@@ -1100,7 +1100,8 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
   freeIn.addEventListener("keydown", (e) => { if (e.key === "Enter") $c("chatSend").click(); });
   $c("chatRestart").addEventListener("click", start);
 
-  start();
+  window.addEventListener('shared-schedule-refresh',()=>{if(user)pull()});
+start();
 })();
 </script>
 
@@ -1733,11 +1734,33 @@ function draw(){
  $('ss-summary').innerHTML='<span class="ss-chip">'+day.length+' عناصر اليوم</span><span class="ss-chip">🔥 '+Math.round(kcal)+' سعرة</span><span class="ss-chip">💪 '+Math.round(protein*10)/10+' غ بروتين</span>';
  $('ss-items').innerHTML=day.length?day.map(r=>'<div class="ss-item"><div class="ss-time">'+esc(timeText(r.starts_at))+'</div><div class="ss-itembody"><div class="ss-title">'+(r.kind==='meal'?'🍽️ ':'')+esc(r.title)+'</div>'+(r.details?'<div class="ss-details">'+esc(r.details)+'</div>':'')+(r.kind==='meal'?'<div class="ss-kind">'+Math.round(Number(r.calories)||0)+' سعرة · '+Math.round(Number(r.protein)||0)+'غ بروتين</div>':'<div class="ss-kind">'+(r.kind==='appointment'?'موعد':'مهمة')+'</div>')+'</div><button class="ss-del" data-ss-delete="'+esc(r.id)+'" type="button">حذف</button></div>').join(''):'<div class="ss-empty">ما في عناصر لهذا اليوم. أضف وجبة أو مهمة من النموذج بالأسفل.</div>';
 }
-async function pull(){if(!user)return;status('جارٍ تحميل الجدول المشترك…');const {data,error}=await client.from(TABLE).select('*').eq('user_id',user.id).order('starts_at',{ascending:true});if(error){status('تعذر تحميل الجدول. تأكد من تنفيذ ملف shared_schedule.sql في Supabase: '+error.message);return}rows=data||[];draw();$('ss-main').hidden=false;$('ss-auth-area').innerHTML='<p class="ss-sub">متصل بالحساب: '+esc(user.email||'')+' · مزامنة مباشرة من السحابة</p><button id="ss-refresh" type="button" class="ss-save" style="width:100%;margin-top:8px">تحديث الجدول</button>';$('ss-refresh').onclick=pull;status('الجدول المشترك جاهز.')}
+async function syncMealsToLocal(){
+ if(!location.pathname.includes('my-food-assistant'))return;
+ try{
+  const db=await new Promise((resolve,reject)=>{const req=indexedDB.open('my-food-assistant-db',1);req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)});
+  if(!db.objectStoreNames.contains('meals'))return;
+  const all=await new Promise((resolve,reject)=>{const req=db.transaction('meals','readonly').objectStore('meals').getAll();req.onsuccess=()=>resolve(req.result||[]);req.onerror=()=>reject(req.error)});
+  const byId=new Map(all.filter(m=>m.clientId).map(m=>[String(m.clientId),m]));
+  const remoteMeals=rows.filter(r=>r.kind==='meal'),currentIds=new Set(remoteMeals.map(r=>String(r.id)));
+  const tx=db.transaction(['meals','settings'],'readwrite'),store=tx.objectStore('meals'),settings=tx.objectStore('settings');
+  const prevReq=settings.get('sharedScheduleIds');
+  prevReq.onsuccess=()=>{
+   const prev=Array.isArray(prevReq.result?.value)?prevReq.result.value:[];
+   for(const id of prev){if(!currentIds.has(String(id))){const old=byId.get(String(id));if(old)store.delete(old.id)}}
+   for(const r of remoteMeals){
+    const old=byId.get(String(r.id));
+    store.put({...(old&&old.id!==undefined?{id:old.id}:{}),clientId:String(r.id),name:r.title||'وجبة',type:r.meal_type||'وجبة خفيفة',date:r.starts_at,ingredients:r.ingredients||r.details||'',notes:r.details||'',calories:Number(r.calories)||0,protein:Number(r.protein)||0,carbs:Number(r.carbs)||0,fat:Number(r.fat)||0,updatedAt:r.updated_at||new Date().toISOString()});
+   }
+   settings.put({key:'sharedScheduleIds',value:[...currentIds]});
+  };
+  tx.oncomplete=()=>window.dispatchEvent(new Event('shared-schedule-updated'));
+ }catch(e){console.warn('Shared meal local sync failed',e)}
+}
+async function pull(){if(!user)return;status('جارٍ تحميل الجدول المشترك…');const {data,error}=await client.from(TABLE).select('*').eq('user_id',user.id).order('starts_at',{ascending:true});if(error){status('تعذر تحميل الجدول. تأكد من تنفيذ ملف shared_schedule.sql في Supabase: '+error.message);return}rows=data||[];await syncMealsToLocal();draw();$('ss-main').hidden=false;$('ss-auth-area').innerHTML='<p class="ss-sub">متصل بالحساب: '+esc(user.email||'')+' · مزامنة مباشرة من السحابة</p><button id="ss-refresh" type="button" class="ss-save" style="width:100%;margin-top:8px">تحديث الجدول</button>';$('ss-refresh').onclick=pull;status('الجدول المشترك جاهز.')}
 async function boot(){if(!client)return;const {data,error}=await client.auth.getSession();if(error){status(error.message);return}user=data.session?.user||null;if(!user){$('ss-main').hidden=true;showAuth();return}await pull()}
 $('ss-week').addEventListener('click',e=>{const b=e.target.closest('[data-ss-day]');if(b){selected=b.dataset.ssDay;$('ss-date').value=selected;draw()}});
 $('ss-items').addEventListener('click',async e=>{const b=e.target.closest('[data-ss-delete]');if(!b||!user)return;if(!confirm('حذف هذا العنصر من الجدول الموحد في التطبيقين؟'))return;const {error}=await client.from(TABLE).delete().eq('id',b.dataset.ssDelete).eq('user_id',user.id);if(error){status('تعذر الحذف: '+error.message);return}rows=rows.filter(r=>r.id!==b.dataset.ssDelete);draw();status('تم الحذف من الجدول المشترك.');});
-$('ss-form').addEventListener('submit',async e=>{e.preventDefault();if(!user){status('سجّل الدخول أولاً.');return}const kind=$('ss-kind').value,title=$('ss-title').value.trim(),date=$('ss-date').value,time=$('ss-time').value;if(!title||!date||!time)return;const row={id:(crypto.randomUUID?crypto.randomUUID():'entry-'+Date.now()),user_id:user.id,kind,title,details:$('ss-details').value.trim(),starts_at:new Date(date+'T'+time+':00').toISOString(),meal_type:kind==='meal'?'وجبة':'',calories:kind==='meal'?Number($('ss-calories').value)||0:0,protein:kind==='meal'?Number($('ss-protein').value)||0:0,source_app:location.pathname.includes('my-food-assistant')?'my-food-assistant':'jadwali-weekly',updated_at:new Date().toISOString()};const {error}=await client.from(TABLE).upsert(row);if(error){status('تعذر الحفظ: '+error.message);return}selected=date;rows=rows.filter(r=>r.id!==row.id);rows.push(row);$('ss-title').value='';$('ss-details').value='';$('ss-calories').value='';$('ss-protein').value='';draw();status('تم الحفظ في الجدول الموحد، وسيظهر في التطبيق الآخر عند فتحه أو تحديثه.');});
+$('ss-form').addEventListener('submit',async e=>{e.preventDefault();if(!user){status('سجّل الدخول أولاً.');return}const kind=$('ss-kind').value,title=$('ss-title').value.trim(),date=$('ss-date').value,time=$('ss-time').value;if(!title||!date||!time)return;const row={id:(crypto.randomUUID?crypto.randomUUID():'entry-'+Date.now()),user_id:user.id,kind,title,details:$('ss-details').value.trim(),starts_at:new Date(date+'T'+time+':00').toISOString(),meal_type:kind==='meal'?'وجبة':'',calories:kind==='meal'?Number($('ss-calories').value)||0:0,protein:kind==='meal'?Number($('ss-protein').value)||0:0,source_app:location.pathname.includes('my-food-assistant')?'my-food-assistant':'jadwali-weekly',updated_at:new Date().toISOString()};const {error}=await client.from(TABLE).upsert(row);if(error){status('تعذر الحفظ: '+error.message);return}selected=date;$('ss-title').value='';$('ss-details').value='';$('ss-calories').value='';$('ss-protein').value='';await pull();status('تم الحفظ في الجدول الموحد، وسيظهر في التطبيق الآخر عند فتحه أو تحديثه.');});
 async function start(){try{await loadLibrary();client=window.supabase.createClient(URL,KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});window.sharedScheduleClient=client;await boot();client.auth.onAuthStateChange(()=>setTimeout(boot,0));}catch(e){status('تعذر بدء المزامنة: '+(e.message||e))}}
 const dateField=$('ss-date');if(dateField)dateField.value=selected;
 start();
