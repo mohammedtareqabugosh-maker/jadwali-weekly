@@ -717,7 +717,7 @@ $('day-ai-suggest').addEventListener('click', async () => {
             index: i, time: it.time, title: it.title, type: it.type,
             detail: it.detail || '', dur: Number.isFinite(Number(it.dur)) ? Number(it.dur) : null
           }))
-        })
+        }
       }),
       signal: controller.signal
     });
