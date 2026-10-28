@@ -1769,6 +1769,37 @@ start();
 
 >
 
+
+<style>
+:root{--quickbar-h:68px}
+body{padding-bottom:calc(94px + env(safe-area-inset-bottom,0px))!important}
+#quick-nav{position:fixed;z-index:999;left:10px;right:10px;bottom:max(8px,env(safe-area-inset-bottom,0px));display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px;padding:8px 5px calc(8px + env(safe-area-inset-bottom,0px));border:1px solid rgba(180,190,174,.65);border-radius:22px;background:rgba(250,251,247,.94);box-shadow:0 12px 36px rgba(25,39,27,.18);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);direction:rtl}
+#quick-nav button{display:flex;min-width:0;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:6px 1px;border:0;border-radius:13px;background:transparent;color:#667164;font:inherit;cursor:pointer}
+#quick-nav button .qn-icon{font-size:19px;line-height:1.1}
+#quick-nav button .qn-label{font-size:10px;font-weight:800;white-space:nowrap}
+#quick-nav button.active{background:#263b2d;color:#fff}
+#quick-nav button:focus-visible{outline:2px solid #b58a3a;outline-offset:2px}
+@media(min-width:700px){#quick-nav{left:50%;right:auto;transform:translateX(-50%);width:min(680px,calc(100% - 30px));bottom:14px}.shared-schedule{margin-bottom:25px}}
+@media(prefers-color-scheme:dark){#quick-nav{background:rgba(27,36,29,.95);border-color:#465347}#quick-nav button{color:#c1cbbd}#quick-nav button.active{background:#b58a3a;color:#fff}}
+</style>
+<nav id="quick-nav" aria-label="التنقل السريع">
+ <button type="button" class="active" data-qtarget="timeline"><span class="qn-icon">⌂</span><span class="qn-label">الرئيسية</span></button>
+ <button type="button" data-qtarget="shared-schedule"><span class="qn-icon">▦</span><span class="qn-label">الجدول</span></button>
+ <button type="button" data-qtarget="goalGrid"><span class="qn-icon">◎</span><span class="qn-label">الأهداف</span></button>
+ <button type="button" data-qtarget="alts"><span class="qn-icon">♧</span><span class="qn-label">الوجبات</span></button>
+ <button type="button" data-qtarget="scenarioGrid"><span class="qn-icon">⚡</span><span class="qn-label">الطوارئ</span></button>
+ <button type="button" data-qtarget="food-sync-panel"><span class="qn-icon">☁</span><span class="qn-label">المزامنة</span></button>
+</nav>
+<script>
+(()=>{const nav=document.getElementById('quick-nav');if(!nav)return;
+function targetFor(id){const el=document.getElementById(id);if(!el)return null;const details=el.closest('details');if(details)details.open=true;return el}
+nav.addEventListener('click',e=>{const b=e.target.closest('[data-qtarget]');if(!b)return;const target=targetFor(b.dataset.qtarget);if(!target)return;nav.querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b));target.scrollIntoView({behavior:'smooth',block:'start'});if(b.dataset.qtarget==='shared-schedule'){const date=document.getElementById('ss-date');if(date&&typeof date.showPicker==='function'){} }});
+const sections=[['timeline',0],['shared-schedule',1],['goalGrid',2],['alts',3],['scenarioGrid',4],['food-sync-panel',5]];
+function setActive(){let chosen=0,best=Infinity;for(const [id,index] of sections){const el=document.getElementById(id);if(!el)continue;const d=Math.abs(el.getBoundingClientRect().top-120);if(d<best){best=d;chosen=index}}nav.querySelectorAll('button').forEach((b,i)=>b.classList.toggle('active',i===chosen))}
+let ticking=false;window.addEventListener('scroll',()=>{if(ticking)return;ticking=true;requestAnimationFrame(()=>{setActive();ticking=false})},{passive:true});
+})();
+</script>
+
 </body>
 </html>
 
