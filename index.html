@@ -515,7 +515,7 @@ const GOALS = {
   fast: { title: 'نزول أسرع: 1700–1850 سعرة', kcal: '1700 – 1850 kcal', prot: '135 – 150 g', note: 'نزول أسرع، لكن الجوع والتعب قد يكونان أكبر.' }
 };
 const DEFAULT_GOAL = 'balanced';
-const EMPTY = () => ({ done:{}, checkins:[], weights:[], incidents:[], achievements:[...DEFAULT_ACHIEVEMENTS], notes:[], overrides:{}, theme:'light', goal: DEFAULT_GOAL });
+const EMPTY = () => ({ done:{}, checkins:[], weights:[], incidents:[], achievements:[...DEFAULT_ACHIEVEMENTS], notes:[], overrides:{}, dayMeals:{}, theme:'light', goal: DEFAULT_GOAL });
 const LOCAL_KEY = 'weekly-planner-v1';      // same key as before, so existing data is kept
 const BACKUP_KEY = 'weekly-planner-v1-backup';
 let state = EMPTY();
@@ -613,6 +613,11 @@ function currentEventIndex(items, isToday, now) {
 }
 
 // ---------- Render ----------
+// Meals added from the cloud list (per day) are shown after the base items of that day.
+function extraRowsHTML(key) {
+  const list = (state.dayMeals || {})[key] || [];
+  return list.map(m => `<div class="event-row" style="--event-color:#b8862b"><div class="event-copy"><div class="event-title">🍽️ ${esc(m.title)}</div>${m.detail ? `<div class="event-detail">${esc(m.detail)}</div>` : ''}</div><span class="event-time">${esc(m.time)}</span></div>`).join('');
+}
 function render() {
   const d = derived();
   const isDark = state.theme === 'dark';
@@ -659,7 +664,7 @@ function render() {
       <input type="checkbox" class="event-check" data-task="${i}" ${done ? 'checked' : ''} aria-label="إنجاز: ${esc(it.title)}">
       <div class="event-copy"><div class="event-title">${esc(it.title)}${cur === i ? ' <span class="tag-pill">الآن</span>' : ''}</div>${it.detail ? `<div class="event-detail">${esc(it.detail)}</div>` : ''}</div>
       <span class="event-time">${esc(it.time)}</span></label>`;
-  }).join('');
+  }).join('') + extraRowsHTML(d.selectedKey);
 
   $('alts').innerHTML = ALTERNATIVES.map(([t, x]) => `<div class="alt"><strong>${esc(t)}</strong>${esc(x)}</div>`).join('');
   $('scenarioGrid').innerHTML = SCENARIOS.map(s => `<button type="button" data-scenario="${esc(s.id)}">${esc(s.title)}</button>`).join('');
@@ -756,7 +761,8 @@ $('resetBtn').addEventListener('click', async () => {
     const done = { ...s.done };
     Object.keys(done).forEach(k => { if (k.startsWith(`${d.selectedKey}-`)) delete done[k]; });
     const overrides = { ...s.overrides }; delete overrides[d.selectedKey];
-    return { ...s, done, overrides };
+    const dayMeals = { ...(s.dayMeals || {}) }; delete dayMeals[d.selectedKey];
+    return { ...s, done, overrides, dayMeals };
   });
   $('scenarioResult').innerHTML = '';
   if (ok) toast('عاد اليوم إلى جدوله الأصلي');
@@ -1458,7 +1464,9 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
     return isNaN(d) ? "" : d.toLocaleTimeString("ar-JO", { hour: "2-digit", minute: "2-digit" });
   }
 
+  let lastMeals = [];
   function renderMeals(meals) {
+    lastMeals = meals;
     const list = $("food-sync-list");
     list.textContent = "";
     meals.forEach(meal => {
@@ -1473,7 +1481,20 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
       del.textContent = "حذف";
       del.dataset.id = String(meal.id);
       del.style.cssText = "border:0;border-radius:10px;padding:6px 10px;background:#b44a4a;color:white;font:inherit";
-      li.append(text, del);
+      const toDay = document.createElement("button");
+      toDay.type = "button";
+      toDay.textContent = "أضف للجدول";
+      toDay.dataset.addDay = String(meal.id);
+      toDay.style.cssText = "border:0;border-radius:10px;padding:6px 10px;background:#b8862b;color:white;font:inherit";
+      const toNote = document.createElement("button");
+      toNote.type = "button";
+      toNote.textContent = "أضف للملاحظات";
+      toNote.dataset.addNote = String(meal.id);
+      toNote.style.cssText = "border:0;border-radius:10px;padding:6px 10px;background:#6b7f70;color:white;font:inherit";
+      const actions = document.createElement("span");
+      actions.style.cssText = "display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end";
+      actions.append(toDay, toNote, del);
+      li.append(text, actions);
       list.appendChild(li);
     });
   }
@@ -1534,7 +1555,39 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
     );
   }
 
+  function addCloudMealToPlanner(meal, mode) {
+    const when = new Date(meal.meal_date);
+    const key = dateKey(when);
+    const time = isNaN(when) ? "" : when.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+    const title = meal.meal_name || "وجبة";
+    const detail = (meal.meal_type || "") + " · " + (Number(meal.calories) || 0) + " سعرة · " + (Number(meal.protein) || 0) + " غ بروتين";
+
+    if (mode === "day") {
+      const current = (state.dayMeals || {})[key] || [];
+      if (current.some(x => x.cid === meal.client_id)) return toast("الوجبة مضافة لهذا اليوم بالفعل");
+      const ok = commit(s => {
+        const all = { ...(s.dayMeals || {}) };
+        all[key] = [...(all[key] || []), { cid: meal.client_id, title, time, detail }];
+        return { ...s, dayMeals: all };
+      });
+      if (ok) toast("أضيفت الوجبة إلى جدول اليوم");
+      return;
+    }
+
+    const text = "🍽️ " + title + " — " + time + " — " + detail;
+    if (state.notes.includes(text)) return toast("الوجبة موجودة في الملاحظات");
+    if (commit(s => ({ ...s, notes: [...s.notes, text] }))) toast("أضيفت الوجبة إلى الملاحظات");
+    renderMonth();
+  }
+
   $("food-sync-list").addEventListener("click", async (e) => {
+    const action = e.target.closest("[data-add-day],[data-add-note]");
+    if (action) {
+      const id = action.dataset.addDay || action.dataset.addNote;
+      const meal = lastMeals.find(m => String(m.id) === id);
+      if (meal) addCloudMealToPlanner(meal, action.dataset.addDay ? "day" : "note");
+      return;
+    }
     const btn = e.target.closest("[data-id]");
     if (!btn) return;
     if (!window.confirm("حذف هذه الوجبة من السحابة؟ ستختفي من مساعدي الغذائي عند مزامنته.")) return;
