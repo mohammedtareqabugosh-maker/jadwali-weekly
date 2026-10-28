@@ -739,11 +739,37 @@ $('day-ai-suggest').addEventListener('click', async () => {
     const applyBtn = box.querySelector('#ai-add-proposal');
     if (window.__jadwaliAiPlan && plan.actions.length) {
       const counts = {add:0,update:0,delete:0};
-      plan.actions.forEach(a=>{if(a&&Object.prototype.hasOwnProperty.call(counts,a.type))counts[a.type]++;});
-      status.textContent = 'خطة جاهزة للمراجعة: إضافة '+counts.add+'، تعديل '+counts.update+'، حذف '+counts.delete+' مهمة.';
-      applyBtn.disabled = false;
+      const allowedTypes = ['study','work','uni','online','food','rest','sleep'];
+      const actionsValid = plan.actions.every(a => {
+        if (!a || !['add','update','delete'].includes(a.type)) return false;
+        if (a.type === 'delete') {
+          return Number.isInteger(a.index) && a.index >= 0 &&
+            a.index < items.length && typeof a.reason === 'string';
+        }
+        if (a.type === 'update' &&
+            (!Number.isInteger(a.index) || a.index < 0 || a.index >= items.length)) return false;
+        const start = eventStart(String(a.start || '').trim());
+        const end = eventStart(String(a.end || '').trim());
+        return typeof a.title === 'string' && !!a.title.trim() &&
+          start >= 0 && end >= 0 && end > start &&
+          end - start <= 1440 && allowedTypes.includes(String(a.taskType || '').toLowerCase()) &&
+          typeof a.detail === 'string';
+      });
+      if (actionsValid) {
+        plan.actions.forEach(a=>{if(a&&Object.prototype.hasOwnProperty.call(counts,a.type))counts[a.type]++;});
+        status.textContent = 'خطة جاهزة للمراجعة: إضافة '+counts.add+'، تعديل '+counts.update+'، حذف '+counts.delete+' مهمة. سيتم فحص التعارضات مرة أخرى قبل الحفظ.';
+        applyBtn.disabled = false;
+      } else {
+        window.__jadwaliAiPlan = null;
+        status.textContent = 'الخطة المنظمة تحتوي بيانات أو أوقاتًا غير صالحة؛ لم يتغير جدولك. أعد التحليل.';
+      }
     } else {
-      status.textContent = planError || (window.__jadwaliAiPlan ? 'المساعد لم يقترح تغييرات فعلية. لا يوجد شيء لتنفيذه.' : 'لم تصل خطة تنفيذ منظمة وآمنة من المساعد؛ لم يتغير جدولك. أعد الطلب بصيغة واضحة للتعديل المطلوب.');
+      const suggestsChange = /(?:يمكن|اقترح|اقتراح|إضافة مهمة|إضافة:|التغييرات المقترحة)[^\n]{0,100}(?:إضافة|مهمة|تعديل|حذف)|(?:إضافة مهمة|يمكن إضافة|التغييرات المقترحة)/i.test(visibleAnswer);
+      status.textContent = planError || (window.__jadwaliAiPlan
+        ? (suggestsChange
+          ? 'الرد النصي يقترح تغييرًا، لكن خطة التنفيذ المنظمة فارغة. لم يتم تفعيل التنفيذ حتى لا يتغير جدولك دون خطة موثوقة. أعد التحليل.'
+          : 'المساعد لم يقترح تغييرات فعلية. لا يوجد شيء لتنفيذه.')
+        : 'لم تصل خطة تنفيذ منظمة وآمنة من المساعد؛ لم يتغير جدولك. أعد الطلب بصيغة واضحة للتعديل المطلوب.');
     }
   } catch (err) {
     box.innerHTML = '<div class="response-box warn"></div>';
