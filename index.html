@@ -728,7 +728,7 @@ $('day-ai-suggest').addEventListener('click', async () => {
       throw new Error((data && data.error) || 'تعذر الحصول على رد من المساعد.');
     }
     const answer = String(data.answer).replace(/\\n/g, '\n').replace(/\\r/g, '\r');
-    const planMatch = answer.match(/PLAN_JSON\s*(?:```json\s*)?(\{[\s\S]*?\})(?:\s*```)?/i);
+    const planMatch = answer.match(/PLAN_JSON\s*(?:```json\s*)?(\{[\s\S]*\})(?:\s*```)?\s*$/i);
     let plan = null, planError = '';
     if (planMatch) { try { plan = JSON.parse(planMatch[1]); } catch (_) { planError = 'صيغة خطة التنفيذ غير صالحة.'; } }
     const visibleAnswer = answer.replace(/PLAN_JSON[\s\S]*$/i, '').trim();
