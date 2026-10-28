@@ -257,6 +257,7 @@ details[open].panel > summary::after { content: "▴"; }
       <div id="conflicts"></div>
       <div id="override"></div>
       <div class="timeline" id="timeline"></div>
+      <div id="dayNotes" class="day-notes" style="margin-top:14px"></div>
     </section>
 
     <aside class="side-stack">
@@ -676,6 +677,7 @@ function render() {
   }).join('') + extraRowsHTML(d.selectedKey);
   renderDayChecklist();
 
+  renderDayNotes();
   $('alts').innerHTML = ALTERNATIVES.map(([t, x]) => `<div class="alt"><strong>${esc(t)}</strong>${esc(x)}</div>`).join('');
   $('scenarioGrid').innerHTML = SCENARIOS.map(s => `<button type="button" data-scenario="${esc(s.id)}">${esc(s.title)}</button>`).join('');
 }
@@ -689,7 +691,67 @@ function renderDayChecklist(){
  const done=items.filter((it,i)=>!!state.done[d.selectedKey+'-'+i]).length;
  box.innerHTML='<p class="empty">'+done+' من '+items.length+' مهام مكتملة</p>'+items.map((it,i)=>'<div class="kv"><span>'+esc(it.title)+'</span><b>'+(state.done[d.selectedKey+'-'+i]?'✅ تم':'⏳ لم يتم')+'</b></div>').join('');
 }
-function saveDayItems(items){const d=derived();return commit(st=>({...st,dayPlans:{...(st.dayPlans||{}),[d.selectedKey]:items}}));}
+function saveDayItems(items){const d=derived();const ok=commit(st=>({...st,dayPlans:{...(st.dayPlans||{}),[d.selectedKey]:items}}));if(ok)pushDayPlan(d.selectedKey,items);return ok;}
+// ---------- Cloud copy of each day (table day_plans) ----------
+// Local storage stays the source on this device; the cloud copy lets other devices see the same day.
+function cloudDayClient(){return window.sharedScheduleClient||null;}
+async function cloudUserId(){const c=cloudDayClient();if(!c)return null;try{const {data}=await c.auth.getSession();return data.session?.user?.id||null;}catch(_){return null;}}
+async function pushDayPlan(key,items){
+  const c=cloudDayClient();if(!c)return;
+  const uid=await cloudUserId();if(!uid)return;
+  const {error}=await c.from('day_plans').upsert({user_id:uid,plan_date:key,items,updated_at:new Date().toISOString()},{onConflict:'user_id,plan_date'});
+  if(error)toast('تعذر حفظ هذا اليوم في السحابة، وبقي محفوظًا على هذا الجهاز');
+}
+async function pullDayPlans(){
+  const c=cloudDayClient();if(!c)return;
+  const uid=await cloudUserId();if(!uid)return;
+  const from=new Date();from.setDate(from.getDate()-30);const to=new Date();to.setDate(to.getDate()+60);
+  const {data,error}=await c.from('day_plans').select('plan_date,items').eq('user_id',uid).gte('plan_date',dateKey(from)).lte('plan_date',dateKey(to));
+  if(error||!data)return;
+  const plans={...(state.dayPlans||{})};
+  for(const row of data){if(Array.isArray(row.items)&&row.items.length)plans[row.plan_date]=row.items;}
+  state={...state,dayPlans:plans};
+  saveLocal();render();
+}
+function startCloudDayPlans(){
+  let tries=0;
+  const timer=setInterval(()=>{
+    const c=cloudDayClient();tries++;
+    if(c||tries>60){clearInterval(timer);if(!c)return;
+      pullDayPlans();
+      c.auth.onAuthStateChange(()=>{pullDayPlans();});}
+  },1000);
+}
+// ---------- Priority and progress notes for each task of the day ----------
+const PRIORITY_LABELS={high:'عالية',medium:'متوسطة',low:'منخفضة'};
+function renderDayNotes(){
+  const box=$('dayNotes');if(!box)return;
+  const items=currentDayItems();
+  box.innerHTML='<strong>الأولوية وملاحظات التقدم</strong>'+items.map((it,i)=>{
+    const p=it.priority||'medium';const last=(it.progress||[]).slice(-1)[0];
+    return '<div class="day-note-row" style="margin:8px 0;padding:10px;border-radius:12px;background:var(--surface,#f5f1e8)">'
+      +'<div><b>'+esc(it.title)+'</b> <small>'+esc(it.time||'')+'</small></div>'
+      +'<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap"><select data-prio="'+i+'" aria-label="الأولوية">'
+      +Object.keys(PRIORITY_LABELS).map(k=>'<option value="'+k+'"'+(k===p?' selected':'')+'>'+PRIORITY_LABELS[k]+'</option>').join('')
+      +'</select><input data-note-input="'+i+'" maxlength="200" placeholder="ملاحظة تقدم" style="flex:1;min-width:120px;padding:6px;border-radius:8px;border:1px solid #d9d2c3"><button type="button" data-note-add="'+i+'">حفظ</button></div>'
+      +(last?'<small>آخر ملاحظة: '+esc(last.text)+'</small>':'')
+      +'</div>';
+  }).join('');
+}
+function updateDayItem(index,patch){
+  const items=currentDayItems().map(x=>({...x}));
+  if(!items[index])return false;
+  items[index]={...items[index],...patch};
+  return saveDayItems(items);
+}
+startCloudDayPlans();
+document.addEventListener('change',e=>{const sel=e.target.closest&&e.target.closest('[data-prio]');if(!sel)return;updateDayItem(Number(sel.dataset.prio),{priority:sel.value});});
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-note-add]');if(!b)return;
+  const i=Number(b.dataset.noteAdd);const input=document.querySelector('[data-note-input="'+i+'"]');const text=(input&&input.value||'').trim();
+  if(!text)return toast('اكتب الملاحظة أولًا');
+  const items=currentDayItems();const old=items[i];if(!old)return;
+  if(updateDayItem(i,{progress:[...(old.progress||[]),{at:new Date().toISOString(),text}]})){toast('حُفظت ملاحظة التقدم');}
+});
 $('day-item-add').addEventListener('click',()=>{const title=$('day-item-title').value.trim(),time=$('day-item-time').value.trim(),detail=$('day-item-detail').value.trim(),type=$('day-item-type').value;if(!title||!time)return toast('اكتب اسم المهمة والوقت');const items=[...currentDayItems(),{time,title,type,detail,dur:undefined}];saveDayItems(items);$('day-item-title').value='';$('day-item-time').value='';$('day-item-detail').value='';toast('أُضيفت المهمة لهذا اليوم فقط');});
 $('day-ai-suggest').addEventListener('click', async () => {
   const problem = $('day-ai-problem').value.trim();
@@ -717,7 +779,7 @@ $('day-ai-suggest').addEventListener('click', async () => {
           date: d.selectedKey,
           items: items.map((it, i) => ({
             index: i, time: it.time, title: it.title, type: it.type,
-            detail: it.detail || '', dur: Number.isFinite(Number(it.dur)) ? Number(it.dur) : null
+            detail: it.detail || '', dur: Number.isFinite(Number(it.dur)) ? Number(it.dur) : null, priority: it.priority || 'medium', last_progress: ((it.progress||[]).slice(-1)[0]||{}).text || ''
           }))
         }
       }),
