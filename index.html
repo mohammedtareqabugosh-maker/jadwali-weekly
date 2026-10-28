@@ -728,10 +728,10 @@ $('day-ai-suggest').addEventListener('click', async () => {
       throw new Error((data && data.error) || 'تعذر الحصول على رد من المساعد.');
     }
     const answer = String(data.answer).replace(/\\n/g, '\n').replace(/\\r/g, '\r');
-    const planMatch = answer.match(/PLAN_JSON\\s*(?:```json\\s*)?(\\{[\\s\\S]*?\\})(?:\\s*```)?/i);
+    const planMatch = answer.match(/PLAN_JSON\s*(?:```json\s*)?(\{[\s\S]*?\})(?:\s*```)?/i);
     let plan = null, planError = '';
     if (planMatch) { try { plan = JSON.parse(planMatch[1]); } catch (_) { planError = 'صيغة خطة التنفيذ غير صالحة.'; } }
-    const visibleAnswer = answer.replace(/PLAN_JSON[\\s\\S]*$/i, '').trim();
+    const visibleAnswer = answer.replace(/PLAN_JSON[\s\S]*$/i, '').trim();
     window.__jadwaliAiPlan = plan && plan.version === 1 && plan.date === d.selectedKey && Array.isArray(plan.actions) ? {plan, date:d.selectedKey, items:items.map(x=>({...x}))} : null;
     box.innerHTML = '<div class="response-box"><strong>اقتراح ذكي لليوم المحدد</strong><p class="ai-answer" style="white-space:pre-wrap"></p><div class="ai-plan-status empty"></div><button type="button" class="primary-button" id="ai-add-proposal" style="margin-top:10px" disabled>اعتماد الخطة وتنفيذها</button><p class="empty">لن يتغير الجدول إلا بعد موافقتك. ستُطبّق الإضافات والتعديلات والحذف المذكورة صراحةً فقط.</p></div>';
     box.querySelector('.ai-answer').textContent = visibleAnswer || answer;
