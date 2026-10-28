@@ -1959,7 +1959,7 @@ const labels={home:'جدولي الأسبوعي',schedule:'الجدول المش
 function showPage(page){if(!labels[page])page='home';document.body.dataset.appPage=page;nav.querySelectorAll('[data-qtarget]').forEach(b=>b.classList.toggle('active',pages[b.dataset.qtarget]===page));const title=document.querySelector('.brand h1');if(title)title.textContent=labels[page];window.scrollTo({top:0,behavior:'instant'});try{history.replaceState(null,'','#'+page)}catch(e){}}
 nav.addEventListener('click',e=>{const b=e.target.closest('[data-qtarget]');if(b)showPage(pages[b.dataset.qtarget]||'home')});
 window.addEventListener('hashchange',()=>showPage(location.hash.slice(1)));
-showPage(labels[location.hash.slice(1)]?location.hash.slice(1):'home');
+showPage('home');
 })();
 </script>
 
