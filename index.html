@@ -710,7 +710,7 @@ $('day-ai-suggest').addEventListener('click', async () => {
         problem,
         context: {
           app: 'جدولي الأسبوعي',
-          task: 'حلّل الطلب لأي يوم ومهمة وفق البيانات المرسلة. افحص الأوقات والمدد والتداخلات حسابياً. لا تفترض أن المهمة ذات المدة المجهولة وقت فراغ، ولا تخترع مواعيد أو مدد. اعرض الاقتراح فقط ولا تعدّل الجدول أو تحفظ تغييراً تلقائياً. إذا كانت البيانات غير كافية فاذكر ما ينقص بوضوح.',
+          task: 'حلّل الطلب والجدول، ثم أجب بالعربية باقتراح واضح. في نهاية الإجابة أضف كتلة PLAN_JSON تحتوي JSON صالحاً فقط بالشكل {"version":1,"date":"قيمة date المرسلة كما هي","actions":[...]}. كل action أحد: {"type":"add","title":"...","start":"6:00 PM","end":"7:00 PM","taskType":"study|work|uni|online|food|rest|sleep","detail":"..."} أو {"type":"update","index":0,"title":"...","start":"...","end":"...","taskType":"...","detail":"..."} أو {"type":"delete","index":0,"reason":"..."}. index هو index الأصلي للمهمة المرسلة، وليس فهرساً بعد التعديل. أرسل actions فارغة إذا كان الطلب استشارة فقط أو المعلومات غير كافية. لا تخترع مواعيد أو مدد؛ أي إضافة/تعديل يجب أن تكون لها بداية ونهاية واضحتان. لا تنفّذ أي تغيير بنفسك؛ التطبيق سيعرض الخطة للموافقة قبل الحفظ. أخرج الكتلة بهذا الشكل الحرفي: PLAN_JSON ثم JSON في سطر/كتلة مستقلة.',
           selectedDay: DAYS[selected].name,
           date: d.selectedKey,
           items: items.map((it, i) => ({
@@ -728,8 +728,23 @@ $('day-ai-suggest').addEventListener('click', async () => {
       throw new Error((data && data.error) || 'تعذر الحصول على رد من المساعد.');
     }
     const answer = String(data.answer).replace(/\\n/g, '\n').replace(/\\r/g, '\r');
-    box.innerHTML = '<div class="response-box"><strong>اقتراح ذكي لليوم المحدد</strong><p class="ai-answer" style="white-space:pre-wrap"></p><p class="empty">هذا اقتراح فقط؛ لم يتغير جدولك ولم تُحذف أي مهمة.</p><button type="button" class="primary-button" id="ai-add-proposal" style="margin-top:10px">➕ إضافة الاقتراح إلى الجدول</button><p class="empty">قبل الإضافة ستدخل تفاصيل المهمة ووقتها للتأكد من صحتها وعدم تعارضها.</p></div>';
-    box.querySelector('.ai-answer').textContent = answer;
+    const planMatch = answer.match(/PLAN_JSON\\s*(?:```json\\s*)?(\\{[\\s\\S]*?\\})(?:\\s*```)?/i);
+    let plan = null, planError = '';
+    if (planMatch) { try { plan = JSON.parse(planMatch[1]); } catch (_) { planError = 'صيغة خطة التنفيذ غير صالحة.'; } }
+    const visibleAnswer = answer.replace(/PLAN_JSON[\\s\\S]*$/i, '').trim();
+    window.__jadwaliAiPlan = plan && plan.version === 1 && plan.date === d.selectedKey && Array.isArray(plan.actions) ? {plan, date:d.selectedKey, items:items.map(x=>({...x}))} : null;
+    box.innerHTML = '<div class="response-box"><strong>اقتراح ذكي لليوم المحدد</strong><p class="ai-answer" style="white-space:pre-wrap"></p><div class="ai-plan-status empty"></div><button type="button" class="primary-button" id="ai-add-proposal" style="margin-top:10px" disabled>اعتماد الخطة وتنفيذها</button><p class="empty">لن يتغير الجدول إلا بعد موافقتك. ستُطبّق الإضافات والتعديلات والحذف المذكورة صراحةً فقط.</p></div>';
+    box.querySelector('.ai-answer').textContent = visibleAnswer || answer;
+    const status = box.querySelector('.ai-plan-status');
+    const applyBtn = box.querySelector('#ai-add-proposal');
+    if (window.__jadwaliAiPlan && plan.actions.length) {
+      const counts = {add:0,update:0,delete:0};
+      plan.actions.forEach(a=>{if(a&&Object.prototype.hasOwnProperty.call(counts,a.type))counts[a.type]++;});
+      status.textContent = 'خطة جاهزة للمراجعة: إضافة '+counts.add+'، تعديل '+counts.update+'، حذف '+counts.delete+' مهمة.';
+      applyBtn.disabled = false;
+    } else {
+      status.textContent = planError || (window.__jadwaliAiPlan ? 'المساعد لم يقترح تغييرات فعلية. لا يوجد شيء لتنفيذه.' : 'لم تصل خطة تنفيذ منظمة وآمنة من المساعد؛ لم يتغير جدولك. أعد الطلب بصيغة واضحة للتعديل المطلوب.');
+    }
   } catch (err) {
     box.innerHTML = '<div class="response-box warn"></div>';
     box.querySelector('.response-box').textContent = err && err.name === 'AbortError'
@@ -744,34 +759,46 @@ $('day-ai-suggest').addEventListener('click', async () => {
 document.addEventListener('click',e=>{
  const addProposal=e.target.closest('#ai-add-proposal');
  if(addProposal){
-   const title=prompt('اسم المهمة التي تريد إضافتها');
-   if(title===null)return;
-   if(!title.trim())return toast('اسم المهمة مطلوب');
-   const startRaw=prompt('وقت البداية بصيغة مثل 6:00 PM');
-   if(startRaw===null)return;
-   const endRaw=prompt('وقت النهاية بصيغة مثل 7:00 PM');
-   if(endRaw===null)return;
-   const s=eventStart(startRaw.trim()),eMin=eventStart(endRaw.trim());
-   if(s<0||eMin<0||eMin<=s||eMin-s>1440)return toast('الوقت غير صالح؛ تحقق من البداية والنهاية');
-   const typeRaw=prompt('نوع المهمة: study أو work أو uni أو online أو food أو rest أو sleep','study');
-   if(typeRaw===null)return;
+   const saved=window.__jadwaliAiPlan;
+   if(!saved||!saved.plan||!Array.isArray(saved.plan.actions))return toast('لا توجد خطة صالحة للتنفيذ');
+   const now=derived();
+   if(now.selectedKey!==saved.date)return toast('تغيّر اليوم المحدد. أعد تحليل المشكلة قبل التنفيذ');
+   const original=currentDayItems();
+   if(JSON.stringify(original)!==JSON.stringify(saved.items))return toast('تغيّر الجدول منذ التحليل. أعد التحليل حتى لا تُطبّق الخطة على بيانات قديمة');
+   const actions=saved.plan.actions;
+   if(!actions.length)return toast('لا توجد تغييرات لتنفيذها');
    const allowed=['study','work','uni','online','food','rest','sleep'];
-   const type=typeRaw.trim().toLowerCase();
-   if(!allowed.includes(type))return toast('نوع المهمة غير معروف');
-   const detail=prompt('تفاصيل إضافية (اختياري)','')||'';
-   const items=currentDayItems();
-   const start=s<360?s+1440:s, end=eMin<360?eMin+1440:eMin;
-   for(let i=0;i<items.length;i++){
-     const r=rangeOf(items,i); if(!r)continue;
-     if(r.explicit && start<r.e && r.s<end)return toast('لم تتم الإضافة: يوجد تعارض مع «'+r.it.title+'»');
-     if(!r.explicit && r.s>=0 && r.s<end)return toast('لم تتم الإضافة: توجد مهمة بمدة غير معروفة («'+r.it.title+'»)، لذلك لا يمكن تأكيد خلو هذه الفترة من التعارض');
+   const updates=new Map(), deletes=new Set(), adds=[];
+   for(const a of actions){
+     if(!a||!['add','update','delete'].includes(a.type))return toast('الخطة تحتوي إجراءً غير معروف؛ لم يتغير الجدول');
+     if(a.type==='delete'||a.type==='update'){
+       if(!Number.isInteger(a.index)||a.index<0||a.index>=original.length)return toast('الخطة تشير إلى مهمة غير موجودة؛ لم يتغير الجدول');
+       if(a.type==='delete'){if(updates.has(a.index)||deletes.has(a.index))return toast('الخطة تكرر تعديل المهمة نفسها؛ لم يتغير الجدول');deletes.add(a.index);continue;}
+       if(deletes.has(a.index)||updates.has(a.index))return toast('الخطة تكرر تعديل المهمة نفسها؛ لم يتغير الجدول');
+     }
+     if(a.type==='add'||a.type==='update'){
+       const title=String(a.title||'').trim(), type=String(a.taskType||'').trim().toLowerCase();
+       const st=eventStart(String(a.start||'').trim()), en=eventStart(String(a.end||'').trim());
+       if(!title||st<0||en<0||en<=st||en-st>1440||!allowed.includes(type))return toast('الخطة فيها عنوان أو وقت أو نوع مهمة غير صالح؛ لم يتغير الجدول');
+       const start=st<360?st+1440:st, end=en<360?en+1440:en;
+       const task={time:fmtTime(st)+' – '+fmtTime(en),title,type,detail:String(a.detail||'').trim(),dur:en-st};
+       if(a.type==='add')adds.push({task,start,end}); else updates.set(a.index,{task,start,end});
+     }
    }
-   const task={time:fmtTime(s),title:title.trim(),type,detail:detail.trim(),dur:eMin-s};
-   if(!confirm('إضافة «'+task.title+'» يوم '+DAYS[selected].name+' من '+fmtTime(s)+' إلى '+fmtTime(eMin)+'؟'))return;
-   const ok=saveDayItems([...items,task]);
+   let proposed=original.filter((_,i)=>!deletes.has(i)).map((it,i)=>({...it}));
+   // Preserve original-index targeting while applying edits/deletes.
+   proposed=[];
+   for(let i=0;i<original.length;i++){if(deletes.has(i))continue;proposed.push(updates.has(i)?updates.get(i).task:{...original[i]});}
+   adds.forEach(x=>proposed.push(x.task));
+   const check=analyzeDay(proposed);
+   if(check.conflicts.length)return toast('لم تُنفّذ الخطة لوجود تعارض: '+check.conflicts[0]);
+   const summary=actions.map(a=>a.type==='add'?'إضافة: '+a.title:a.type==='update'?'تعديل: '+original[a.index].title+' ← '+(a.title||original[a.index].title):'حذف: '+original[a.index].title).join('\n');
+   if(!confirm('هل تعتمد تنفيذ هذه الخطة على يوم '+DAYS[selected].name+'؟\n\n'+summary+'\n\nلن تتغير المهام الأخرى.'))return;
+   const ok=saveDayItems(proposed);
    if(!ok)return;
-   $('day-ai-result').innerHTML='<div class="response-box">تمت إضافة المهمة إلى جدول اليوم المحدد.</div>';
-   toast('تمت إضافة المهمة إلى الجدول');
+   window.__jadwaliAiPlan=null;
+   $('day-ai-result').innerHTML='<div class="response-box">تم تنفيذ الخطة المعتمدة وحفظ التغييرات لليوم المحدد.</div>';
+   toast('تم تنفيذ الخطة وحفظها');
    return;
  }
  const mainDel=e.target.closest('[data-main-delete]');if(mainDel){const i=Number(mainDel.dataset.mainDelete),items=currentDayItems().slice();if(!Number.isInteger(i)||i<0||i>=items.length)return;if(!confirm('متأكد من حذف هذه المهمة من اليوم المحدد فقط؟'))return;items.splice(i,1);saveDayItems(items);toast('تم حذف المهمة من هذا اليوم فقط');return;}const mainEdit=e.target.closest('[data-main-edit]');if(mainEdit){const i=Number(mainEdit.dataset.mainEdit),items=currentDayItems().slice();if(!Number.isInteger(i)||i<0||i>=items.length)return;const it=items[i],title=prompt('اسم المهمة',it.title);if(title===null)return;if(!title.trim())return toast('اسم المهمة لا يمكن أن يكون فارغاً');const time=prompt('الوقت',it.time);if(time===null)return;if(!time.trim())return toast('الوقت لا يمكن أن يكون فارغاً');const detail=prompt('التفاصيل (اختياري)',it.detail||'');if(detail===null)return;items[i]={...it,title:title.trim(),time:time.trim(),detail:detail.trim()};saveDayItems(items);toast('تم تعديل المهمة لهذا اليوم فقط');return;}const del=e.target.closest('[data-day-remove]');if(del){const i=Number(del.dataset.dayRemove),items=currentDayItems().slice();items.splice(i,1);saveDayItems(items);$('day-ai-result').innerHTML='';toast('تم حذف المهمة من هذا اليوم فقط');return;}const edit=e.target.closest('[data-day-time]');if(edit){const i=Number(edit.dataset.dayTime),v=$('day-edit-time-'+i).value.trim();if(!v)return toast('أدخل الوقت الجديد');const items=currentDayItems().slice();items[i]={...items[i],time:v};saveDayItems(items);toast('تم تعديل وقت المهمة لهذا اليوم فقط');}});
