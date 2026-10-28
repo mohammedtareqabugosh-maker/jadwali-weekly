@@ -687,7 +687,7 @@ function renderDayChecklist(){
  const done=items.filter((it,i)=>!!state.done[d.selectedKey+'-'+i]).length;
  box.innerHTML='<p class="empty">'+done+' من '+items.length+' مهام مكتملة</p>'+items.map((it,i)=>'<div class="kv"><span>'+esc(it.title)+'</span><b>'+(state.done[d.selectedKey+'-'+i]?'✅ تم':'⏳ لم يتم')+'</b></div>').join('');
 }
-function saveDayItems(items){const d=derived();commit(st=>({...st,dayPlans:{...(st.dayPlans||{}),[d.selectedKey]:items}}));}
+function saveDayItems(items){const d=derived();return commit(st=>({...st,dayPlans:{...(st.dayPlans||{}),[d.selectedKey]:items}}));}
 $('day-item-add').addEventListener('click',()=>{const title=$('day-item-title').value.trim(),time=$('day-item-time').value.trim(),detail=$('day-item-detail').value.trim(),type=$('day-item-type').value;if(!title||!time)return toast('اكتب اسم المهمة والوقت');const items=[...currentDayItems(),{time,title,type,detail,dur:undefined}];saveDayItems(items);$('day-item-title').value='';$('day-item-time').value='';$('day-item-detail').value='';toast('أُضيفت المهمة لهذا اليوم فقط');});
 $('day-ai-suggest').addEventListener('click', async () => {
   const problem = $('day-ai-problem').value.trim();
@@ -764,12 +764,12 @@ document.addEventListener('click',e=>{
    for(let i=0;i<items.length;i++){
      const r=rangeOf(items,i); if(!r)continue;
      if(r.explicit && start<r.e && r.s<end)return toast('لم تتم الإضافة: يوجد تعارض مع «'+r.it.title+'»');
-     if(!r.explicit && r.s>=0 && r.s<end && r.s>=start)return toast('لم تتم الإضافة: توجد مهمة بمدة غير معروفة تبدأ خلال الوقت المقترح');
+     if(!r.explicit && r.s>=0 && r.s<end)return toast('لم تتم الإضافة: توجد مهمة بمدة غير معروفة («'+r.it.title+'»)، لذلك لا يمكن تأكيد خلو هذه الفترة من التعارض');
    }
    const task={time:fmtTime(s),title:title.trim(),type,detail:detail.trim(),dur:eMin-s};
    if(!confirm('إضافة «'+task.title+'» يوم '+DAYS[selected].name+' من '+fmtTime(s)+' إلى '+fmtTime(eMin)+'؟'))return;
    const ok=saveDayItems([...items,task]);
-   if(ok===false)return;
+   if(!ok)return;
    $('day-ai-result').innerHTML='<div class="response-box">تمت إضافة المهمة إلى جدول اليوم المحدد.</div>';
    toast('تمت إضافة المهمة إلى الجدول');
    return;
