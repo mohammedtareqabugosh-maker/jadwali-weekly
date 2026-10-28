@@ -1671,70 +1671,80 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
 })();
 </script>
 
+
 <style>
-#custom-weekly{margin:24px 12px;padding:16px;border:1px solid var(--line,#ddd);border-radius:18px;background:var(--panel,#fff);color:var(--text,inherit)}
-#custom-weekly h2{margin:0 0 8px;font-size:1.15rem}
-#custom-weekly .cw-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:9px;margin:14px 0}
-#custom-weekly input,#custom-weekly textarea{box-sizing:border-box;width:100%;min-width:0;padding:10px;border:1px solid #bbb;border-radius:10px;background:transparent;color:inherit;font:inherit}
-#custom-weekly button{border:0;border-radius:10px;padding:10px 13px;font:inherit;cursor:pointer}
-#custom-weekly .cw-save{background:#b8862b;color:white}
-#custom-weekly .cw-day{padding:12px 0;border-top:1px solid #ddd}
-#custom-weekly .cw-entry{display:flex;align-items:flex-start;gap:8px;justify-content:space-between;padding:8px 0}
-#custom-weekly .cw-time{font-weight:700;white-space:nowrap}
-#custom-weekly .cw-delete{background:#f3e5e5;color:#8b2222;padding:5px 8px}
-#custom-weekly .cw-muted{opacity:.7;font-size:.9em}
+.shared-schedule{direction:rtl;margin:18px 0;padding:18px;border:1px solid var(--border,#e4e7df);border-radius:24px;background:linear-gradient(145deg,rgba(255,255,255,.96),rgba(246,248,242,.96));box-shadow:0 12px 32px rgba(24,35,24,.07);color:var(--text,#202a22)}
+.shared-schedule *{box-sizing:border-box}.shared-schedule .ss-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:14px}
+.shared-schedule .ss-eyebrow{font-size:.75rem;letter-spacing:.04em;color:#9a7631;font-weight:800}.shared-schedule h2{font-size:1.25rem;margin:4px 0}.shared-schedule .ss-sub{font-size:.88rem;color:#778076;margin:0}
+.shared-schedule .ss-week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin:16px 0}
+.shared-schedule .ss-daybtn{border:1px solid #e0e5dc;border-radius:13px;background:#fff;padding:9px 2px;color:#495348;font:inherit;font-size:.77rem;min-width:0}
+.shared-schedule .ss-daybtn strong{display:block;font-size:1rem;margin-top:4px}.shared-schedule .ss-daybtn.active{background:#263b2d;color:#fff;border-color:#263b2d;box-shadow:0 5px 12px #263b2d22}
+.shared-schedule .ss-summary{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.shared-schedule .ss-chip{background:#eef2e9;color:#4c5e4d;padding:7px 10px;border-radius:999px;font-size:.8rem}
+.shared-schedule .ss-item{display:flex;gap:11px;align-items:flex-start;padding:13px;margin:9px 0;border:1px solid #e7ebe3;border-radius:16px;background:#fff}
+.shared-schedule .ss-time{min-width:64px;color:#8b6a2c;font-weight:800;font-size:.9rem;padding-top:2px}.shared-schedule .ss-itembody{flex:1;min-width:0}.shared-schedule .ss-title{font-weight:800;color:#26372b}.shared-schedule .ss-details{font-size:.82rem;color:#788176;margin-top:5px;line-height:1.55}.shared-schedule .ss-kind{font-size:.72rem;display:inline-block;margin-top:7px;padding:4px 8px;border-radius:999px;background:#f4f0e5;color:#80652e}
+.shared-schedule .ss-del{border:0;border-radius:9px;background:#f8ece9;color:#a14e42;padding:7px 9px;font:inherit;font-size:.8rem}
+.shared-schedule .ss-addbox{border-top:1px solid #e7ebe3;margin-top:16px;padding-top:15px}.shared-schedule .ss-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.shared-schedule input,.shared-schedule select,.shared-schedule textarea{width:100%;min-width:0;padding:11px;border:1px solid #dce2d7;border-radius:12px;background:#fff;color:#253329;font:inherit;font-size:.9rem}.shared-schedule .ss-full{grid-column:1/-1}.shared-schedule .ss-save{border:0;border-radius:12px;background:#b58a3a;color:#fff;font:inherit;font-weight:800;padding:12px}
+.shared-schedule .ss-status{font-size:.82rem;color:#738073;min-height:1.2em;margin:10px 0}.shared-schedule .ss-auth{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.shared-schedule .ss-auth button{border:0;border-radius:11px;background:#263b2d;color:white;padding:11px;font:inherit}.shared-schedule .ss-empty{padding:18px;text-align:center;border:1px dashed #dce2d7;border-radius:15px;color:#7d877a}
+@media(max-width:390px){.shared-schedule{padding:13px}.shared-schedule .ss-daybtn{font-size:.68rem}.shared-schedule .ss-daybtn strong{font-size:.9rem}.shared-schedule .ss-item{padding:10px;gap:7px}.shared-schedule .ss-time{min-width:53px;font-size:.8rem}}
+@media(prefers-color-scheme:dark){.shared-schedule{background:#1b241d;color:#edf2e8;border-color:#3c493d}.shared-schedule .ss-daybtn,.shared-schedule .ss-item,.shared-schedule input,.shared-schedule select,.shared-schedule textarea{background:#242f26;color:#edf2e8;border-color:#435045}.shared-schedule .ss-title{color:#edf2e8}.shared-schedule .ss-details{color:#b7c2b4}.shared-schedule .ss-chip{background:#303e31;color:#dce7d7}}
 </style>
-<section id="custom-weekly" aria-labelledby="cw-title">
-  <h2 id="cw-title">🗓️ جدول المهام الأسبوعي</h2>
-  <p class="cw-muted">أضف أي مهمة أو موعد، وسيظهر في يومه ووقته مع حفظه على هذا الجهاز.</p>
-  <form id="cw-form" class="cw-form">
-    <input id="cw-title-input" required maxlength="120" placeholder="اسم المهمة أو الموعد" aria-label="اسم المهمة">
-    <input id="cw-date" required type="date" aria-label="اليوم">
-    <input id="cw-time" required type="time" aria-label="الوقت">
-    <input id="cw-detail" maxlength="240" placeholder="تفاصيل (اختياري)" aria-label="تفاصيل">
-    <button class="cw-save" type="submit">إضافة للجدول</button>
-  </form>
-  <div id="cw-days"></div>
-</section>
+<div class="shared-schedule" id="shared-schedule">
+ <div class="ss-head"><div><div class="ss-eyebrow">YOUR WEEK · جدولك الموحد</div><h2>جدولك الأسبوعي</h2><p class="ss-sub">وجباتك ومهامك في مكان واحد، ومتزامنة بين التطبيقين.</p></div><span aria-hidden="true" style="font-size:1.7rem">✦</span></div>
+ <div id="ss-auth-area"></div>
+ <div id="ss-main" hidden>
+  <div class="ss-week" id="ss-week"></div>
+  <div class="ss-summary" id="ss-summary"></div>
+  <div id="ss-items"></div>
+  <div class="ss-addbox">
+   <h3 style="margin:0 0 10px;font-size:1rem">إضافة إلى الجدول</h3>
+   <form class="ss-form" id="ss-form">
+    <select id="ss-kind" aria-label="نوع العنصر"><option value="task">مهمة</option><option value="appointment">موعد</option><option value="meal">وجبة</option></select>
+    <input id="ss-date" type="date" required aria-label="التاريخ">
+    <input id="ss-title" class="ss-full" maxlength="140" required placeholder="اسم المهمة أو الوجبة">
+    <input id="ss-time" type="time" required aria-label="الوقت">
+    <input id="ss-calories" type="number" min="0" step="1" placeholder="السعرات (للوجبة)">
+    <input id="ss-protein" type="number" min="0" step="0.1" placeholder="البروتين غ (للوجبة)">
+    <textarea id="ss-details" class="ss-full" maxlength="400" rows="2" placeholder="تفاصيل أو مكونات الوجبة (اختياري)"></textarea>
+    <button class="ss-save ss-full" type="submit">حفظ في الجدول الموحد</button>
+   </form>
+  </div>
+  <p class="ss-status" id="ss-status" role="status"></p>
+ </div>
+</div>
 <script>
-(()=> {
-  'use strict';
-  const KEY='weekly-planner-custom-entries-v1';
-  const $=id=>document.getElementById(id);
-  const dayNames=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
-  const pad=n=>String(n).padStart(2,'0');
-  const localDate=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
-  const safe=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  let entries=[];
-  try{const x=JSON.parse(localStorage.getItem(KEY)||'[]');if(Array.isArray(x))entries=x.filter(e=>e&&e.id&&e.date&&e.time&&e.title)}catch(_){}
-  function save(){try{localStorage.setItem(KEY,JSON.stringify(entries));return true}catch(_){alert('تعذّر الحفظ على هذا الجهاز. تأكد من توفر مساحة في المتصفح.');return false}}
-  function render(){
-    const now=new Date(), start=new Date(now);start.setDate(now.getDate()-now.getDay());start.setHours(0,0,0,0);
-    let html='';
-    for(let i=0;i<7;i++){
-      const d=new Date(start);d.setDate(start.getDate()+i);const key=localDate(d);
-      const list=entries.filter(e=>e.date===key).sort((a,b)=>a.time.localeCompare(b.time)||a.id.localeCompare(b.id));
-      html+='<div class="cw-day"><strong>'+dayNames[i]+' — '+safe(new Intl.DateTimeFormat('ar-JO',{day:'numeric',month:'short'}).format(d))+'</strong>';
-      if(!list.length) html+='<p class="cw-muted">لا توجد مهام مضافة</p>';
-      for(const e of list)html+='<div class="cw-entry"><span class="cw-time">'+safe(e.time)+'</span><div style="flex:1;min-width:0"><b>'+safe(e.title)+'</b>'+(e.detail?'<div class="cw-muted">'+safe(e.detail)+'</div>':'')+'</div><button type="button" class="cw-delete" data-cw-delete="'+safe(e.id)+'" aria-label="حذف '+safe(e.title)+'">حذف</button></div>';
-      html+='</div>';
-    }
-    $('cw-days').innerHTML=html;
-  }
-  $('cw-date').value=localDate(new Date());
-  $('cw-form').addEventListener('submit',e=>{
-    e.preventDefault();
-    const entry={id:Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,8),title:$('cw-title-input').value.trim(),date:$('cw-date').value,time:$('cw-time').value,detail:$('cw-detail').value.trim()};
-    if(!entry.title||!entry.date||!entry.time)return;
-    entries.push(entry);if(save()){ $('cw-title-input').value='';$('cw-detail').value='';render(); }
-  });
-  $('cw-days').addEventListener('click',e=>{
-    const b=e.target.closest('[data-cw-delete]');if(!b)return;
-    entries=entries.filter(x=>x.id!==b.dataset.cwDelete);if(save())render();
-  });
-  render();
+(()=>{'use strict';
+const URL='https://chcapjgjvvwpljgdffpg.supabase.co',KEY='sb_publishable_9dzltRprFtyXPyg0Iul3aQ_4SU1VTG9',TABLE='shared_schedule';
+const $=id=>document.getElementById(id),root=$('shared-schedule');if(!root)return;
+const names=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'],pad=n=>String(n).padStart(2,'0');
+const key=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const localDate=iso=>{const d=new Date(iso);return isNaN(d)?'':key(d)};
+const parseDate=k=>{const a=k.split('-').map(Number);return new Date(a[0],a[1]-1,a[2],12)};
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const timeText=iso=>{const d=new Date(iso);return isNaN(d)?'':d.toLocaleTimeString('ar-JO',{hour:'2-digit',minute:'2-digit',hour12:true})};
+let client=null,user=null,selected=key(new Date()),rows=[];
+function status(t){const el=$('ss-status');if(el)el.textContent=t}
+function loadLibrary(){return new Promise((resolve,reject)=>{if(window.supabase)return resolve();const sc=document.createElement('script');sc.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';sc.onload=resolve;sc.onerror=reject;document.head.appendChild(sc)})}
+function showAuth(){ $('ss-auth-area').innerHTML='<p class="ss-sub">سجّل الدخول بنفس الحساب في التطبيقين حتى تظهر البيانات نفسها في كليهما.</p><input id="ss-email" type="email" autocomplete="username" placeholder="البريد الإلكتروني"><input id="ss-password" type="password" autocomplete="current-password" placeholder="كلمة المرور" style="margin-top:8px"><div class="ss-auth"><button type="button" id="ss-login">تسجيل الدخول</button><button type="button" id="ss-signup">إنشاء حساب</button></div><p class="ss-status" id="ss-auth-status"></p>';$('ss-login').onclick=async()=>{const {error}=await client.auth.signInWithPassword({email:$('ss-email').value.trim(),password:$('ss-password').value});$('ss-auth-status').textContent=error?error.message:'تم تسجيل الدخول.';await boot()};$('ss-signup').onclick=async()=>{const {data,error}=await client.auth.signUp({email:$('ss-email').value.trim(),password:$('ss-password').value});$('ss-auth-status').textContent=error?error.message:(data.session?'تم إنشاء الحساب.':'تحقق من بريدك الإلكتروني لتأكيد الحساب ثم سجّل الدخول.');if(data.session)await boot()}}
+function draw(){
+ const d=parseDate(selected),sun=new Date(d);sun.setDate(d.getDate()-d.getDay());
+ $('ss-week').innerHTML=Array.from({length:7},(_,i)=>{const x=new Date(sun);x.setDate(sun.getDate()+i);const k=key(x);return '<button type="button" class="ss-daybtn '+(k===selected?'active':'')+'" data-ss-day="'+k+'">'+names[i]+'<strong>'+x.getDate()+'</strong></button>'}).join('');
+ const day=rows.filter(r=>localDate(r.starts_at)===selected).sort((a,b)=>new Date(a.starts_at)-new Date(b.starts_at));
+ const meals=day.filter(x=>x.kind==='meal'),kcal=meals.reduce((a,x)=>a+(Number(x.calories)||0),0),protein=meals.reduce((a,x)=>a+(Number(x.protein)||0),0);
+ $('ss-summary').innerHTML='<span class="ss-chip">'+day.length+' عناصر اليوم</span><span class="ss-chip">🔥 '+Math.round(kcal)+' سعرة</span><span class="ss-chip">💪 '+Math.round(protein*10)/10+' غ بروتين</span>';
+ $('ss-items').innerHTML=day.length?day.map(r=>'<div class="ss-item"><div class="ss-time">'+esc(timeText(r.starts_at))+'</div><div class="ss-itembody"><div class="ss-title">'+(r.kind==='meal'?'🍽️ ':'')+esc(r.title)+'</div>'+(r.details?'<div class="ss-details">'+esc(r.details)+'</div>':'')+(r.kind==='meal'?'<div class="ss-kind">'+Math.round(Number(r.calories)||0)+' سعرة · '+Math.round(Number(r.protein)||0)+'غ بروتين</div>':'<div class="ss-kind">'+(r.kind==='appointment'?'موعد':'مهمة')+'</div>')+'</div><button class="ss-del" data-ss-delete="'+esc(r.id)+'" type="button">حذف</button></div>').join(''):'<div class="ss-empty">ما في عناصر لهذا اليوم. أضف وجبة أو مهمة من النموذج بالأسفل.</div>';
+}
+async function pull(){if(!user)return;status('جارٍ تحميل الجدول المشترك…');const {data,error}=await client.from(TABLE).select('*').eq('user_id',user.id).order('starts_at',{ascending:true});if(error){status('تعذر تحميل الجدول. تأكد من تنفيذ ملف shared_schedule.sql في Supabase: '+error.message);return}rows=data||[];draw();$('ss-main').hidden=false;$('ss-auth-area').innerHTML='<p class="ss-sub">متصل بالحساب: '+esc(user.email||'')+' · مزامنة مباشرة من السحابة</p><button id="ss-refresh" type="button" class="ss-save" style="width:100%;margin-top:8px">تحديث الجدول</button>';$('ss-refresh').onclick=pull;status('الجدول المشترك جاهز.')}
+async function boot(){if(!client)return;const {data,error}=await client.auth.getSession();if(error){status(error.message);return}user=data.session?.user||null;if(!user){$('ss-main').hidden=true;showAuth();return}await pull()}
+$('ss-week').addEventListener('click',e=>{const b=e.target.closest('[data-ss-day]');if(b){selected=b.dataset.ssDay;$('ss-date').value=selected;draw()}});
+$('ss-items').addEventListener('click',async e=>{const b=e.target.closest('[data-ss-delete]');if(!b||!user)return;if(!confirm('حذف هذا العنصر من الجدول الموحد في التطبيقين؟'))return;const {error}=await client.from(TABLE).delete().eq('id',b.dataset.ssDelete).eq('user_id',user.id);if(error){status('تعذر الحذف: '+error.message);return}rows=rows.filter(r=>r.id!==b.dataset.ssDelete);draw();status('تم الحذف من الجدول المشترك.');});
+$('ss-form').addEventListener('submit',async e=>{e.preventDefault();if(!user){status('سجّل الدخول أولاً.');return}const kind=$('ss-kind').value,title=$('ss-title').value.trim(),date=$('ss-date').value,time=$('ss-time').value;if(!title||!date||!time)return;const row={id:(crypto.randomUUID?crypto.randomUUID():'entry-'+Date.now()),user_id:user.id,kind,title,details:$('ss-details').value.trim(),starts_at:new Date(date+'T'+time+':00').toISOString(),meal_type:kind==='meal'?'وجبة':'',calories:kind==='meal'?Number($('ss-calories').value)||0:0,protein:kind==='meal'?Number($('ss-protein').value)||0:0,source_app:location.pathname.includes('my-food-assistant')?'my-food-assistant':'jadwali-weekly',updated_at:new Date().toISOString()};const {error}=await client.from(TABLE).upsert(row);if(error){status('تعذر الحفظ: '+error.message);return}selected=date;rows=rows.filter(r=>r.id!==row.id);rows.push(row);$('ss-title').value='';$('ss-details').value='';$('ss-calories').value='';$('ss-protein').value='';draw();status('تم الحفظ في الجدول الموحد، وسيظهر في التطبيق الآخر عند فتحه أو تحديثه.');});
+async function start(){try{await loadLibrary();client=window.supabase.createClient(URL,KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});window.sharedScheduleClient=client;await boot();client.auth.onAuthStateChange(()=>setTimeout(boot,0));}catch(e){status('تعذر بدء المزامنة: '+(e.message||e))}}
+const dateField=$('ss-date');if(dateField)dateField.value=selected;
+start();
 })();
 </script>
+
+>
 
 </body>
 </html>
