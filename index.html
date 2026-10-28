@@ -352,6 +352,15 @@ details[open].panel > summary::after { content: "▴"; }
   </div>
 </div>
 
+<section id="day-tools" class="panel" style="margin:14px 0;padding:16px">
+ <div class="section-head"><div><h2>🛠️ إدارة جدول هذا اليوم</h2><p>تعديل اليوم المختار فقط، دون تغيير بقية الأسبوع</p></div></div>
+ <div class="row-form"><input class="field" id="day-item-title" placeholder="اسم المهمة أو الوجبة"><input class="field" id="day-item-time" placeholder="الوقت مثل 4:30 PM"></div>
+ <div class="row-form"><input class="field" id="day-item-detail" placeholder="تفاصيل اختيارية"><select class="field" id="day-item-type"><option value="study">مذاكرة</option><option value="food">وجبة</option><option value="work">شغل</option><option value="uni">جامعة</option><option value="rest">راحة</option><option value="online">أونلاين</option></select><button class="primary-button" type="button" id="day-item-add">إضافة لليوم</button></div>
+ <div class="sub" style="margin-top:16px">🤖 اشرح المشكلة ليقترح تعديلًا لهذا اليوم</div>
+ <textarea class="field" id="day-ai-problem" rows="3" placeholder="مثلاً: تأخرت عن الجامعة ساعة، وبدي أنقل المذاكرة لوقت مناسب…"></textarea>
+ <button class="primary-button" type="button" id="day-ai-suggest" style="margin-top:8px">تحليل المشكلة واقتراح تعديل</button><div id="day-ai-result"></div>
+ <div class="sub" style="margin-top:16px">📋 إنجازات اليوم</div><div id="day-checklist"></div>
+</section>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
@@ -515,7 +524,7 @@ const GOALS = {
   fast: { title: 'نزول أسرع: 1700–1850 سعرة', kcal: '1700 – 1850 kcal', prot: '135 – 150 g', note: 'نزول أسرع، لكن الجوع والتعب قد يكونان أكبر.' }
 };
 const DEFAULT_GOAL = 'balanced';
-const EMPTY = () => ({ done:{}, checkins:[], weights:[], incidents:[], achievements:[...DEFAULT_ACHIEVEMENTS], notes:[], overrides:{}, dayMeals:{}, theme:'light', goal: DEFAULT_GOAL });
+const EMPTY = () => ({ done:{}, checkins:[], weights:[], incidents:[], achievements:[...DEFAULT_ACHIEVEMENTS], notes:[], overrides:{}, dayMeals:{}, dayPlans:{}, theme:'light', goal: DEFAULT_GOAL });
 const LOCAL_KEY = 'weekly-planner-v1';      // same key as before, so existing data is kept
 const BACKUP_KEY = 'weekly-planner-v1-backup';
 let state = EMPTY();
@@ -635,7 +644,7 @@ function render() {
       <strong>${esc(day.name)}</strong><span>${new Intl.DateTimeFormat('ar',{day:'numeric'}).format(date)} ${esc(day.tag.split(' ')[0])}</span></button>`;
   }).join('');
 
-  const plan = DAYS[selected];
+  const plan = {...DAYS[selected], items: (state.dayPlans && state.dayPlans[d.selectedKey]) || DAYS[selected].items};
   const isToday = d.selectedKey === d.todayKey;
   const doneCount = plan.items.reduce((n, _it, i) => n + (state.done[`${d.selectedKey}-${i}`] ? 1 : 0), 0);
   const cur = currentEventIndex(plan.items, isToday, d.today);
@@ -665,11 +674,24 @@ function render() {
       <div class="event-copy"><div class="event-title">${esc(it.title)}${cur === i ? ' <span class="tag-pill">الآن</span>' : ''}</div>${it.detail ? `<div class="event-detail">${esc(it.detail)}</div>` : ''}</div>
       <span class="event-time">${esc(it.time)}</span></label>`;
   }).join('') + extraRowsHTML(d.selectedKey);
+  renderDayChecklist();
 
   $('alts').innerHTML = ALTERNATIVES.map(([t, x]) => `<div class="alt"><strong>${esc(t)}</strong>${esc(x)}</div>`).join('');
   $('scenarioGrid').innerHTML = SCENARIOS.map(s => `<button type="button" data-scenario="${esc(s.id)}">${esc(s.title)}</button>`).join('');
 }
 
+// ---------- Day-specific schedule editor and daily checklist ----------
+function currentDayItems(){const d=derived();return (state.dayPlans&&state.dayPlans[d.selectedKey])||DAYS[selected].items;}
+function renderDayChecklist(){
+ const d=derived(), items=currentDayItems(), box=$('day-checklist');if(!box)return;
+ const done=items.filter((it,i)=>!!state.done[d.selectedKey+'-'+i]).length;
+ box.innerHTML='<p class="empty">'+done+' من '+items.length+' مهام مكتملة</p>'+items.map((it,i)=>'<div class="kv"><span>'+esc(it.title)+'</span><b>'+(state.done[d.selectedKey+'-'+i]?'✅ تم':'⏳ لم يتم')+'</b></div>').join('');
+}
+function saveDayItems(items){const d=derived();commit(st=>({...st,dayPlans:{...(st.dayPlans||{}),[d.selectedKey]:items}}));}
+$('day-item-add').addEventListener('click',()=>{const title=$('day-item-title').value.trim(),time=$('day-item-time').value.trim(),detail=$('day-item-detail').value.trim(),type=$('day-item-type').value;if(!title||!time)return toast('اكتب اسم المهمة والوقت');const items=[...currentDayItems(),{time,title,type,detail,dur:undefined}];saveDayItems(items);$('day-item-title').value='';$('day-item-time').value='';$('day-item-detail').value='';toast('أُضيفت المهمة لهذا اليوم فقط');});
+$('day-ai-suggest').addEventListener('click',()=>{const problem=$('day-ai-problem').value.trim();if(!problem)return toast('اشرح المشكلة أولاً');const items=currentDayItems();let suggestion='اقترح مراجعة اليوم وتعديل المهمة المتأثرة فقط. لا يوجد اتصال بنموذج ذكاء اصطناعي خارجي في هذه النسخة؛ هذا اقتراح محلي مبني على كلمات المشكلة.';let proposed=items.slice();const lower=problem.toLowerCase();if(/احذف|إلغاء|شيل|الغاء/.test(problem)){suggestion='يبدو أنك تريد حذف مهمة. اختر المهمة من القائمة أدناه ثم اضغط حذف.';}else if(/تأخر|تأخرت|وقت|انقل|تعارض|محاضرة/.test(problem)){suggestion='اقتراح: أبقِ المهام الثابتة مثل الشغل والمحاضرات، وانقل المذاكرة أو الراحة إلى وقت آخر متاح. يمكنك تعديل الوقت أو حذف المهمة من قائمة اليوم.';}else if(/وجبة|أكل|غداء|عشاء/.test(problem)){suggestion='اقتراح: عدّل وقت الوجبة أو تفاصيلها لهذا اليوم فقط، وسيبقى باقي الأسبوع كما هو.';}
+$('day-ai-result').innerHTML='<div class="response-box"><strong>اقتراح ليوم '+esc(DAYS[selected].name)+'</strong><p>'+esc(suggestion)+'</p><div class="sub">مهام اليوم القابلة للتعديل</div>'+proposed.map((it,i)=>'<div class="kv"><span>'+esc(it.time+' · '+it.title)+'</span><button type="button" class="quiet-button" data-day-remove="'+i+'">حذف</button></div><div class="row-form"><input class="field" id="day-edit-time-'+i+'" value="'+esc(it.time)+'" aria-label="وقت المهمة"><button class="quiet-button" type="button" data-day-time="'+i+'">تعديل الوقت</button></div>').join('')+'<p class="empty">هذه المساعدة محلية وليست نموذج ذكاء اصطناعي متصلًا بالإنترنت.</p></div>';});
+document.addEventListener('click',e=>{const del=e.target.closest('[data-day-remove]');if(del){const i=Number(del.dataset.dayRemove),items=currentDayItems().slice();items.splice(i,1);saveDayItems(items);$('day-ai-result').innerHTML='';toast('تم حذف المهمة من هذا اليوم فقط');return;}const edit=e.target.closest('[data-day-time]');if(edit){const i=Number(edit.dataset.dayTime),v=$('day-edit-time-'+i).value.trim();if(!v)return toast('أدخل الوقت الجديد');const items=currentDayItems().slice();items[i]={...items[i],time:v};saveDayItems(items);toast('تم تعديل وقت المهمة لهذا اليوم فقط');}});
 // ---------- Modals & toast ----------
 function openModal(id) { $(id).hidden = false; }
 function closeModal(id) { $(id).hidden = true; }
