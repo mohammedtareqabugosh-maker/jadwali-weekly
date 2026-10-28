@@ -1828,6 +1828,70 @@ body[data-app-page]:not([data-app-page="home"]) #day-tools{display:none!importan
 #quick-nav button:focus-visible{outline:2px solid #b58a3a;outline-offset:2px}
 @media(min-width:700px){#quick-nav{left:50%;right:auto;transform:translateX(-50%);width:min(680px,calc(100% - 30px));bottom:14px}.shared-schedule{margin-bottom:25px}}
 @media(prefers-color-scheme:dark){#quick-nav{background:rgba(27,36,29,.95);border-color:#465347}#quick-nav button{color:#c1cbbd}#quick-nav button.active{background:#b58a3a;color:#fff}}
+
+/* Mobile layout fix: keep task titles readable after adding edit/delete controls */
+@media (max-width: 600px) {
+  .timeline .event-row {
+    display: grid !important;
+    grid-template-columns: 24px minmax(0, 1fr) auto;
+    grid-template-areas:
+      "check copy time"
+      ". edit delete";
+    align-items: center;
+    column-gap: 9px;
+    row-gap: 10px;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 10px;
+    min-width: 0;
+  }
+  .timeline .event-row > .event-check { grid-area: check; }
+  .timeline .event-row > .event-copy {
+    grid-area: copy;
+    min-width: 0;
+    width: auto;
+    overflow-wrap: break-word;
+    word-break: normal;
+  }
+  .timeline .event-row .event-title {
+    font-size: 15px;
+    line-height: 1.5;
+    overflow-wrap: break-word;
+    word-break: normal;
+    white-space: normal;
+  }
+  .timeline .event-row .event-detail {
+    font-size: 12px;
+    line-height: 1.5;
+    overflow-wrap: break-word;
+    word-break: normal;
+  }
+  .timeline .event-row > .event-time {
+    grid-area: time;
+    justify-self: end;
+    align-self: start;
+    font-size: 11px;
+    padding: 5px 8px;
+    max-width: 132px;
+    white-space: normal;
+    text-align: center;
+  }
+  .timeline .event-row > [data-main-edit] {
+    grid-area: edit;
+    justify-self: end;
+    min-width: 42px;
+    padding: 8px 10px;
+  }
+  .timeline .event-row > [data-main-delete] {
+    grid-area: delete;
+    justify-self: end;
+    min-width: 42px;
+    padding: 8px 10px;
+  }
+  #quick-nav { bottom: max(6px, env(safe-area-inset-bottom, 0px)); }
+  body { padding-bottom: calc(150px + env(safe-area-inset-bottom, 0px)) !important; }
+}
+
 </style>
 <nav id="quick-nav" aria-label="التنقل بين صفحات التطبيق">
  <button type="button" class="active" data-qtarget="timeline"><span class="qn-icon">⌂</span><span class="qn-label">الرئيسية</span></button>
