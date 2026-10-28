@@ -1773,6 +1773,23 @@ start();
 <style>
 :root{--quickbar-h:68px}
 body{padding-bottom:calc(94px + env(safe-area-inset-bottom,0px))!important}
+
+/* App-like separate screens controlled by the bottom navigation */
+body[data-app-page="home"] #shared-schedule,body[data-app-page="home"] #food-sync-panel,
+body[data-app-page="schedule"] .summary-grid,body[data-app-page="schedule"] #strip,body[data-app-page="schedule"] .content-grid,body[data-app-page="schedule"] #food-sync-panel,
+body[data-app-page="goals"] .summary-grid,body[data-app-page="goals"] #strip,body[data-app-page="goals"] .content-grid,body[data-app-page="goals"] #shared-schedule,body[data-app-page="goals"] #food-sync-panel,
+body[data-app-page="meals"] .summary-grid,body[data-app-page="meals"] #strip,body[data-app-page="meals"] .content-grid,body[data-app-page="meals"] #shared-schedule,body[data-app-page="meals"] #food-sync-panel,
+body[data-app-page="emergency"] .summary-grid,body[data-app-page="emergency"] #strip,body[data-app-page="emergency"] .content-grid,body[data-app-page="emergency"] #shared-schedule,body[data-app-page="emergency"] #food-sync-panel,
+body[data-app-page="sync"] .summary-grid,body[data-app-page="sync"] #strip,body[data-app-page="sync"] .content-grid,body[data-app-page="sync"] #shared-schedule {display:none!important}
+body[data-app-page="goals"] .side-stack details:not(:has(#goalGrid)),body[data-app-page="meals"] .side-stack details:not(:has(#alts)),body[data-app-page="emergency"] .side-stack details:not(:has(#scenarioGrid)){display:none!important}
+body[data-app-page="goals"] .side-stack,body[data-app-page="meals"] .side-stack,body[data-app-page="emergency"] .side-stack{display:block!important}
+body[data-app-page="goals"] .content-grid,body[data-app-page="meals"] .content-grid,body[data-app-page="emergency"] .content-grid{display:block!important}
+body[data-app-page="goals"] .content-grid>section,body[data-app-page="meals"] .content-grid>section,body[data-app-page="emergency"] .content-grid>section{display:none!important}
+body[data-app-page="goals"] .side-stack details:has(#goalGrid),body[data-app-page="meals"] .side-stack details:has(#alts),body[data-app-page="emergency"] .side-stack details:has(#scenarioGrid){display:block!important}
+body[data-app-page="schedule"] #shared-schedule,body[data-app-page="sync"] #food-sync-panel{display:block!important}
+body[data-app-page="home"] .content-grid{display:grid!important}
+body[data-app-page="home"] .side-stack{display:none!important}
+#quick-nav button.active{background:#263b2d;color:#fff}
 #quick-nav{position:fixed;z-index:999;left:10px;right:10px;bottom:max(8px,env(safe-area-inset-bottom,0px));display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px;padding:8px 5px calc(8px + env(safe-area-inset-bottom,0px));border:1px solid rgba(180,190,174,.65);border-radius:22px;background:rgba(250,251,247,.94);box-shadow:0 12px 36px rgba(25,39,27,.18);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);direction:rtl}
 #quick-nav button{display:flex;min-width:0;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:6px 1px;border:0;border-radius:13px;background:transparent;color:#667164;font:inherit;cursor:pointer}
 #quick-nav button .qn-icon{font-size:19px;line-height:1.1}
@@ -1792,11 +1809,12 @@ body{padding-bottom:calc(94px + env(safe-area-inset-bottom,0px))!important}
 </nav>
 <script>
 (()=>{const nav=document.getElementById('quick-nav');if(!nav)return;
-function targetFor(id){const el=document.getElementById(id);if(!el)return null;const details=el.closest('details');if(details)details.open=true;return el}
-nav.addEventListener('click',e=>{const b=e.target.closest('[data-qtarget]');if(!b)return;const target=targetFor(b.dataset.qtarget);if(!target)return;nav.querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b));target.scrollIntoView({behavior:'smooth',block:'start'});if(b.dataset.qtarget==='shared-schedule'){const date=document.getElementById('ss-date');if(date&&typeof date.showPicker==='function'){} }});
-const sections=[['timeline',0],['shared-schedule',1],['goalGrid',2],['alts',3],['scenarioGrid',4],['food-sync-panel',5]];
-function setActive(){let chosen=0,best=Infinity;for(const [id,index] of sections){const el=document.getElementById(id);if(!el)continue;const d=Math.abs(el.getBoundingClientRect().top-120);if(d<best){best=d;chosen=index}}nav.querySelectorAll('button').forEach((b,i)=>b.classList.toggle('active',i===chosen))}
-let ticking=false;window.addEventListener('scroll',()=>{if(ticking)return;ticking=true;requestAnimationFrame(()=>{setActive();ticking=false})},{passive:true});
+const pages={timeline:'home','shared-schedule':'schedule',goalGrid:'goals',alts:'meals',scenarioGrid:'emergency','food-sync-panel':'sync'};
+const labels={home:'الرئيسية',schedule:'الجدول',goals:'الأهداف',meals:'الوجبات',emergency:'مخرج الطوارئ',sync:'المزامنة'};
+function showPage(page,scroll=true){document.body.dataset.appPage=page;nav.querySelectorAll('[data-qtarget]').forEach(b=>b.classList.toggle('active',pages[b.dataset.qtarget]===page));const title=document.querySelector('.brand h1');if(title)title.textContent=page==='home'?'جدولي الأسبوعي':labels[page];if(scroll)window.scrollTo({top:0,behavior:'smooth'});try{history.replaceState(null,'','#'+page)}catch(e){}}
+nav.addEventListener('click',e=>{const b=e.target.closest('[data-qtarget]');if(!b)return;showPage(pages[b.dataset.qtarget]||'home')});
+window.addEventListener('hashchange',()=>{const p=location.hash.slice(1);if(Object.keys(labels).includes(p))showPage(p,false)});
+showPage(Object.keys(labels).includes(location.hash.slice(1))?location.hash.slice(1):'home',false);
 })();
 </script>
 
