@@ -1,6 +1,6 @@
 // Service worker for جدولي الأسبوعي.
 // Caches the app shell so the page opens offline. The AI emergency request is a POST and is never cached.
-const CACHE = 'jadwali-shell-v3';
+const CACHE = 'jadwali-shell-v4';
 const SHELL = [
   './',
   './index.html',
