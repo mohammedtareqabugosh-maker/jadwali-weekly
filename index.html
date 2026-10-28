@@ -1670,6 +1670,72 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
   loadToday();
 })();
 </script>
+
+<style>
+#custom-weekly{margin:24px 12px;padding:16px;border:1px solid var(--line,#ddd);border-radius:18px;background:var(--panel,#fff);color:var(--text,inherit)}
+#custom-weekly h2{margin:0 0 8px;font-size:1.15rem}
+#custom-weekly .cw-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:9px;margin:14px 0}
+#custom-weekly input,#custom-weekly textarea{box-sizing:border-box;width:100%;min-width:0;padding:10px;border:1px solid #bbb;border-radius:10px;background:transparent;color:inherit;font:inherit}
+#custom-weekly button{border:0;border-radius:10px;padding:10px 13px;font:inherit;cursor:pointer}
+#custom-weekly .cw-save{background:#b8862b;color:white}
+#custom-weekly .cw-day{padding:12px 0;border-top:1px solid #ddd}
+#custom-weekly .cw-entry{display:flex;align-items:flex-start;gap:8px;justify-content:space-between;padding:8px 0}
+#custom-weekly .cw-time{font-weight:700;white-space:nowrap}
+#custom-weekly .cw-delete{background:#f3e5e5;color:#8b2222;padding:5px 8px}
+#custom-weekly .cw-muted{opacity:.7;font-size:.9em}
+</style>
+<section id="custom-weekly" aria-labelledby="cw-title">
+  <h2 id="cw-title">🗓️ جدول المهام الأسبوعي</h2>
+  <p class="cw-muted">أضف أي مهمة أو موعد، وسيظهر في يومه ووقته مع حفظه على هذا الجهاز.</p>
+  <form id="cw-form" class="cw-form">
+    <input id="cw-title-input" required maxlength="120" placeholder="اسم المهمة أو الموعد" aria-label="اسم المهمة">
+    <input id="cw-date" required type="date" aria-label="اليوم">
+    <input id="cw-time" required type="time" aria-label="الوقت">
+    <input id="cw-detail" maxlength="240" placeholder="تفاصيل (اختياري)" aria-label="تفاصيل">
+    <button class="cw-save" type="submit">إضافة للجدول</button>
+  </form>
+  <div id="cw-days"></div>
+</section>
+<script>
+(()=> {
+  'use strict';
+  const KEY='weekly-planner-custom-entries-v1';
+  const $=id=>document.getElementById(id);
+  const dayNames=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+  const pad=n=>String(n).padStart(2,'0');
+  const localDate=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+  const safe=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  let entries=[];
+  try{const x=JSON.parse(localStorage.getItem(KEY)||'[]');if(Array.isArray(x))entries=x.filter(e=>e&&e.id&&e.date&&e.time&&e.title)}catch(_){}
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(entries));return true}catch(_){alert('تعذّر الحفظ على هذا الجهاز. تأكد من توفر مساحة في المتصفح.');return false}}
+  function render(){
+    const now=new Date(), start=new Date(now);start.setDate(now.getDate()-now.getDay());start.setHours(0,0,0,0);
+    let html='';
+    for(let i=0;i<7;i++){
+      const d=new Date(start);d.setDate(start.getDate()+i);const key=localDate(d);
+      const list=entries.filter(e=>e.date===key).sort((a,b)=>a.time.localeCompare(b.time)||a.id.localeCompare(b.id));
+      html+='<div class="cw-day"><strong>'+dayNames[i]+' — '+safe(new Intl.DateTimeFormat('ar-JO',{day:'numeric',month:'short'}).format(d))+'</strong>';
+      if(!list.length) html+='<p class="cw-muted">لا توجد مهام مضافة</p>';
+      for(const e of list)html+='<div class="cw-entry"><span class="cw-time">'+safe(e.time)+'</span><div style="flex:1;min-width:0"><b>'+safe(e.title)+'</b>'+(e.detail?'<div class="cw-muted">'+safe(e.detail)+'</div>':'')+'</div><button type="button" class="cw-delete" data-cw-delete="'+safe(e.id)+'" aria-label="حذف '+safe(e.title)+'">حذف</button></div>';
+      html+='</div>';
+    }
+    $('cw-days').innerHTML=html;
+  }
+  $('cw-date').value=localDate(new Date());
+  $('cw-form').addEventListener('submit',e=>{
+    e.preventDefault();
+    const entry={id:Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,8),title:$('cw-title-input').value.trim(),date:$('cw-date').value,time:$('cw-time').value,detail:$('cw-detail').value.trim()};
+    if(!entry.title||!entry.date||!entry.time)return;
+    entries.push(entry);if(save()){ $('cw-title-input').value='';$('cw-detail').value='';render(); }
+  });
+  $('cw-days').addEventListener('click',e=>{
+    const b=e.target.closest('[data-cw-delete]');if(!b)return;
+    entries=entries.filter(x=>x.id!==b.dataset.cwDelete);if(save())render();
+  });
+  render();
+})();
+</script>
+
 </body>
 </html>
 
