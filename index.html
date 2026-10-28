@@ -1290,5 +1290,262 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
   });
 })();
 </script>
+
+<!-- ربط جدولي الأسبوعي بمساعدي الغذائي عبر Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+  #food-sync-panel {
+    margin: 16px 0;
+    padding: 16px;
+    border: 1px solid var(--border, #ddd);
+    border-radius: 16px;
+    direction: rtl;
+    font-family: inherit;
+  }
+  #food-sync-panel input,
+  #food-sync-panel button {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 11px;
+    margin-top: 8px;
+    border-radius: 10px;
+    font: inherit;
+  }
+  #food-sync-panel input {
+    border: 1px solid #aaa;
+    background: transparent;
+    color: inherit;
+  }
+  #food-sync-panel button {
+    border: 0;
+    cursor: pointer;
+    background: var(--accent, #b8862b);
+    color: white;
+  }
+  #food-sync-panel .food-sync-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin: 14px 0;
+  }
+  #food-sync-panel .food-sync-stat {
+    padding: 12px 8px;
+    border-radius: 12px;
+    background: var(--panel, rgba(128,128,128,.10));
+    text-align: center;
+  }
+  #food-sync-panel .food-sync-number {
+    display: block;
+    font-size: 22px;
+    font-weight: 800;
+    margin-top: 5px;
+  }
+  #food-sync-message {
+    font-size: 13px;
+    line-height: 1.7;
+    overflow-wrap: anywhere;
+  }
+</style>
+
+<section id="food-sync-panel">
+  <h3>🍽️ وجباتي اليوم</h3>
+  <p>اربط حساب مساعدي الغذائي لعرض استهلاكك اليومي.</p>
+
+  <div id="food-sync-auth">
+    <label for="food-sync-email">البريد الإلكتروني</label>
+    <input id="food-sync-email" type="email"
+      autocomplete="username" placeholder="البريد المستخدم في مساعدي الغذائي">
+
+    <label for="food-sync-password">كلمة المرور</label>
+    <input id="food-sync-password" type="password"
+      autocomplete="current-password" placeholder="كلمة المرور">
+
+    <button id="food-sync-login">تسجيل الدخول</button>
+  </div>
+
+  <div class="food-sync-stats">
+    <div class="food-sync-stat">
+      السعرات المستهلكة
+      <span class="food-sync-number" id="food-sync-calories">—</span>
+      <small>kcal</small>
+    </div>
+    <div class="food-sync-stat">
+      البروتين المستهلك
+      <span class="food-sync-number" id="food-sync-protein">—</span>
+      <small>غرام</small>
+    </div>
+  </div>
+
+  <p id="food-sync-message" role="status">لم يتم تسجيل الدخول بعد.</p>
+
+  <button id="food-sync-refresh">تحديث وجبات اليوم</button>
+  <button id="food-sync-logout" hidden>تسجيل الخروج</button>
+</section>
+
+<script>
+(() => {
+  "use strict";
+
+  const SUPABASE_URL =
+    "https://chcapjgjvvwpljgdffpg.supabase.co";
+
+  const SUPABASE_KEY =
+    "sb_publishable_9dzltRprFtyXPyg0Iul3aQ_4SU1VTG9";
+
+  const panel = document.getElementById("food-sync-panel");
+  if (!panel || !window.supabase) return;
+
+  const client = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY,
+    {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true
+      }
+    }
+  );
+
+  const $ = id => document.getElementById(id);
+  const message = $("food-sync-message");
+  let requestNumber = 0;
+
+  function setMessage(text) {
+    message.textContent = text;
+  }
+
+  function localDateKey() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+
+  function showLoggedIn(isLoggedIn) {
+    $("food-sync-auth").hidden = isLoggedIn;
+    $("food-sync-logout").hidden = !isLoggedIn;
+  }
+
+  async function loadToday() {
+    const thisRequest = ++requestNumber;
+
+    const { data: sessionData, error: sessionError } =
+      await client.auth.getSession();
+
+    if (sessionError) {
+      setMessage("تعذّر التحقق من تسجيل الدخول: " + sessionError.message);
+      return;
+    }
+
+    const user = sessionData.session?.user;
+
+    if (!user) {
+      showLoggedIn(false);
+      $("food-sync-calories").textContent = "—";
+      $("food-sync-protein").textContent = "—";
+      setMessage("سجّل الدخول باستخدام نفس حساب مساعدي الغذائي.");
+      return;
+    }
+
+    showLoggedIn(true);
+    setMessage("جارٍ تحميل وجبات اليوم…");
+
+    const { data, error } = await client
+      .from("meals")
+      .select("meal_name, calories, protein, meal_date")
+      .eq("user_id", user.id)
+      .eq("meal_date", localDateKey());
+
+    if (thisRequest !== requestNumber) return;
+
+    if (error) {
+      setMessage(
+        "تعذّر تحميل الوجبات. تحقق من سياسات RLS وصلاحية قراءة وجبات حسابك. التفاصيل: " +
+        error.message
+      );
+      return;
+    }
+
+    const meals = data || [];
+    const calories = meals.reduce(
+      (sum, meal) => sum + (Number(meal.calories) || 0), 0
+    );
+    const protein = meals.reduce(
+      (sum, meal) => sum + (Number(meal.protein) || 0), 0
+    );
+
+    $("food-sync-calories").textContent =
+      Math.round(calories).toLocaleString("en-US");
+
+    $("food-sync-protein").textContent =
+      Math.round(protein * 10) / 10;
+
+    setMessage(
+      meals.length
+        ? `تم تحميل ${meals.length} وجبة من حسابك لهذا اليوم.`
+        : "لا توجد وجبات مسجّلة لهذا اليوم في الحساب."
+    );
+  }
+
+  $("food-sync-login").addEventListener("click", async () => {
+    const email = $("food-sync-email").value.trim();
+    const password = $("food-sync-password").value;
+
+    if (!email || !password) {
+      setMessage("أدخل البريد الإلكتروني وكلمة المرور.");
+      return;
+    }
+
+    setMessage("جارٍ تسجيل الدخول…");
+
+    const { error } = await client.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (error) {
+      setMessage("تعذّر تسجيل الدخول: " + error.message);
+      return;
+    }
+
+    $("food-sync-password").value = "";
+    await loadToday();
+  });
+
+  $("food-sync-refresh").addEventListener("click", loadToday);
+
+  $("food-sync-logout").addEventListener("click", async () => {
+    const { error } = await client.auth.signOut();
+
+    if (error) {
+      setMessage("تعذّر تسجيل الخروج: " + error.message);
+      return;
+    }
+
+    $("food-sync-calories").textContent = "—";
+    $("food-sync-protein").textContent = "—";
+    showLoggedIn(false);
+    setMessage("تم تسجيل الخروج.");
+  });
+
+  client.auth.onAuthStateChange((event, session) => {
+    if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
+      loadToday();
+    } else if (event === "SIGNED_OUT") {
+      showLoggedIn(false);
+      $("food-sync-calories").textContent = "—";
+      $("food-sync-protein").textContent = "—";
+    }
+  });
+
+  loadToday();
+})();
+</script>
+</body>
+</html>
+
 </body>
 </html>
