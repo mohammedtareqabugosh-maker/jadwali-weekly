@@ -681,7 +681,9 @@ function render() {
 }
 
 // ---------- Day-specific schedule editor and daily checklist ----------
-function currentDayItems(){const d=derived();return (state.dayPlans&&state.dayPlans[d.selectedKey])||DAYS[selected].items;}
+function currentDayItems(){const d=derived();const raw=(state.dayPlans&&state.dayPlans[d.selectedKey])||DAYS[selected].items;return sortChronological(raw);}
+// Stable sort by start time, so the day always reads in time order (indexes match what is shown).
+function sortChronological(list){return list.map((x,i)=>({x,i,k:rowStartKey(x)})).sort((a,b)=>(a.k-b.k)||(a.i-b.i)).map(o=>o.x);}
 function renderDayChecklist(){
  const d=derived(), items=currentDayItems(), box=$('day-checklist');if(!box)return;
  const done=items.filter((it,i)=>!!state.done[d.selectedKey+'-'+i]).length;
