@@ -870,6 +870,7 @@ function updateDayItem(index,patch){
   items[index]={...items[index],...patch};
   return saveDayItems(items);
 }
+window.addEventListener('shared-meals-updated',()=>render());
 startCloudDayPlans();
 document.addEventListener('change',e=>{const sel=e.target.closest&&e.target.closest('[data-prio]');if(!sel)return;updateDayItem(Number(sel.dataset.prio),{priority:sel.value});});
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-note-add]');if(!b)return;
