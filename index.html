@@ -661,7 +661,8 @@ function render() {
       <strong>${esc(day.name)}</strong><span>${new Intl.DateTimeFormat('ar',{day:'numeric'}).format(date)} ${esc(day.tag.split(' ')[0])}</span></button>`;
   }).join('');
 
-  const plan = {...DAYS[selected], items: (state.dayPlans && state.dayPlans[d.selectedKey]) || DAYS[selected].items};
+  // Rows always show in time order; rows with the same start keep their order.
+  const plan = {...DAYS[selected], items: sortChronological((state.dayPlans && state.dayPlans[d.selectedKey]) || DAYS[selected].items)};
   const sharedMeals = Array.isArray(window.sharedMealRecords) ? window.sharedMealRecords : [];
   const mealKey = value => {
     const s = String(value || '').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي');
