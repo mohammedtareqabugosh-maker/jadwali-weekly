@@ -898,6 +898,25 @@ function renderDayChecklist(){
  const done=items.filter((it,i)=>!!state.done[d.selectedKey+'-'+i]).length;
  box.innerHTML='<p class="empty">'+done+' من '+items.length+' مهام مكتملة</p>'+items.map((it,i)=>'<div class="kv"><span>'+esc(it.title)+'</span><b>'+(state.done[d.selectedKey+'-'+i]?'✅ تم':'⏳ لم يتم')+'</b></div>').join('');
 }
+// Keeps the day's rows before each applied plan, so the user can take a change back.
+function rememberBeforeChange(key, items){commit(st=>({...st,undo:[{key,at:Date.now(),items:items.map(x=>({...x}))},...(st.undo||[]).slice(0,9)]}))}
+// Rows removed by the latest change to this day (compared with the snapshot kept before it).
+function recentRemovedFor(key, items){
+  const last=(state.undo||[]).find(x=>x.key===key);
+  if(!last) return [];
+  return last.items.filter(o=>!items.some(n=>n.title===o.title&&n.time===o.time))
+    .map(o=>({time:o.time,title:o.title,type:o.type,detail:o.detail||'',dur:o.dur}));
+}
+function undoLastChange(){
+  const key=derived().selectedKey;
+  const last=(state.undo||[]).find(x=>x.key===key);
+  if(!last) return toast('لا يوجد تغيير يمكن التراجع عنه لهذا اليوم');
+  if(!confirm('ترجع جدول هذا اليوم إلى ما كان قبل آخر خطة معتمدة؟')) return;
+  if(!saveDayItems(last.items.map(x=>({...x})))) return;
+  commit(st=>({...st,undo:(st.undo||[]).filter(x=>x!==last)}));
+  $('day-ai-result').innerHTML='';
+  toast('تم التراجع عن آخر تغيير');
+}
 function saveDayItems(items){const d=derived();const ok=commit(st=>({...st,dayPlans:{...(st.dayPlans||{}),[d.selectedKey]:items}}));if(ok)pushDayPlan(d.selectedKey,items);return ok;}
 // ---------- Cloud copy of each day (table day_plans) ----------
 // Local storage stays the source on this device; the cloud copy lets other devices see the same day.
@@ -986,6 +1005,7 @@ $('day-ai-suggest').addEventListener('click', async () => {
           selectedDay: DAYS[selected].name,
           date: d.selectedKey,
           availability: analyzeDay(items),
+          recent_removed: recentRemovedFor(d.selectedKey, items),
           items: items.map((it, i) => ({
             index: i, time: it.time, title: it.title, type: it.type,
             detail: it.detail || '', dur: Number.isFinite(Number(it.dur)) ? Number(it.dur) : null, priority: it.priority || 'medium', last_progress: ((it.progress||[]).slice(-1)[0]||{}).text || ''
@@ -1074,6 +1094,7 @@ function insertChronological(list, task) {
   return list;
 }
 document.addEventListener('click',e=>{
+ if(e.target.closest('#day-ai-undo')){undoLastChange();return;}
  const addProposal=e.target.closest('#ai-add-proposal');
  if(addProposal){
    const saved=window.__jadwaliAiPlan;
@@ -1109,13 +1130,14 @@ document.addEventListener('click',e=>{
    for(let i=0;i<original.length;i++){if(deletes.has(i))continue;proposed.push(updates.has(i)?updates.get(i).task:{...original[i]});}
    adds.forEach(x=>insertChronological(proposed,x.task));
    const check=analyzeDay(proposed);
-   if(check.conflicts.length)return toast('لم تُنفّذ الخطة لوجود تعارض: '+check.conflicts[0]);
+   const conflictText=check.conflicts.length?'\n\n⚠️ تعارضات ستبقى كما هي إن وافقت:\n'+check.conflicts.join('\n'):'';
    const summary=actions.map(a=>a.type==='add'?'إضافة: '+a.title:a.type==='update'?'تعديل: '+original[a.index].title+' ← '+(a.title||original[a.index].title):'حذف: '+original[a.index].title).join('\n');
-   if(!confirm('هل تعتمد تنفيذ هذه الخطة على يوم '+DAYS[selected].name+'؟\n\n'+summary+'\n\nلن تتغير المهام الأخرى.'))return;
+   if(!confirm('هل تعتمد تنفيذ هذه الخطة على يوم '+DAYS[selected].name+'؟\n\n'+summary+conflictText+'\n\nلن تتغير المهام الأخرى.'))return;
    const ok=saveDayItems(proposed);
    if(!ok)return;
+   rememberBeforeChange(saved.date, original);
    window.__jadwaliAiPlan=null;
-   $('day-ai-result').innerHTML='<div class="response-box">تم تنفيذ الخطة المعتمدة وحفظ التغييرات لليوم المحدد.</div>';
+   $('day-ai-result').innerHTML='<div class="response-box">تم تنفيذ الخطة المعتمدة وحفظ التغييرات لليوم المحدد. <button type="button" class="quiet-button" id="day-ai-undo">تراجع عن هذا التغيير</button></div>';
    toast('تم تنفيذ الخطة وحفظها');
    return;
  }
