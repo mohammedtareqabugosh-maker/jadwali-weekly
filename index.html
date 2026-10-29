@@ -213,6 +213,10 @@ details[open].panel > summary::after { content: "▴"; }
 .meal-card-edit[hidden]{display:none}
 .meal-card-edit input,.meal-card-edit textarea{width:100%}
 .meal-card-nums{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+.meal-done{display:flex;align-items:center;gap:4px;font-size:.85rem;white-space:nowrap}
+.meal-done input{width:20px;height:20px;accent-color:var(--c-food,#3d7a4f);cursor:pointer}
+.meal-card.done{opacity:.6}
+.meal-card.done .meal-card-head strong{text-decoration:line-through}
 </style>
 </head>
 <body>
@@ -807,8 +811,9 @@ function linkedMealHTML(meals){
     if(fat) nums.push(`دهون ${fat} غ`);
     const when=new Date(m.meal_date);
     const hhmm=isNaN(when)?'':`${String(when.getHours()).padStart(2,'0')}:${String(when.getMinutes()).padStart(2,'0')}`;
-    return `<div class="meal-card" data-meal-card="${id}">
-      <div class="meal-card-head"><strong>${esc(m.meal_name||'وجبة')}</strong><span class="meal-card-type">${esc(m.meal_type||'')}</span></div>
+    const done=!!((state.mealDone||{})[derived().selectedKey]||{})[m.client_id];
+    return `<div class="meal-card ${done?'done':''}" data-meal-card="${id}">
+      <div class="meal-card-head"><label class="meal-done"><input type="checkbox" class="meal-check" data-meal-done="${id}" ${done?'checked':''} aria-label="تم: ${esc(m.meal_name||'وجبة')}"> تم</label><strong>${esc(m.meal_name||'وجبة')}</strong><span class="meal-card-type">${esc(m.meal_type||'')}</span></div>
       ${m.ingredients?`<div class="meal-card-line">${esc(m.ingredients)}</div>`:''}
       ${nums.length?`<div class="meal-card-line">${esc(nums.join(' · '))}</div>`:''}
       ${m.notes?`<div class="meal-card-line">${esc(m.notes)}</div>`:''}
@@ -858,6 +863,19 @@ function mealIsoAt(hhmm){
   return new Date(y,mo-1,da,hh,mi).toISOString();
 }
 function refreshMealsNow(){const key=derived().selectedKey;linkedFetchedAt[key]=0;ensureLinkedMeals(key)}
+// Done tick on a meal card: kept on this device per day.
+document.addEventListener('change',e=>{
+  const box=e.target.closest&&e.target.closest('[data-meal-done]');
+  if(!box) return;
+  const id=box.dataset.mealDone, key=derived().selectedKey;
+  commit(st=>{
+    const md={...(st.mealDone||{})};
+    const day={...(md[key]||{})};
+    if(box.checked) day[id]=true; else delete day[id];
+    md[key]=day;
+    return {...st,mealDone:md};
+  });
+});
 document.addEventListener('click',async e=>{
   const btn=e.target.closest('[data-meal-time],[data-meal-edit],[data-meal-cancel],[data-meal-save],[data-meal-delete]');
   if(!btn) return;
