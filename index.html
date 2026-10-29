@@ -204,6 +204,15 @@ details[open].panel > summary::after { content: "▴"; }
 .prayer-grid span{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px;border-radius:10px;background:rgba(0,0,0,.05)}
 .prayer-grid b{font-weight:700}
 .prayer-grid .prayer-next{outline:2px solid currentColor}
+.meal-card{border:1px solid rgba(0,0,0,.12);border-radius:12px;padding:10px;margin-top:8px;background:rgba(184,134,43,.06)}
+.meal-card-head{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.meal-card-type{font-size:.8rem;opacity:.7}
+.meal-card-line{font-size:.9rem;margin-top:4px}
+.meal-card-controls{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px}
+.meal-card-edit{display:grid;gap:6px;margin-top:8px}
+.meal-card-edit[hidden]{display:none}
+.meal-card-edit input,.meal-card-edit textarea{width:100%}
+.meal-card-nums{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
 </style>
 </head>
 <body>
@@ -709,7 +718,7 @@ function render() {
     const done = !!state.done[`${d.selectedKey}-${i}`];
     return `<div class="event-row ${done ? 'done' : ''} ${cur === i ? 'now' : ''}" style="--event-color:${TYPE_COLORS[it.type]}">
       <input type="checkbox" class="event-check" data-task="${i}" ${done ? 'checked' : ''} aria-label="إنجاز: ${esc(it.title)}">
-      <div class="event-copy"><div class="event-title">${esc(it.title)}${cur === i ? ' <span class="tag-pill">الآن</span>' : ''}</div>${it.detail ? `<div class="event-detail">${esc(it.detail)}</div>` : ''}${it.detail ? '' : linkedMealHTML(linkedBySlot[i])}</div>
+      <div class="event-copy"><div class="event-title">${esc(it.title)}${cur === i ? ' <span class="tag-pill">الآن</span>' : ''}</div>${it.detail && !(linkedBySlot[i]||[]).length ? `<div class="event-detail">${esc(it.detail)}</div>` : ''}${linkedMealHTML(linkedBySlot[i])}</div>
       <span class="event-time">${esc(it.time)}</span><button type="button" class="quiet-button" data-main-edit="${i}" aria-label="تعديل ${esc(it.title)}">✏️</button><button type="button" class="quiet-button" data-main-delete="${i}" aria-label="حذف ${esc(it.title)}">🗑️</button></div>`;
   }).join('') + extraRowsHTML(d.selectedKey) + unmatchedMealsHTML(linkedBySlot.unmatched);
   renderDayChecklist();
@@ -784,18 +793,102 @@ function unmatchedMealsHTML(meals){
   if(!meals||!meals.length) return '';
   return `<div class="event-row" style="--event-color:#b8862b"><div class="event-copy"><div class="event-title">وجبات من مساعدي الغذائي بلا موعد مطابق في هذا اليوم</div>${linkedMealHTML(meals)}</div></div>`;
 }
+// Each meal from the food app is its own card: time picker, edit, and delete.
 function linkedMealHTML(meals){
   if(!meals||!meals.length) return '';
   return meals.map(m=>{
+    const id=esc(m.client_id||'');
     const nums=[];
     const cal=Number(m.calories)||0, pro=Number(m.protein)||0, carb=Number(m.carbs)||0, fat=Number(m.fat)||0;
     if(cal) nums.push(`${Math.round(cal)} سعرة`);
     if(pro) nums.push(`بروتين ${pro} غ`);
     if(carb) nums.push(`كربوهيدرات ${carb} غ`);
     if(fat) nums.push(`دهون ${fat} غ`);
-    return `<div class="event-detail linked-meal"><strong>${esc(m.meal_name||'وجبة')}</strong>${m.ingredients?`<div>${esc(m.ingredients)}</div>`:''}${nums.length?`<div>${esc(nums.join(' · '))}</div>`:''}${m.notes?`<div>${esc(m.notes)}</div>`:''}</div>`;
+    const when=new Date(m.meal_date);
+    const hhmm=isNaN(when)?'':`${String(when.getHours()).padStart(2,'0')}:${String(when.getMinutes()).padStart(2,'0')}`;
+    return `<div class="meal-card" data-meal-card="${id}">
+      <div class="meal-card-head"><strong>${esc(m.meal_name||'وجبة')}</strong><span class="meal-card-type">${esc(m.meal_type||'')}</span></div>
+      ${m.ingredients?`<div class="meal-card-line">${esc(m.ingredients)}</div>`:''}
+      ${nums.length?`<div class="meal-card-line">${esc(nums.join(' · '))}</div>`:''}
+      ${m.notes?`<div class="meal-card-line">${esc(m.notes)}</div>`:''}
+      <div class="meal-card-controls">
+        <label>الوقت <input type="time" class="meal-time" value="${hhmm}"></label>
+        <button type="button" class="quiet-button" data-meal-time>حفظ الوقت</button>
+        <button type="button" class="quiet-button" data-meal-edit>تعديل</button>
+        <button type="button" class="quiet-button" data-meal-delete>حذف</button>
+      </div>
+      <div class="meal-card-edit" hidden>
+        <input data-f="meal_name" value="${esc(m.meal_name||'')}" placeholder="اسم الوجبة">
+        <textarea data-f="ingredients" rows="2" placeholder="المكونات والكميات">${esc(m.ingredients||'')}</textarea>
+        <div class="meal-card-nums">
+          <label>سعرات <input type="number" min="0" step="1" data-f="calories" value="${Number(m.calories)||0}"></label>
+          <label>بروتين <input type="number" min="0" step="0.1" data-f="protein" value="${Number(m.protein)||0}"></label>
+          <label>كربوهيدرات <input type="number" min="0" step="0.1" data-f="carbs" value="${Number(m.carbs)||0}"></label>
+          <label>دهون <input type="number" min="0" step="0.1" data-f="fat" value="${Number(m.fat)||0}"></label>
+        </div>
+        <textarea data-f="notes" rows="1" placeholder="ملاحظات">${esc(m.notes||'')}</textarea>
+        <div class="meal-card-controls">
+          <button type="button" class="primary-button" data-meal-save>حفظ التعديل</button>
+          <button type="button" class="quiet-button" data-meal-cancel>إلغاء</button>
+        </div>
+      </div>
+    </div>`;
   }).join('');
 }
+// Writes go straight to the shared meals table (RLS limits them to this user's rows).
+async function writeMealCloud(id, patch){
+  const c=cloudDayClient(), uid=await cloudUserId();
+  if(!c||!uid) throw new Error('سجّل الدخول أولًا لتعديل الوجبات.');
+  if(!navigator.onLine) throw new Error('تحتاج تعديل الوجبة إلى اتصال بالإنترنت.');
+  const {error}=await c.from('meals').update({...patch,updated_at:new Date().toISOString()}).eq('user_id',uid).eq('client_id',id);
+  if(error) throw error;
+}
+async function deleteMealCloud(id){
+  const c=cloudDayClient(), uid=await cloudUserId();
+  if(!c||!uid) throw new Error('سجّل الدخول أولًا لحذف الوجبات.');
+  if(!navigator.onLine) throw new Error('تحتاج حذف الوجبة إلى اتصال بالإنترنت.');
+  const {error}=await c.from('meals').delete().eq('user_id',uid).eq('client_id',id);
+  if(error) throw error;
+}
+// Local date of the shown day with the chosen HH:MM, as an ISO string.
+function mealIsoAt(hhmm){
+  const [y,mo,da]=derived().selectedKey.split('-').map(Number);
+  const [hh,mi]=hhmm.split(':').map(Number);
+  return new Date(y,mo-1,da,hh,mi).toISOString();
+}
+function refreshMealsNow(){const key=derived().selectedKey;linkedFetchedAt[key]=0;ensureLinkedMeals(key)}
+document.addEventListener('click',async e=>{
+  const btn=e.target.closest('[data-meal-time],[data-meal-edit],[data-meal-cancel],[data-meal-save],[data-meal-delete]');
+  if(!btn) return;
+  const card=btn.closest('[data-meal-card]');
+  if(!card) return;
+  const id=card.dataset.mealCard;
+  const form=card.querySelector('.meal-card-edit');
+  try{
+    if(btn.hasAttribute('data-meal-edit')){form.hidden=false;return}
+    if(btn.hasAttribute('data-meal-cancel')){form.hidden=true;return}
+    if(btn.hasAttribute('data-meal-time')){
+      const v=card.querySelector('.meal-time').value;
+      if(!/^\d{2}:\d{2}$/.test(v)) return toast('اختر وقتًا صحيحًا');
+      await writeMealCloud(id,{meal_date:mealIsoAt(v)});
+      toast('تم تحديث وقت الوجبة');
+    } else if(btn.hasAttribute('data-meal-save')){
+      const f=name=>form.querySelector(`[data-f="${name}"]`).value;
+      const name=f('meal_name').trim();
+      if(!name) return toast('اكتب اسم الوجبة');
+      const num=k=>{const n=Number(f(k));return Number.isFinite(n)&&n>=0?n:0};
+      await writeMealCloud(id,{meal_name:name,ingredients:f('ingredients').trim(),calories:num('calories'),protein:num('protein'),carbs:num('carbs'),fat:num('fat'),notes:f('notes').trim()});
+      toast('تم حفظ تعديل الوجبة');
+    } else if(btn.hasAttribute('data-meal-delete')){
+      if(!confirm('حذف هذه الوجبة نهائيًا؟ ستُحذف من تطبيق مساعدي الغذائي أيضًا عند مزامنته.')) return;
+      await deleteMealCloud(id);
+      toast('تم حذف الوجبة');
+    }
+    refreshMealsNow();
+  }catch(err){
+    toast('تعذر الحفظ: '+(err&&err.message?err.message:err));
+  }
+});
 setInterval(()=>{if(document.visibilityState!=='hidden')ensureLinkedMeals(derived().selectedKey)},60000);
 
 // ---------- Prayer times (calculated locally, matched to دائرة الأوقاف الأردنية) ----------
