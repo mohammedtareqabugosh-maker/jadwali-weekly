@@ -455,15 +455,26 @@ const dateKey = (d) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDat
 const dateFromKey = (k) => { const [y,m,d] = k.split('-').map(Number); return new Date(y, m-1, d); };
 const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// Minutes after midnight for "11:00 PM", "11 مساءً", "10:45 مساءً", "23:00", "00:30" (-1 when unclear).
+// Hours 1–12 with no AM/PM keep the old meaning (24-hour), so existing rows parse exactly as before.
 const eventStart = (time) => {
-  const m = time.match(/(\d{1,2}):(\d{2})/);
+  let s = String(time || '').replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+  s = s.replace(/مساء\S*/g, ' PM').replace(/صباح\S*/g, ' AM');
+  const m = s.match(/(\d{1,2})(?::(\d{2}))?/);
   if (!m) return -1;
   let h = Number(m[1]);
-  const ap = (time.match(/(AM|PM)/i) || [])[1];
-  if (ap && ap.toUpperCase() === 'PM' && h < 12) h += 12;
-  if (ap && ap.toUpperCase() === 'AM' && h === 12) h = 0;
-  return h * 60 + Number(m[2]);
+  const min = m[2] === undefined ? 0 : Number(m[2]);
+  if (min > 59) return -1;
+  const ap = (s.match(/(AM|PM)/i) || [])[1];
+  if (ap) {
+    if (h < 1 || h > 12) return -1;
+    if (ap.toUpperCase() === 'PM' && h < 12) h += 12;
+    if (ap.toUpperCase() === 'AM' && h === 12) h = 0;
+  } else if (h > 23) return -1;
+  return h * 60 + min;
 };
+// Length in minutes from start to end. An end before 6 AM is read as after midnight; otherwise the window is invalid (-1).
+const spanOf = (st, en) => (en > st ? en - st : (en < 360 ? en + 1440 - st : -1));
 const TYPE_COLORS = { uni:'var(--c-uni)', work:'var(--c-work)', online:'var(--c-online)', study:'var(--c-study)', food:'var(--c-food)', rest:'var(--c-rest)', sleep:'var(--c-sleep)' };
 
 const fmtTime = (m) => { const h = Math.floor(m / 60) % 24, mm = m % 60; return `${h % 12 || 12}:${String(mm).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`; };
@@ -912,8 +923,8 @@ $('day-ai-suggest').addEventListener('click', async () => {
         const start = eventStart(String(a.start || '').trim());
         const end = eventStart(String(a.end || '').trim());
         return typeof a.title === 'string' && !!a.title.trim() &&
-          start >= 0 && end >= 0 && end > start &&
-          end - start <= 1440 && allowedTypes.includes(String(a.taskType || '').toLowerCase()) &&
+          start >= 0 && end >= 0 && spanOf(start, end) > 0 &&
+          spanOf(start, end) <= 1440 && allowedTypes.includes(String(a.taskType || '').toLowerCase()) &&
           typeof a.detail === 'string';
       });
       if (actionsValid) {
@@ -984,9 +995,10 @@ document.addEventListener('click',e=>{
      if(a.type==='add'||a.type==='update'){
        const title=String(a.title||'').trim(), type=String(a.taskType||'').trim().toLowerCase();
        const st=eventStart(String(a.start||'').trim()), en=eventStart(String(a.end||'').trim());
-       if(!title||st<0||en<0||en<=st||en-st>1440||!allowed.includes(type))return toast('الخطة فيها عنوان أو وقت أو نوع مهمة غير صالح؛ لم يتغير الجدول');
-       const start=st<360?st+1440:st, end=en<360?en+1440:en;
-       const task={time:fmtTime(st)+' – '+fmtTime(en),title,type,detail:String(a.detail||'').trim(),dur:en-st};
+       if(!title||st<0||en<0||spanOf(st,en)<=0||spanOf(st,en)>1440||!allowed.includes(type))return toast('الخطة فيها عنوان أو وقت أو نوع مهمة غير صالح؛ لم يتغير الجدول');
+       const span=spanOf(st,en);
+       const start=st<360?st+1440:st, end=start+span;
+       const task={time:fmtTime(st)+' – '+fmtTime(en),title,type,detail:String(a.detail||'').trim(),dur:span};
        if(a.type==='add')adds.push({task,start,end}); else updates.set(a.index,{task,start,end});
      }
    }
