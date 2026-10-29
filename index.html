@@ -1007,8 +1007,11 @@ function currentDayItems(){const d=derived();const raw=(state.dayPlans&&state.da
 function sortChronological(list){return list.map((x,i)=>({x,i,k:rowStartKey(x)})).sort((a,b)=>(a.k-b.k)||(a.i-b.i)).map(o=>o.x);}
 function renderDayChecklist(){
  const d=derived(), items=currentDayItems(), box=$('day-checklist');if(!box)return;
- const done=items.filter((it,i)=>!!state.done[d.selectedKey+'-'+i]).length;
- box.innerHTML='<p class="empty">'+done+' من '+items.length+' مهام مكتملة</p>'+items.map((it,i)=>'<div class="kv"><span>'+esc(it.title)+'</span><b>'+(state.done[d.selectedKey+'-'+i]?'✅ تم':'⏳ لم يتم')+'</b></div>').join('');
+ // Meals from مساعدي الغذائي count too, with the done tick kept on the meal card.
+ const meals=linkedMealsFor(d.selectedKey)||[], mealDoneMap=(state.mealDone||{})[d.selectedKey]||{};
+ const done=items.filter((it,i)=>!!state.done[d.selectedKey+'-'+i]).length+meals.filter(m=>!!mealDoneMap[m.client_id]).length;
+ const total=items.length+meals.length;
+ box.innerHTML='<p class="empty">'+done+' من '+total+' مهام مكتملة</p>'+items.map((it,i)=>'<div class="kv"><span>'+esc(it.title)+'</span><b>'+(state.done[d.selectedKey+'-'+i]?'✅ تم':'⏳ لم يتم')+'</b></div>').join('')+meals.map(m=>'<div class="kv"><span>🍽️ '+esc(m.meal_name||'وجبة')+'</span><b>'+(mealDoneMap[m.client_id]?'✅ تم':'⏳ لم يتم')+'</b></div>').join('');
 }
 // Keeps the day's rows before each applied plan, so the user can take a change back.
 function rememberBeforeChange(key, items){commit(st=>({...st,undo:[{key,at:Date.now(),items:items.map(x=>({...x}))},...(st.undo||[]).slice(0,9)]}))}
