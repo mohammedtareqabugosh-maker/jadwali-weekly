@@ -1470,6 +1470,7 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
   $c("chatRestart").addEventListener("click", start);
 
   window.addEventListener('shared-schedule-refresh',()=>{if(user)pull()});
+setInterval(()=>{if(user)pull()},30000);
 start();
 })();
 </script>
