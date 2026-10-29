@@ -280,11 +280,7 @@ details[open].panel > summary::after { content: "▴"; }
       <details class="panel">
         <summary>🍱 الوجبة المحمولة (الثلاثاء والخميس)</summary>
         <div class="panel-body">
-          <p style="color:var(--c-food);font-weight:800">400 سعرة · 30غ بروتين · تُؤكل في استراحة الشغل 7:00 PM</p>
-          <ul>
-            <li>صدر دجاج مشوي (100غ بعد الطبخ) + رغيف عربي صغير (60غ) + خضار</li>
-            <li>سندويشة دجاج بخبز عربي صغير (60غ) + خضار طازجة</li>
-          </ul>
+          <p style="color:var(--c-food);font-weight:800">يبقى موعد الوجبة ثابتًا، وتظهر محتوياتها وقيمها الغذائية بعد تسجيلها في تطبيق «مساعدي الغذائي».</p>
         </div>
       </details>
 
@@ -371,13 +367,7 @@ details[open].panel > summary::after { content: "▴"; }
 
 <script>
 // ---------- Data ----------
-const MEAL = {
-  bf: 'بيضتان متوسطتان + خبز عربي أسمر صغير (60غ) + جبنة قليلة الدسم (30غ) + خيار متوسط وبندورة متوسطة + شاي بدون سكر · 380 سعرة · 22غ بروتين',
-  sn: 'زبادي غير محلى (170–200غ) + تفاحة متوسطة · 150 سعرة · 8غ بروتين',
-  lu: 'صدر دجاج مشوي (180غ بعد الطبخ) + أرز (150غ مطبوخ) + سلطة (كوب) + ملعقة شاي زيت زيتون · 550 سعرة · 50غ بروتين',
-  sa: 'سندويشة بخبز أسمر (50–60غ) + جبنة قليلة الدسم (40غ) + خيار أو خس · 230 سعرة · 12غ بروتين',
-  di: 'دجاج أو لحم قليل الدهن (150غ بعد الطبخ) + بطاطا بالفرن (200غ) + سلطة (كوب) + علبة لبن صغيرة (150غ) · 500 سعرة · 40غ بروتين'
-};
+const MEAL = { bf:'', sn:'', lu:'', sa:'', di:'' };
 // dur is in minutes. An event without a stated duration keeps dur undefined and is never given an invented one.
 const ev = (time, title, type, detail, dur) => ({
   time, title, type, detail,
@@ -392,10 +382,10 @@ const campusItems = () => [
 const workTuesdayItems = () => [
   ...campusItems(),
   ev('11:50 AM','راحة وتجهيز للمحاضرة التالية','rest'), ev('1:00 PM','محاضرة البرمجة الكينونية','uni'),
-  ev('2:00 PM','سناك بعد الجامعة','food','سندويشة صغيرة بخبز أسمر + جبنة قليلة الدسم · 230 سعرة'),
+  ev('2:00 PM','وجبة خفيفة بعد الجامعة','food'),
   ev('2:15 PM','انتقال إلى الشغل','rest','45 دقيقة', 45), ev('3:00–11:00 PM','شغل (3:00 PM – 11:00 PM)','work'),
   ev('5:00–7:00 PM','غداء (بعد الجامعة في استراحة الشغل)','food',MEAL.lu),
-  ev('7:00 PM','وجبة محمولة (في الاستراحة)','food','صدر دجاج مشوي (100غ بعد الطبخ) + رغيف عربي صغير (60غ) + خضار · 400 سعرة · 30غ بروتين'),
+  ev('7:00 PM','وجبة محمولة (في الاستراحة)','food'),
   ev('11:00 PM','العودة إلى البيت (5–10 دقائق)','rest','تُحسب 10 دقائق (الحد الأعلى)', 10),
   ev('11:10 PM','عشاء خفيف','food','بيضة مسلوقة (حبة) + لبن قليل الدسم أو زبادي غير محلى (150غ) · 200 سعرة · 15غ بروتين'),
   ev('11:30 PM','تحضير للنوم','rest'), ev('12:30 AM','نوم','sleep')
@@ -404,12 +394,12 @@ const homeWorkday = (studyTitle, studyDetail, extraSlot) => [
   ev('8:30 AM','استيقاظ','rest'), ev('9:00 AM–7:00 PM','شغل حتى 7:00 PM','work'),
   ...(extraSlot ? [ev('11:00 AM','التربية الوطنية أونلاين','online','أثناء الشغل')] : []),
   ev('12:00 PM','فطور متأخر (في الاستراحة)','food',MEAL.bf),
-  ev('4:30 PM','سناك عصري (في الاستراحة)','food','سندويشة جبنة قليلة الدسم + خضار'),
+  ev('4:30 PM','وجبة خفيفة (في الاستراحة)','food'),
   ev('5:00 PM','مهارات الحاسوب الاستدراكي أونلاين','online','أثناء الشغل'),
-  ev('7:00 PM','انتقال إلى البيت، ثم غداء في البيت','food',MEAL.lu),
+  ev('7:00 PM','انتقال إلى البيت، ثم غداء في البيت','food'),
   ev('8:15 PM', studyTitle, 'study', studyDetail, 90),
   ev('9:45 PM','عشاء (بعد المذاكرة)','food',MEAL.di),
-  ev('10:15 PM','سناك (زبادي + تفاحة)','food',MEAL.sn),
+  ev('10:15 PM','وجبة خفيفة','food'),
   ev('10:45 PM','وقت شخصي','rest'), ev('12:00 AM','نوم','sleep')
 ];
 const DAYS = [
@@ -426,19 +416,18 @@ const DAYS = [
   { name:'الجمعة', tag:'شغل بدون محاضرات', total:'1810 سعرة · 132غ بروتين', items: homeWorkday('مذاكرة البرمجة الكينونية','ساعة ونصف', false) },
   { name:'السبت', tag:'شغل + تربية وطنية أونلاين', total:'1810 سعرة · 132غ بروتين', items: [
     ev('8:30 AM','استيقاظ','rest'), ev('9:00 AM–7:00 PM','شغل حتى 7:00 PM','work'), ev('11:00 AM','التربية الوطنية أونلاين','online','أثناء الشغل'),
-    ev('12:00 PM','فطور متأخر (في الاستراحة)','food',MEAL.bf), ev('4:30 PM','سناك عصري (في الاستراحة)','food','سندويشة جبنة قليلة الدسم + خضار'),
-    ev('5:00 PM','مهارات الحاسوب الاستدراكي أونلاين','online','أثناء الشغل'), ev('7:00 PM','انتقال إلى البيت، ثم غداء في البيت','food',MEAL.lu),
+    ev('12:00 PM','فطور متأخر (في الاستراحة)','food',MEAL.bf), ev('4:30 PM','وجبة خفيفة (في الاستراحة)','food'),
+    ev('5:00 PM','مهارات الحاسوب الاستدراكي أونلاين','online','أثناء الشغل'), ev('7:00 PM','انتقال إلى البيت، ثم غداء في البيت','food'),
     ev('8:15 PM','مذاكرة الجبر الخطي','study','ساعة', 60), ev('9:15 PM','وقت شخصي','rest'), ev('9:45 PM','عشاء (بعد المذاكرة)','food',MEAL.di),
-    ev('10:15 PM','سناك (زبادي + تفاحة)','food',MEAL.sn), ev('12:00 AM','نوم','sleep')
+    ev('10:15 PM','وجبة خفيفة','food'), ev('12:00 AM','نوم','sleep')
   ]}
 ];
 const TYPE_LABELS = [['uni','جامعة'],['work','شغل'],['online','أونلاين'],['study','مذاكرة'],['food','وجبة'],['rest','راحة'],['sleep','نوم']];
 const ALTERNATIVES = [
-  ['الفطور','فول مطبوخ (150غ) مع خبز عربي معتدل · أو شوفان (60غ) مع حليب قليل الدسم (250مل) وموزة صغيرة · أو بيضتان مسلوقتان مع لبنة قليلة الدسم (50غ) وخبز أسمر صغير'],
-  ['السناك الصباحي','موزة صغيرة مع 10غ لوز · أو حليب قليل الدسم مع فاكهة صغيرة · أو بيضة مسلوقة مع فاكهة'],
-  ['الغداء','لحم قليل الدهن (150غ) مع بطاطا بالفرن (200غ) وسلطة · أو سمك مشوي (150غ) مع أرز (150غ) وسلطة · أو مجدّرة (250غ) مع لبن (200غ) وسلطة'],
-  ['السناك العصري','موزة مع حليب قليل الدسم · أو زبادي غير محلى مع مكسرات (15غ) · أو سندويشة بيضة مسلوقة مع خضار'],
-  ['العشاء','سندويشة دجاج (100غ) بخبز عربي صغير (60غ) مع لبن وخضار · أو بيضتان مسلوقتان مع لبنة قليلة الدسم (60غ) وخبز أسمر · أو سمك مشوي (150غ) مع أرز (150غ) وسلطة']
+  ['الفطور','تُعرض المحتويات والقيم الغذائية عند تسجيل الوجبة في تطبيق مساعدي الغذائي.'],
+  ['الوجبة الخفيفة','تُعرض المحتويات والقيم الغذائية عند تسجيل الوجبة في تطبيق مساعدي الغذائي.'],
+  ['الغداء','تُعرض المحتويات والقيم الغذائية عند تسجيل الوجبة في تطبيق مساعدي الغذائي.'],
+  ['العشاء','تُعرض المحتويات والقيم الغذائية عند تسجيل الوجبة في تطبيق مساعدي الغذائي.']
 ];
 const SCENARIOS = [
   { id:'overeat', title:'تناولت وجبة إضافية أو أكلت أكثر من المعتاد', advice:['لا تحتاج إلى تعويض قاسٍ أو تخطي وجبات؛ عد إلى وجبتك التالية المعتادة.','اختر ماءً ووجبة متوازنة عندما يحين وقتها، واترك مساحة لمرونة اليوم.','إن كان مناسباً لك، خذ استراحة قصيرة أو مشياً هادئاً.'] },
@@ -664,9 +653,36 @@ function render() {
   }).join('');
 
   const plan = {...DAYS[selected], items: (state.dayPlans && state.dayPlans[d.selectedKey]) || DAYS[selected].items};
+  const sharedMeals = Array.isArray(window.sharedMealRecords) ? window.sharedMealRecords : [];
+  const mealKey = value => {
+    const s = String(value || '').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي');
+    if (/فطور|افطار|breakfast/.test(s)) return 'breakfast';
+    if (/غداء|غدا|lunch/.test(s)) return 'lunch';
+    if (/عشاء|عشا|dinner/.test(s)) return 'dinner';
+    if (/سناك|خفيف|snack|وجبه خفيفه/.test(s)) return 'snack';
+    return '';
+  };
+  const displayItems = plan.items.map(it => {
+    if (it.type !== 'food') return it;
+    const kind = mealKey(it.title);
+    if (!kind) return it;
+    const matches = sharedMeals.filter(m => {
+      if (!m.starts_at || !m.meal_type) return false;
+      const dt = new Date(m.starts_at);
+      const dateKey = dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');
+      return dateKey === d.selectedKey && mealKey(m.meal_type) === kind;
+    });
+    if (!matches.length) return {...it, detail:''};
+    const detail = matches.map(m => {
+      const ingredients = m.ingredients || m.details || '';
+      const macros = [Number(m.calories)>0 ? Math.round(Number(m.calories))+' سعرة' : '', Number(m.protein)>0 ? Number(m.protein)+'غ بروتين' : '', Number(m.carbs)>0 ? Number(m.carbs)+'غ كربوهيدرات' : '', Number(m.fat)>0 ? Number(m.fat)+'غ دهون' : ''].filter(Boolean).join(' · ');
+      return (m.title ? m.title+' — ' : '')+(ingredients || 'المكونات غير محددة')+(macros ? ' · '+macros : '');
+    }).join(' | ');
+    return {...it, detail};
+  });
   const isToday = d.selectedKey === d.todayKey;
-  const doneCount = plan.items.reduce((n, _it, i) => n + (state.done[`${d.selectedKey}-${i}`] ? 1 : 0), 0);
-  const cur = currentEventIndex(plan.items, isToday, d.today);
+  const doneCount = displayItems.reduce((n, _it, i) => n + (state.done[`${d.selectedKey}-${i}`] ? 1 : 0), 0);
+  const cur = currentEventIndex(displayItems, isToday, d.today);
   $('dayTitle').textContent = `${plan.name}، ${new Intl.DateTimeFormat('ar',{day:'numeric', month:'long'}).format(d.selectedDate)}`;
   $('dayTag').textContent = plan.tag + (isToday ? ' · هذا اليوم' : '');
   $('dayCount').textContent = `${doneCount} من ${plan.items.length} مهام`;
@@ -687,7 +703,7 @@ function render() {
   renderPrayerTimes(d);
   $('override').innerHTML = ov ? `<div class="response-box"><strong>خطة مرنة لهذا اليوم</strong><p>${esc(ov)} — تُسجّل لهذا اليوم فقط ولا تغيّر الجدول الأصلي.</p></div>` : '';
 
-  $('timeline').innerHTML = plan.items.map((it, i) => {
+  $('timeline').innerHTML = displayItems.map((it, i) => {
     const done = !!state.done[`${d.selectedKey}-${i}`];
     return `<div class="event-row ${done ? 'done' : ''} ${cur === i ? 'now' : ''}" style="--event-color:${TYPE_COLORS[it.type]}">
       <input type="checkbox" class="event-check" data-task="${i}" ${done ? 'checked' : ''} aria-label="إنجاز: ${esc(it.title)}">
@@ -2083,6 +2099,8 @@ function draw(){
  $('ss-week').innerHTML=Array.from({length:7},(_,i)=>{const x=new Date(sun);x.setDate(sun.getDate()+i);const k=key(x);return '<button type="button" class="ss-daybtn '+(k===selected?'active':'')+'" data-ss-day="'+k+'">'+names[i]+'<strong>'+x.getDate()+'</strong></button>'}).join('');
  const day=rows.filter(r=>localDate(r.starts_at)===selected).sort((a,b)=>new Date(a.starts_at)-new Date(b.starts_at));
  const meals=day.filter(x=>x.kind==='meal'),kcal=meals.reduce((a,x)=>a+(Number(x.calories)||0),0),protein=meals.reduce((a,x)=>a+(Number(x.protein)||0),0);
+ window.sharedMealRecords=rows.filter(r=>r.kind==='meal');
+ window.dispatchEvent(new Event('shared-meals-updated'));
  $('ss-summary').innerHTML='<span class="ss-chip">'+day.length+' عناصر اليوم</span><span class="ss-chip">🔥 '+Math.round(kcal)+' سعرة</span><span class="ss-chip">💪 '+Math.round(protein*10)/10+' غ بروتين</span>';
  $('ss-items').innerHTML=day.length?day.map(r=>'<div class="ss-item"><div class="ss-time">'+esc(timeText(r.starts_at))+'</div><div class="ss-itembody"><div class="ss-title">'+(r.kind==='meal'?'🍽️ ':'')+esc(r.title)+'</div>'+(r.details?'<div class="ss-details">'+esc(r.details)+'</div>':'')+(r.kind==='meal'?'<div class="ss-kind">'+Math.round(Number(r.calories)||0)+' سعرة · '+Math.round(Number(r.protein)||0)+'غ بروتين</div>':'<div class="ss-kind">'+(r.kind==='appointment'?'موعد':'مهمة')+'</div>')+'</div><button class="ss-del" data-ss-delete="'+esc(r.id)+'" type="button">حذف</button></div>').join(''):'<div class="ss-empty">ما في عناصر لهذا اليوم. أضف وجبة أو مهمة من النموذج بالأسفل.</div>';
 }
