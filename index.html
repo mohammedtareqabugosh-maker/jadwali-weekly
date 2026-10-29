@@ -370,7 +370,7 @@ details[open].panel > summary::after { content: "▴"; }
 const MEAL = { bf:'', sn:'', lu:'', sa:'', di:'' };
 // dur is in minutes. An event without a stated duration keeps dur undefined and is never given an invented one.
 const ev = (time, title, type, detail, dur) => ({
-  time, title, type, detail,
+  time, title, type, detail: type === 'food' ? '' : detail,
   // lectures last 1 hour; the programming lab lasts 2 hours
   dur: dur ?? (type === 'uni' ? (title.includes('مختبر') ? 120 : 60) : undefined)
 });
@@ -703,19 +703,100 @@ function render() {
   renderPrayerTimes(d);
   $('override').innerHTML = ov ? `<div class="response-box"><strong>خطة مرنة لهذا اليوم</strong><p>${esc(ov)} — تُسجّل لهذا اليوم فقط ولا تغيّر الجدول الأصلي.</p></div>` : '';
 
+  ensureLinkedMeals(d.selectedKey);
+  const linkedBySlot = linkMealsToSlots(plan.items, linkedMealsFor(d.selectedKey));
   $('timeline').innerHTML = displayItems.map((it, i) => {
     const done = !!state.done[`${d.selectedKey}-${i}`];
     return `<div class="event-row ${done ? 'done' : ''} ${cur === i ? 'now' : ''}" style="--event-color:${TYPE_COLORS[it.type]}">
       <input type="checkbox" class="event-check" data-task="${i}" ${done ? 'checked' : ''} aria-label="إنجاز: ${esc(it.title)}">
-      <div class="event-copy"><div class="event-title">${esc(it.title)}${cur === i ? ' <span class="tag-pill">الآن</span>' : ''}</div>${it.detail ? `<div class="event-detail">${esc(it.detail)}</div>` : ''}</div>
+      <div class="event-copy"><div class="event-title">${esc(it.title)}${cur === i ? ' <span class="tag-pill">الآن</span>' : ''}</div>${it.detail ? `<div class="event-detail">${esc(it.detail)}</div>` : ''}${it.detail ? '' : linkedMealHTML(linkedBySlot[i])}</div>
       <span class="event-time">${esc(it.time)}</span><button type="button" class="quiet-button" data-main-edit="${i}" aria-label="تعديل ${esc(it.title)}">✏️</button><button type="button" class="quiet-button" data-main-delete="${i}" aria-label="حذف ${esc(it.title)}">🗑️</button></div>`;
-  }).join('') + extraRowsHTML(d.selectedKey);
+  }).join('') + extraRowsHTML(d.selectedKey) + unmatchedMealsHTML(linkedBySlot.unmatched);
   renderDayChecklist();
 
   renderDayNotes();
   $('alts').innerHTML = ALTERNATIVES.map(([t, x]) => `<div class="alt"><strong>${esc(t)}</strong>${esc(x)}</div>`).join('');
   $('scenarioGrid').innerHTML = SCENARIOS.map(s => `<button type="button" data-scenario="${esc(s.id)}">${esc(s.title)}</button>`).join('');
 }
+
+// ---------- Meals from مساعدي الغذائي (shown inside their meal slot, read from the shared meals table) ----------
+const LINKED_MEALS_KEY = 'linked-meals-v1';
+const linkedMemory = {};    // dateKey -> rows from the last successful load
+const linkedFetchedAt = {}; // dateKey -> time of the last attempt
+const linkedInflight = {};
+function linkedCacheRead(){try{return JSON.parse(localStorage.getItem(LINKED_MEALS_KEY)||'{}')}catch{return {}}}
+function linkedCacheWrite(key,rows){try{const o=linkedCacheRead();o[key]=rows;const keep={};Object.keys(o).sort().slice(-14).forEach(k=>keep[k]=o[k]);localStorage.setItem(LINKED_MEALS_KEY,JSON.stringify(keep))}catch{}}
+// Rows for a day: the last load in this page, else the copy saved on this device (kept when offline).
+function linkedMealsFor(key){if(linkedMemory[key])return linkedMemory[key];const c=linkedCacheRead()[key];return Array.isArray(c)?c:[]}
+// Meal category from a slot title ("غداء (بعد الجامعة)") or from the food app's meal type ("الغداء").
+function mealCategoryOf(text){const t=String(text||'');if(/فطور|إفطار/.test(t))return 'breakfast';if(/غداء/.test(t))return 'lunch';if(/عشاء/.test(t))return 'dinner';if(/سناك/.test(t))return 'snack';return ''}
+function mealCategoryOfType(type){return {'الفطور':'breakfast','الغداء':'lunch','العشاء':'dinner','وجبة خفيفة':'snack'}[String(type||'').trim()]||''}
+async function fetchLinkedMeals(key){
+  const c=cloudDayClient(); const uid=await cloudUserId();
+  if(!c||!uid) return null; // not signed in: keep what this device already has
+  const [y,m,d]=key.split('-').map(Number);
+  const from=new Date(y,m-1,d).toISOString(), to=new Date(y,m-1,d+1).toISOString();
+  const {data,error}=await c.from('meals')
+    .select('client_id,meal_name,meal_type,meal_date,calories,protein,carbs,fat,ingredients,notes')
+    .eq('user_id',uid).gte('meal_date',from).lt('meal_date',to).order('meal_date',{ascending:true});
+  if(error) throw error;
+  return data||[];
+}
+// Loads a day at most once a minute. Re-renders only when new rows arrive.
+function ensureLinkedMeals(key){
+  if(linkedInflight[key]) return;
+  if(linkedFetchedAt[key] && Date.now()-linkedFetchedAt[key] < 60000) return;
+  linkedInflight[key]=true;
+  fetchLinkedMeals(key).then(rows=>{
+    linkedFetchedAt[key]=Date.now();
+    if(rows){linkedMemory[key]=rows;linkedCacheWrite(key,rows)}
+  }).catch(()=>{linkedFetchedAt[key]=Date.now()-30000}).finally(()=>{delete linkedInflight[key];render()});
+}
+// Each meal goes to one food slot: same category, nearest time. A meal is never shown twice.
+function linkMealsToSlots(items, meals){
+  const slots=[];
+  items.forEach((it,i)=>{
+    if(it.type!=='food') return;
+    const cat=mealCategoryOf(it.title);
+    const r=rangeOf(items,i);
+    if(cat && r) slots.push({i,cat,start:r.s%1440});
+  });
+  const bySlot={}, used=new Set(), unmatched=[];
+  for(const meal of meals){
+    const cat=mealCategoryOfType(meal.meal_type);
+    const id=meal.client_id||`${meal.meal_date}|${meal.meal_name}`;
+    if(!cat||used.has(id)) continue;
+    const when=new Date(meal.meal_date);
+    if(isNaN(when)) continue;
+    const mm=when.getHours()*60+when.getMinutes();
+    const cands=slots.filter(s=>s.cat===cat).sort((a,b)=>Math.abs(a.start-mm)-Math.abs(b.start-mm));
+    if(!cands.length){unmatched.push(meal);used.add(id);continue}
+    (bySlot[cands[0].i]||(bySlot[cands[0].i]=[])).push(meal);
+    used.add(id);
+  }
+  // Meals with no matching slot (or unknown type) are listed below the timeline, not dropped.
+  for(const meal of meals){const id=meal.client_id||`${meal.meal_date}|${meal.meal_name}`;if(!used.has(id)){unmatched.push(meal);used.add(id)}}
+  bySlot.unmatched=unmatched;
+  return bySlot;
+}
+// Shows only values the food app actually has. Zero means "not recorded", so it is left out.
+function unmatchedMealsHTML(meals){
+  if(!meals||!meals.length) return '';
+  return `<div class="event-row" style="--event-color:#b8862b"><div class="event-copy"><div class="event-title">وجبات من مساعدي الغذائي بلا موعد مطابق في هذا اليوم</div>${linkedMealHTML(meals)}</div></div>`;
+}
+function linkedMealHTML(meals){
+  if(!meals||!meals.length) return '';
+  return meals.map(m=>{
+    const nums=[];
+    const cal=Number(m.calories)||0, pro=Number(m.protein)||0, carb=Number(m.carbs)||0, fat=Number(m.fat)||0;
+    if(cal) nums.push(`${Math.round(cal)} سعرة`);
+    if(pro) nums.push(`بروتين ${pro} غ`);
+    if(carb) nums.push(`كربوهيدرات ${carb} غ`);
+    if(fat) nums.push(`دهون ${fat} غ`);
+    return `<div class="event-detail linked-meal"><strong>${esc(m.meal_name||'وجبة')}</strong>${m.ingredients?`<div>${esc(m.ingredients)}</div>`:''}${nums.length?`<div>${esc(nums.join(' · '))}</div>`:''}${m.notes?`<div>${esc(m.notes)}</div>`:''}</div>`;
+  }).join('');
+}
+setInterval(()=>{if(document.visibilityState!=='hidden')ensureLinkedMeals(derived().selectedKey)},60000);
 
 // ---------- Prayer times (calculated locally, matched to دائرة الأوقاف الأردنية) ----------
 const PRAYER_LOCATION = { lat: 31.9539, lng: 35.9106, label: 'عمّان' };
@@ -1934,15 +2015,7 @@ start();
     const detail = (meal.meal_type || "") + " · " + (Number(meal.calories) || 0) + " سعرة · " + (Number(meal.protein) || 0) + " غ بروتين";
 
     if (mode === "day") {
-      const current = (state.dayMeals || {})[key] || [];
-      if (current.some(x => x.cid === meal.client_id)) return toast("الوجبة مضافة لهذا اليوم بالفعل");
-      const ok = commit(s => {
-        const all = { ...(s.dayMeals || {}) };
-        all[key] = [...(all[key] || []), { cid: meal.client_id, title, time, detail }];
-        return { ...s, dayMeals: all };
-      });
-      if (ok) toast("أضيفت الوجبة إلى جدول اليوم");
-      return;
+      return toast("ستظهر الوجبة تلقائيًا في موعدها داخل الجدول");
     }
 
     const text = "🍽️ " + title + " — " + time + " — " + detail;
