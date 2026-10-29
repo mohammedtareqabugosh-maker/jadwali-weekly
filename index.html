@@ -200,6 +200,10 @@ details[open].panel > summary::after { content: "▴"; }
   .summary-grid, .metrics, .scenario-grid { grid-template-columns: 1fr; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+.prayer-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(88px,1fr));gap:8px;margin-top:8px}
+.prayer-grid span{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px;border-radius:10px;background:rgba(0,0,0,.05)}
+.prayer-grid b{font-weight:700}
+.prayer-grid .prayer-next{outline:2px solid currentColor}
 </style>
 </head>
 <body>
@@ -256,6 +260,7 @@ details[open].panel > summary::after { content: "▴"; }
       <div class="legend" id="legend"></div>
       <div id="conflicts"></div>
       <div id="override"></div>
+      <div id="prayerBox" class="response-box" style="margin-top:12px"></div>
       <div class="timeline" id="timeline"></div>
       <div id="dayNotes" class="day-notes" style="margin-top:14px"></div>
     </section>
@@ -666,6 +671,7 @@ function render() {
     : '';
 
   const ov = state.overrides[d.selectedKey];
+  renderPrayerTimes(d);
   $('override').innerHTML = ov ? `<div class="response-box"><strong>خطة مرنة لهذا اليوم</strong><p>${esc(ov)} — تُسجّل لهذا اليوم فقط ولا تغيّر الجدول الأصلي.</p></div>` : '';
 
   $('timeline').innerHTML = plan.items.map((it, i) => {
@@ -681,6 +687,97 @@ function render() {
   $('alts').innerHTML = ALTERNATIVES.map(([t, x]) => `<div class="alt"><strong>${esc(t)}</strong>${esc(x)}</div>`).join('');
   $('scenarioGrid').innerHTML = SCENARIOS.map(s => `<button type="button" data-scenario="${esc(s.id)}">${esc(s.title)}</button>`).join('');
 }
+
+// ---------- Prayer times (calculated locally, matched to دائرة الأوقاف الأردنية) ----------
+const PRAYER_LOCATION = { lat: 31.9539, lng: 35.9106, label: 'عمّان' };
+const PRAYER_NAMES = [['Fajr','الفجر'],['Dhuhr','الظهر'],['Asr','العصر'],['Maghrib','المغرب'],['Isha','العشاء']];
+// Official timetable of دائرة الأوقاف الأردنية (24-hour). Used first for every date it covers.
+// Columns: Fajr, Sunrise, Dhuhr, Asr, Maghrib, Isha. Add more rows here as the ministry publishes them.
+const AWQAF_TIMES = {
+  '2026-10-29': {Fajr:'05:28',Sunrise:'06:44',Dhuhr:'12:20',Asr:'15:26',Maghrib:'17:56',Isha:'19:12'},
+  '2026-10-30': {Fajr:'05:28',Sunrise:'06:45',Dhuhr:'12:20',Asr:'15:26',Maghrib:'17:55',Isha:'19:11'},
+  '2026-10-31': {Fajr:'05:29',Sunrise:'06:46',Dhuhr:'12:20',Asr:'15:25',Maghrib:'17:54',Isha:'19:10'},
+  '2026-11-01': {Fajr:'05:30',Sunrise:'06:46',Dhuhr:'12:20',Asr:'15:24',Maghrib:'17:53',Isha:'19:10'},
+  '2026-11-02': {Fajr:'05:30',Sunrise:'06:47',Dhuhr:'12:20',Asr:'15:24',Maghrib:'17:52',Isha:'19:09'},
+  '2026-11-03': {Fajr:'05:31',Sunrise:'06:48',Dhuhr:'12:20',Asr:'15:23',Maghrib:'17:51',Isha:'19:08'},
+  '2026-11-04': {Fajr:'05:32',Sunrise:'06:49',Dhuhr:'12:20',Asr:'15:22',Maghrib:'17:51',Isha:'19:07'},
+  '2026-11-05': {Fajr:'05:33',Sunrise:'06:50',Dhuhr:'12:20',Asr:'15:22',Maghrib:'17:50',Isha:'19:07'},
+  '2026-11-06': {Fajr:'05:33',Sunrise:'06:51',Dhuhr:'12:20',Asr:'15:21',Maghrib:'17:49',Isha:'19:06'},
+  '2026-11-07': {Fajr:'05:34',Sunrise:'06:51',Dhuhr:'12:20',Asr:'15:21',Maghrib:'17:48',Isha:'19:06'},
+};
+// Settings fitted to the table above: Fajr and Isha at 18°, Shafi Asr, sunrise/sunset at -1.95°.
+const PRAYER_CALC = { fajrAngle: 18, ishaAngle: 18, asrFactor: 1, horizon: -1.95, tzHours: 3 };
+const PRAYER_RAD = Math.PI / 180;
+// Solar declination and equation of time (NOAA approximation). g is the fractional year in radians.
+function prayerSun(doy, utcMin){
+  const g = 2*Math.PI/365*(doy-1+(utcMin/60-12)/24);
+  const eqt = 229.18*(0.000075+0.001868*Math.cos(g)-0.032077*Math.sin(g)-0.014615*Math.cos(2*g)-0.040849*Math.sin(2*g));
+  const decl = 0.006918-0.399912*Math.cos(g)+0.070257*Math.sin(g)-0.006758*Math.cos(2*g)+0.000907*Math.sin(2*g)-0.002697*Math.cos(3*g)+0.00148*Math.sin(3*g);
+  return {decl, eqt};
+}
+// Sun altitude in degrees at a local clock time (minutes after midnight, Jordan time).
+function prayerAltitude(doy, localMin){
+  const utc = localMin - PRAYER_CALC.tzHours*60;
+  const {decl, eqt} = prayerSun(doy, utc);
+  const tst = utc + eqt + 4*PRAYER_LOCATION.lng;
+  const ha = (tst/4 - 180)*PRAYER_RAD;
+  const lat = PRAYER_LOCATION.lat*PRAYER_RAD;
+  return Math.asin(Math.sin(lat)*Math.sin(decl)+Math.cos(lat)*Math.cos(decl)*Math.cos(ha))/PRAYER_RAD;
+}
+// Local minute of solar noon (highest altitude).
+function prayerNoon(doy){
+  let best=720, bestAlt=-99;
+  for(let m=690;m<=750;m+=0.25){const a=prayerAltitude(doy,m); if(a>bestAlt){bestAlt=a;best=m}}
+  return best;
+}
+// Bisection for the moment the sun crosses a target altitude, before or after noon.
+function prayerCross(doy, target, before){
+  const noon=prayerNoon(doy);
+  let a=before?noon-900:noon, b=before?noon:noon+900;
+  for(let i=0;i<80;i++){
+    const m=(a+b)/2;
+    const above=prayerAltitude(doy,m)>target;
+    if(before?!above:above) a=m; else b=m;
+  }
+  return (a+b)/2;
+}
+// Asr: shadow length = factor × object height + noon shadow.
+function prayerAsr(doy){
+  const {decl}=prayerSun(doy, 720-PRAYER_CALC.tzHours*60);
+  const lat=PRAYER_LOCATION.lat*PRAYER_RAD;
+  const target=Math.atan(1/(PRAYER_CALC.asrFactor+Math.tan(Math.abs(lat-decl))))/PRAYER_RAD;
+  return prayerCross(doy, target, false);
+}
+function prayerDayOfYear(key){const [y,m,d]=key.split('-').map(Number);return Math.floor((Date.UTC(y,m-1,d)-Date.UTC(y,0,1))/86400000)+1}
+// "17:42" -> minutes after midnight, -1 if not a clock time.
+function prayerMinutes(s){const m=String(s||'').match(/^(\d{1,2}):(\d{2})/);return m?Number(m[1])*60+Number(m[2]):-1}
+// "17:42" -> "5:42 PM" (same format as the planner).
+function prayerClock12(s){const total=prayerMinutes(s);if(total<0)return '';let h=Math.floor(total/60);const min=String(total%60).padStart(2,'0');const suffix=h<12?'AM':'PM';h=h%12||12;return `${h}:${min} ${suffix}`}
+function prayerHM(minutes){const t=Math.round(minutes)%1440;return String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0')}
+// Times for a date key ('YYYY-MM-DD'): official table first, otherwise the local calculation.
+function loadPrayerTimes(key){
+  if(AWQAF_TIMES[key]) return AWQAF_TIMES[key];
+  const doy=prayerDayOfYear(key);
+  return {
+    Fajr: prayerHM(prayerCross(doy,-PRAYER_CALC.fajrAngle,true)),
+    Sunrise: prayerHM(prayerCross(doy,PRAYER_CALC.horizon,true)),
+    Dhuhr: prayerHM(prayerNoon(doy)),
+    Asr: prayerHM(prayerAsr(doy)),
+    Maghrib: prayerHM(prayerCross(doy,PRAYER_CALC.horizon,false)),
+    Isha: prayerHM(prayerCross(doy,-PRAYER_CALC.ishaAngle,false)),
+  };
+}
+function renderPrayerTimes(d){
+  const box=$('prayerBox');if(!box)return;
+  const key=d.selectedKey;
+  const t=loadPrayerTimes(key);
+  let nextName='';
+  if(key===d.todayKey){const now=d.today.getHours()*60+d.today.getMinutes();const next=PRAYER_NAMES.find(([en])=>prayerMinutes(t[en])>now);nextName=next?next[0]:''}
+  const source=AWQAF_TIMES[key]?'حسب تقويم دائرة الأوقاف':'محسوبة بنفس إعدادات الأوقاف (الفجر والعشاء 18°)';
+  box.innerHTML=`<strong>مواقيت الصلاة · ${esc(PRAYER_LOCATION.label)}</strong><p class="muted" style="margin:4px 0 0">${esc(source)}</p><div class="prayer-grid">${PRAYER_NAMES.map(([en,ar])=>`<span class="${en===nextName?'prayer-next':''}">${ar}<b>${esc(prayerClock12(t[en]))}</b></span>`).join('')}</div>`;
+}
+// Keeps "next prayer" and the day switch current without a page reload.
+setInterval(()=>{if(document.visibilityState!=='hidden')renderPrayerTimes(derived())},60000);
 
 // ---------- Day-specific schedule editor and daily checklist ----------
 function currentDayItems(){const d=derived();const raw=(state.dayPlans&&state.dayPlans[d.selectedKey])||DAYS[selected].items;return sortChronological(raw);}
