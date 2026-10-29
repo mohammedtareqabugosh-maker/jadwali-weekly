@@ -524,14 +524,16 @@ function analyzeDay(items) {
     const last = merged[merged.length - 1];
     if (last && s <= last[1]) last[1] = Math.max(last[1], e); else merged.push([s, e]);
   });
+  // Keep 15-minute gaps: the planner must support short tasks, not silently discard them.
+  const MIN_FREE_SLOT_MINUTES = 15;
   const freeSlots = [];
   let cursor = WINDOW_START;
   merged.forEach(([s, e]) => {
     const to = Math.min(s, WINDOW_END);
-    if (to - cursor >= 30) freeSlots.push(`${fmtTime(cursor)} – ${fmtTime(to)}`);
+    if (to - cursor >= MIN_FREE_SLOT_MINUTES) freeSlots.push(`${fmtTime(cursor)} – ${fmtTime(to)}`);
     cursor = Math.max(cursor, e);
   });
-  if (WINDOW_END - cursor >= 30) freeSlots.push(`${fmtTime(cursor)} – ${fmtTime(WINDOW_END)}`);
+  if (WINDOW_END - cursor >= MIN_FREE_SLOT_MINUTES) freeSlots.push(`${fmtTime(cursor)} – ${fmtTime(WINDOW_END)}`);
   return { conflicts, freeSlots };
 }
 
@@ -1608,7 +1610,7 @@ start();
           "استخدم أوقات المهام كما هي في الجدول، ولا تخترع مواعيد ثابتة.",
           "راعِ الجامعة والشغل والمحاضرات الأونلاين والتنقل والوجبات والنوم.",
           "انتبه إلى أن بعض المهام قد تتداخل في أوقاتها؛ نبّه المستخدم إلى التعارض بدل إخفائه.",
-          "استخدم قائمة التعارضات والفترات المتاحة المحسوبة لكل يوم كما هي، ولا تقدّر أوقاتاً غير موجودة فيها.",
+          "استخدم قائمة التعارضات والفترات المتاحة المحسوبة لكل يوم كما هي، وتذكّر أن الفترات المتاحة مدتها 15 دقيقة أو أكثر تظهر في القائمة؛ لا ترفض مهمة قصيرة لمجرد أنها أقل من 30 دقيقة.",
           "احسب مجموع المدد بنفسك بدقة قبل ذكر أي مدة إجمالية، وتأكد من صحة الجمع.",
           "كل محاضرة جامعية مدتها ساعة، ومختبر البرمجة الكينونية مدته ساعتان؛ استخدم هذه المدد في حساب الفترات والتعارضات.",
           "اكتب بالعربية فقط، ولا تذكر أسماء الحقول الداخلية مثل schedule_context أو conflicts أو events أو أي مفاتيح تقنية.",
