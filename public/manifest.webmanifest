@@ -1,0 +1,20 @@
+{
+  "name": "جدولي الأسبوعي — Weekly Schedule",
+  "short_name": "جدولي",
+  "description": "جدول أسبوعي عربي للدراسة والعمل والوجبات والأهداف، يحفظ بياناتك محليًا ويعمل دون اتصال.",
+  "id": "./",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#F5F6EF",
+  "theme_color": "#58751B",
+  "categories": ["productivity", "education", "lifestyle"],
+  "icons": [
+    { "src": "./icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "./icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
