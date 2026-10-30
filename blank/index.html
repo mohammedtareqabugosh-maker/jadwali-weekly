@@ -387,34 +387,6 @@ const ev = (time, title, type, detail, dur) => ({
   // lectures last 1 hour; the programming lab lasts 2 hours
   dur: dur ?? (type === 'uni' ? (title.includes('مختبر') ? 120 : 60) : undefined)
 });
-// Each day builds its own item objects (factories), so Tuesday and Thursday never share state.
-const campusItems = () => [
-  ev('7:15 AM','استيقاظ','rest'), ev('9:00 AM','محاضرة المنطق الرقمي','uni'), ev('10:00 AM','محاضرة الجبر الخطي','uni'),
-  ev('11:00 AM','فطور (وقت الفراغ بعد الجبر)','food',MEAL.bf)
-];
-const workTuesdayItems = () => [
-  ...campusItems(),
-  ev('11:50 AM','راحة وتجهيز للمحاضرة التالية','rest'), ev('1:00 PM','محاضرة البرمجة الكينونية','uni'),
-  ev('2:00 PM','وجبة خفيفة بعد الجامعة','food'),
-  ev('2:15 PM','انتقال إلى الشغل','rest','45 دقيقة', 45), ev('3:00–11:00 PM','شغل (3:00 PM – 11:00 PM)','work'),
-  ev('5:00–7:00 PM','غداء (بعد الجامعة في استراحة الشغل)','food',MEAL.lu),
-  ev('7:00 PM','وجبة محمولة (في الاستراحة)','food'),
-  ev('11:00 PM','العودة إلى البيت (5–10 دقائق)','rest','تُحسب 10 دقائق (الحد الأعلى)', 10),
-  ev('11:10 PM','عشاء خفيف','food','بيضة مسلوقة (حبة) + لبن قليل الدسم أو زبادي غير محلى (150غ) · 200 سعرة · 15غ بروتين'),
-  ev('11:30 PM','تحضير للنوم','rest'), ev('12:30 AM','نوم','sleep')
-];
-const homeWorkday = (studyTitle, studyDetail, extraSlot) => [
-  ev('8:30 AM','استيقاظ','rest'), ev('9:00 AM–7:00 PM','شغل حتى 7:00 PM','work'),
-  ...(extraSlot ? [ev('11:00 AM','التربية الوطنية أونلاين','online','أثناء الشغل')] : []),
-  ev('12:00 PM','فطور متأخر (في الاستراحة)','food',MEAL.bf),
-  ev('4:30 PM','وجبة خفيفة (في الاستراحة)','food'),
-  ev('5:00 PM','مهارات الحاسوب الاستدراكي أونلاين','online','أثناء الشغل'),
-  ev('7:00 PM','انتقال إلى البيت، ثم غداء في البيت','food'),
-  ev('8:15 PM', studyTitle, 'study', studyDetail, 90),
-  ev('9:45 PM','عشاء (بعد المذاكرة)','food',MEAL.di),
-  ev('10:15 PM','وجبة خفيفة','food'),
-  ev('10:45 PM','وقت شخصي','rest'), ev('12:00 AM','نوم','sleep')
-];
 const DAYS = [
   { name:'الأحد', tag:'جدول فارغ — أضف مهامك', total:'', items:[] },
   { name:'الاثنين', tag:'جدول فارغ — أضف مهامك', total:'', items:[] },
@@ -437,7 +409,7 @@ const SCENARIOS = [
   { id:'missed_study', title:'لم أتمكن من المذاكرة', advice:['اليوم لم يضع؛ اختر خطوة صغيرة الآن أو انقل جزءاً واحداً لوقت أهدأ.','ابدأ بـ 15 دقيقة أو ثلاثة أسئلة، ثم قرر إن كنت تريد المتابعة.'] },
   { id:'late_sleep', title:'سهرت أو لم أستيقظ في الوقت المخطط', advice:['تعامل مع بقية اليوم بهدوء، واختر موعد نوم واقعي الليلة.','عدّل التوقعات لليوم بدلاً من محاولة تعويض كل شيء دفعة واحدة.'] }
 ];
-const DEFAULT_ACHIEVEMENTS = ['الالتزام بجلسات المذاكرة المحددة في الجدول الأسبوعي','المحافظة على نظام التغذية المستهدف (1800–2000 سعرة)','التوفيق بين دوام الشغل والمحاضرات اليومية والأونلاين'];
+const DEFAULT_ACHIEVEMENTS = [];
 
 // ---------- Helpers ----------
 const $ = (id) => document.getElementById(id);
@@ -723,7 +695,7 @@ function render() {
 }
 
 // ---------- Meals from مساعدي الغذائي (shown inside their meal slot, read from the shared meals table) ----------
-const LINKED_MEALS_KEY = 'linked-meals-v1';
+const LINKED_MEALS_KEY = 'linked-meals-blank-v1';
 const linkedMemory = {};    // dateKey -> rows from the last successful load
 const linkedFetchedAt = {}; // dateKey -> time of the last attempt
 const linkedInflight = {};
