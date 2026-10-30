@@ -1,0 +1,2467 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<title>جدولي الأسبوعي — نسخة فارغة</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="جدول أسبوعي مرن للدراسة والعمل والتغذية، يُحفظ على جهازك.">
+<meta name="theme-color" content="#b8862b">
+<link rel="manifest" href="./manifest-blank.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="جدولي الأسبوعي">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap">
+<style>
+:root {
+  --bg: #f7f3ec; --surface: #fffdf9; --ink: #221d28; --muted: #756d7d; --line: #e6dfd3;
+  --accent: #b8862b; --accent2: #d9a84a; --on-accent: #ffffff; --danger: #b44a4a;
+  --shadow: 0 12px 30px -20px rgba(60, 40, 10, 0.35);
+  --c-uni: #8666b2; --c-work: #bd7b43; --c-online: #4d95a0; --c-study: #6785bf;
+  --c-food: #43866d; --c-rest: #839099; --c-sleep: #bd6688;
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  --bg: #0f0d16; --surface: #191623; --ink: #f4efe4; --muted: #a39db2; --line: #2e2a3b;
+  --accent: #e6c169; --accent2: #f7dc95; --on-accent: #17120a; --danger: #f08a8a;
+  --shadow: 0 14px 36px -18px rgba(0, 0, 0, 0.8);
+  --c-uni: #a78bfa; --c-work: #fbbf24; --c-online: #22d3ee; --c-study: #60a5fa;
+  --c-food: #34d399; --c-rest: #94a3b8; --c-sleep: #f472b6;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { background: var(--bg); }
+body {
+  margin: 0; min-height: 100vh; min-height: 100dvh;
+  padding-top: max(18px, env(safe-area-inset-top, 0px));
+  padding-bottom: max(18px, env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  font: 14px/1.6 "Cairo", system-ui, sans-serif; color: var(--ink); background: var(--bg);
+  -webkit-text-size-adjust: 100%; overflow-x: hidden;
+}
+button, input, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+[hidden] { display: none !important; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wrap { max-width: 980px; margin: 0 auto; min-width: 0; }
+
+.topbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.brand-mark {
+  width: 46px; height: 46px; border-radius: 15px; display: grid; place-items: center; flex: none;
+  background: linear-gradient(135deg, var(--accent2), var(--accent)); color: var(--on-accent); font-size: 22px;
+}
+h1 { margin: 0; font-size: 26px; font-weight: 900; line-height: 1.2; }
+.brand p { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+.top-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.icon-button, .quiet-button, .primary-button, .ghost-button {
+  min-height: 44px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface);
+  padding: 0 14px; font-weight: 800; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; justify-content: center;
+}
+.icon-button { width: 44px; padding: 0; font-size: 18px; }
+.quiet-button { color: var(--danger); }
+.primary-button { border: 0; background: linear-gradient(135deg, var(--accent2), var(--accent)); color: var(--on-accent); box-shadow: 0 8px 18px -10px var(--accent); }
+.ghost-button { color: var(--ink); }
+.local-note { margin: 10px 0 16px; font-size: 12px; color: var(--muted); display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.local-note.warn { color: var(--danger); font-weight: 800; }
+
+.summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+.stat-panel {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: 16px; box-shadow: var(--shadow);
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; text-align: start; min-width: 0;
+}
+.stat-label { font-size: 12px; color: var(--muted); font-weight: 700; }
+.stat-value { font-size: 26px; font-weight: 900; color: var(--accent); }
+.stat-value small { font-size: 14px; }
+.stat-icon { width: 42px; height: 42px; border-radius: 14px; display: grid; place-items: center; background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); flex: none; }
+button.stat-panel { color: inherit; width: 100%; }
+
+.day-strip { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; margin-bottom: 16px; }
+.day-chip {
+  min-height: 62px; padding: 6px 2px; border-radius: 16px; border: 1px solid var(--line); background: var(--surface);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; overflow: hidden;
+}
+.day-chip strong { font-size: 12px; font-weight: 800; }
+.day-chip span { font-size: 10px; color: var(--muted); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.day-chip.today { border-color: var(--accent); }
+.day-chip.selected { background: linear-gradient(135deg, var(--accent2), var(--accent)); border-color: transparent; }
+.day-chip.selected strong, .day-chip.selected span { color: var(--on-accent); }
+
+.content-grid { display: grid; grid-template-columns: 1fr; gap: 16px; align-items: start; }
+@media (min-width: 860px) { .content-grid { grid-template-columns: 1.4fr 1fr; } }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 24px; padding: 18px; box-shadow: var(--shadow); min-width: 0; }
+.section-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 12px; }
+.section-head h2 { margin: 0; font-size: 20px; font-weight: 900; }
+.section-head p { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+.tag-pill {
+  font-size: 12px; font-weight: 800; padding: 4px 10px; border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); white-space: nowrap;
+}
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-bottom: 14px; font-size: 12px; color: var(--muted); font-weight: 700; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 9px; height: 9px; border-radius: 50%; background: var(--event-color); }
+
+.response-box {
+  margin-bottom: 12px; padding: 12px 14px; border-radius: 16px; font-size: 13px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent); border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+}
+.response-box strong { display: block; color: var(--accent); margin-bottom: 4px; }
+.response-box p { margin: 0; }
+.response-box ul { margin: 6px 0 0; padding-inline-start: 18px; }
+.response-box.warn { background: color-mix(in srgb, var(--danger) 12%, transparent); border-color: color-mix(in srgb, var(--danger) 45%, transparent); }
+.response-box.warn strong { color: var(--danger); }
+
+.timeline { display: grid; gap: 10px; }
+.event-row {
+  display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 18px; cursor: pointer;
+  background: var(--bg); border: 1px solid var(--line); border-inline-start: 4px solid var(--event-color); min-width: 0;
+}
+.event-row.now { box-shadow: 0 0 0 2px var(--accent); }
+.event-check { width: 22px; height: 22px; flex: none; accent-color: var(--accent); margin: 0; }
+.event-copy { flex: 1; min-width: 0; }
+.event-title { font-weight: 800; font-size: 15px; overflow-wrap: anywhere; }
+.event-detail { font-size: 12px; color: var(--muted); margin-top: 2px; overflow-wrap: anywhere; }
+.event-time {
+  flex: none; direction: ltr; white-space: nowrap; font-size: 12px; font-weight: 800; padding: 4px 10px; border-radius: 999px;
+  color: var(--event-color); background: color-mix(in srgb, var(--event-color) 14%, transparent);
+}
+.event-row.done .event-title, .event-row.done .event-detail { text-decoration: line-through; opacity: 0.5; }
+
+.side-stack { display: grid; gap: 12px; }
+details.panel { padding: 0; }
+details.panel > summary {
+  list-style: none; cursor: pointer; min-height: 54px; padding: 14px 18px;
+  display: flex; justify-content: space-between; align-items: center; font-weight: 900; font-size: 15px;
+}
+details.panel > summary::-webkit-details-marker { display: none; }
+details.panel > summary::after { content: "▾"; color: var(--muted); }
+details[open].panel > summary::after { content: "▴"; }
+.panel-body { padding: 0 18px 18px; font-size: 13px; }
+.panel-body p { margin: 0 0 8px; }
+.panel-body ul { margin: 0; padding-inline-start: 18px; }
+.panel-body li { margin-bottom: 6px; }
+.kv { display: flex; justify-content: space-between; gap: 10px; padding: 10px 12px; border-radius: 14px; background: var(--bg); margin-bottom: 8px; }
+.kv b { color: var(--accent); direction: ltr; }
+.alt { padding: 10px 12px; border-radius: 14px; background: var(--bg); margin-bottom: 8px; }
+.alt strong { display: block; color: var(--accent); margin-bottom: 2px; }
+.scenario-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.scenario-grid button {
+  min-height: 52px; padding: 8px 10px; border-radius: 14px; border: 1px solid var(--line); background: var(--bg);
+  font-size: 12px; font-weight: 800; text-align: start;
+}
+.scenario-grid button[aria-pressed="true"] { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
+.row-form { display: flex; gap: 8px; margin-top: 10px; }
+.field {
+  width: 100%; min-height: 44px; padding: 10px 12px; border-radius: 14px; border: 1px solid var(--line);
+  background: var(--bg); font-size: 16px;
+}
+.field:focus { outline: none; border-color: var(--accent); }
+
+.modal {
+  position: fixed; inset: 0; z-index: 50; background: rgba(10, 8, 14, 0.55);
+  display: flex; align-items: center; justify-content: center; padding: 16px;
+}
+.sheet {
+  width: 100%; max-width: 480px; max-height: 88dvh; overflow-y: auto;
+  background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 24px; padding: 20px; box-shadow: var(--shadow);
+}
+.sheet-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; padding-bottom: 12px; margin-bottom: 14px; border-bottom: 1px solid var(--line); }
+.sheet-head h3 { margin: 0; font-size: 18px; font-weight: 900; color: var(--accent); }
+.sheet-head p { margin: 2px 0 0; font-size: 12px; color: var(--muted); }
+.close { min-width: 44px; min-height: 44px; border: 0; background: none; color: var(--muted); font-size: 18px; }
+.sheet label { display: block; font-size: 12px; font-weight: 800; color: var(--muted); margin-bottom: 6px; }
+.metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.metric { padding: 12px; border-radius: 16px; background: var(--bg); text-align: center; }
+.metric b { display: block; font-size: 22px; font-weight: 900; color: var(--c-food); }
+.metric span { font-size: 12px; color: var(--muted); font-weight: 700; }
+.sub { font-weight: 900; font-size: 14px; margin: 14px 0 8px; }
+.list { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 6px; }
+.li {
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; padding: 8px 10px;
+  border-radius: 12px; background: var(--bg); font-size: 13px; overflow-wrap: anywhere;
+}
+.li .del { flex: none; min-width: 32px; min-height: 32px; border: 0; background: none; color: var(--danger); font-weight: 900; }
+.empty { font-size: 13px; color: var(--muted); padding: 6px 2px; }
+.confirm-row { display: flex; gap: 8px; margin-top: 16px; }
+.confirm-row > * { flex: 1; }
+.confirm-text { font-size: 15px; font-weight: 800; margin: 0 0 4px; }
+
+.toast {
+  position: fixed; left: 50%; bottom: max(20px, env(safe-area-inset-bottom, 0px)); z-index: 60;
+  transform: translate(-50%, 20px); opacity: 0; transition: opacity 0.25s, transform 0.25s; pointer-events: none;
+  max-width: calc(100% - 40px); padding: 10px 16px; border-radius: 14px; font-size: 13px; font-weight: 800;
+  background: var(--ink); color: var(--bg); text-align: center;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+@media (max-width: 380px) {
+  .summary-grid, .metrics, .scenario-grid { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+.prayer-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(88px,1fr));gap:8px;margin-top:8px}
+.prayer-grid span{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px;border-radius:10px;background:rgba(0,0,0,.05)}
+.prayer-grid b{font-weight:700}
+.prayer-grid .prayer-next{outline:2px solid currentColor}
+.meal-card{border:1px solid rgba(0,0,0,.12);border-radius:12px;padding:10px;margin-top:8px;background:rgba(184,134,43,.06)}
+.meal-card-head{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.meal-card-type{font-size:.8rem;opacity:.7}
+.meal-card-line{font-size:.9rem;margin-top:4px}
+.meal-card-controls{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px}
+.meal-card-edit{display:grid;gap:6px;margin-top:8px}
+.meal-card-edit[hidden]{display:none}
+.meal-card-edit input,.meal-card-edit textarea{width:100%}
+.meal-card-nums{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+.meal-done{display:flex;align-items:center;gap:4px;font-size:.85rem;white-space:nowrap}
+.meal-done input{width:20px;height:20px;accent-color:var(--c-food,#3d7a4f);cursor:pointer}
+.meal-card.done{opacity:.6}
+.meal-card.done .meal-card-head strong{text-decoration:line-through}
+</style>
+</head>
+<body>
+<div class="wrap" dir="rtl">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">📅</div>
+      <div>
+        <h1>جدولي الأسبوعي</h1>
+        <p>مساحة مرنة لليوم الذي تعيشه، لا لليوم المثالي فقط.</p>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button type="button" class="icon-button" id="themeBtn" aria-label="تبديل المظهر">🌙</button>
+      <button type="button" class="quiet-button" id="resetBtn">↺ <span>إعادة ضبط اليوم</span></button>
+    </div>
+  </header>
+
+  <p class="local-note" id="saveNote"><span id="syncStatus" role="status" aria-live="polite">جارٍ تحميل بياناتك…</span></p>
+
+  <section class="summary-grid" aria-label="ملخص الأسبوع">
+    <div class="stat-panel">
+      <div>
+        <div class="stat-label">أيام الالتزام المستمر</div>
+        <div class="stat-value"><span id="streak">0</span> <small>أيام</small></div>
+        <div class="top-actions" style="margin-top:10px">
+          <button type="button" class="primary-button" id="checkinBtn">وثّق التزام اليوم</button>
+          <button type="button" class="quiet-button" id="undoBtn" hidden>إلغاء التوثيق</button>
+        </div>
+      </div>
+      <div class="stat-icon" aria-hidden="true">🔥</div>
+    </div>
+    <button type="button" class="stat-panel" id="monthBtn">
+      <div>
+        <div class="stat-label" id="monthLabel"></div>
+        <div class="stat-value" style="font-size:21px">تقرير إنجازك</div>
+        <div class="stat-label" style="margin-top:5px">التوثيق والتعديلات المسجلة</div>
+      </div>
+      <div class="stat-icon" aria-hidden="true">‹</div>
+    </button>
+  </section>
+
+  <nav class="day-strip" id="strip" aria-label="اختيار اليوم"></nav>
+
+  <div class="content-grid">
+    <section class="panel" aria-live="polite">
+      <div class="section-head">
+        <div>
+          <h2 id="dayTitle"></h2>
+          <p id="dayTag"></p>
+        </div>
+        <span class="tag-pill" id="dayCount"></span>
+      </div>
+      <div class="legend" id="legend"></div>
+      <div id="conflicts"></div>
+      <div id="override"></div>
+      <div id="prayerBox" class="response-box" style="margin-top:12px"></div>
+      <div class="timeline" id="timeline"></div>
+      <div id="dayNotes" class="day-notes" style="margin-top:14px"></div>
+    </section>
+
+    <aside class="side-stack">
+      <details class="panel" open>
+        <summary>🎯 الأهداف اليومية</summary>
+        <div class="panel-body">
+          <div class="scenario-grid" id="goalGrid" role="group" aria-label="اختيار الهدف"></div>
+          <div class="kv"><span>السعرات الحرارية</span><b id="goalKcal"></b></div>
+          <div class="kv"><span>البروتين</span><b id="goalProt"></b></div>
+          <p class="empty" id="goalNote" style="padding:0"></p>
+          <div class="kv"><span>الماء اليومي</span><b>2 – 3 L</b></div>
+        </div>
+      </details>
+
+      <details class="panel">
+        <summary>🍱 الوجبة المحمولة (الثلاثاء والخميس)</summary>
+        <div class="panel-body">
+          <p style="color:var(--c-food);font-weight:800">يبقى موعد الوجبة ثابتًا، وتظهر محتوياتها وقيمها الغذائية بعد تسجيلها في تطبيق «مساعدي الغذائي».</p>
+        </div>
+      </details>
+
+      <details class="panel">
+        <summary>🔄 البدائل المتاحة للوجبات</summary>
+        <div class="panel-body" id="alts"></div>
+      </details>
+
+      <details class="panel" open>
+        <summary>⚡ مخرج الطوارئ (ليوم محدد)</summary>
+        <div class="panel-body">
+          <p>اختر ما حدث معك في اليوم الذي تريده. الخطة تُسجّل لذلك اليوم فقط ولا تغيّر الجدول الأصلي.</p>
+          <div class="scenario-grid" id="scenarioGrid"></div>
+          <div class="row-form">
+            <input class="field" id="customInput" type="text" placeholder="أو اكتب ما حدث بالتفصيل…">
+            <button type="button" class="primary-button" id="customBtn">حفظ</button>
+          </div>
+          <div id="scenarioResult" style="margin-top:12px"></div>
+        </div>
+      </details>
+    </aside>
+  </div>
+</div>
+
+<!-- Check-in -->
+<div class="modal" id="checkinModal" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="checkinTitle">
+    <div class="sheet-head">
+      <div><h3 id="checkinTitle">🔥 توثيق الالتزام</h3><p>سجّل وزنك اليوم لمتابعة التقدم، أو وثّق الالتزام فقط.</p></div>
+      <button type="button" class="close" data-close="checkinModal" aria-label="إغلاق">✕</button>
+    </div>
+    <label for="weightInput">الوزن الحالي (كغم)</label>
+    <input class="field" id="weightInput" type="number" inputmode="decimal" step="0.1" placeholder="مثلاً: 93.5">
+    <p class="empty" style="margin-top:10px">📉 النزول المتوقع لليوم حوالي 80 غرام، وشهرياً حوالي 2.0 – 2.5 كغم.</p>
+    <div class="confirm-row"><button type="button" class="primary-button" id="saveCheckinBtn">تأكيد وحفظ</button></div>
+  </div>
+</div>
+
+<!-- Monthly report -->
+<div class="modal" id="monthModal" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="monthTitle">
+    <div class="sheet-head">
+      <div><h3 id="monthTitle">📊 تقرير إنجازك</h3><p id="monthSub"></p></div>
+      <button type="button" class="close" data-close="monthModal" aria-label="إغلاق">✕</button>
+    </div>
+    <div class="metrics">
+      <div class="metric"><b id="monthRate">0%</b><span>نسبة الالتزام حتى اليوم</span></div>
+      <div class="metric"><b id="monthDays">0</b><span>أيام التوثيق</span></div>
+    </div>
+    <div class="sub">✅ الإنجازات</div>
+    <ul class="list" id="achList"></ul>
+    <div class="row-form"><input class="field" id="achInput" type="text" placeholder="أضف إنجازاً"><button type="button" class="primary-button" id="addAchBtn">إضافة</button></div>
+    <div class="sub">⚖️ سجل الوزن</div>
+    <ul class="list" id="weightList"></ul>
+    <div class="sub">⚠️ التجاوزات والتعديلات</div>
+    <ul class="list" id="incList"></ul>
+    <div class="sub">📝 ملاحظات</div>
+    <ul class="list" id="noteList"></ul>
+    <div class="row-form"><input class="field" id="noteInput" type="text" placeholder="أضف ملاحظة"><button type="button" class="primary-button" id="addNoteBtn">إضافة</button></div>
+  </div>
+</div>
+
+<!-- Confirm (browser confirm() is blocked in some previews) -->
+<div class="modal" id="confirmModal" hidden>
+  <div class="sheet" role="alertdialog" aria-modal="true" aria-labelledby="confirmText">
+    <p class="confirm-text" id="confirmText"></p>
+    <div class="confirm-row">
+      <button type="button" class="ghost-button" id="confirmNo">إلغاء</button>
+      <button type="button" class="primary-button" id="confirmYes">تأكيد</button>
+    </div>
+  </div>
+</div>
+
+<section id="day-tools" class="panel" style="margin:14px 0;padding:16px">
+ <div class="section-head"><div><h2>🛠️ إدارة جدول هذا اليوم</h2><p>تعديل اليوم المختار فقط، دون تغيير بقية الأسبوع</p></div></div>
+ <div class="row-form"><input class="field" id="day-item-title" placeholder="اسم المهمة أو الوجبة"><input class="field" id="day-item-time" placeholder="الوقت مثل 4:30 PM"></div>
+ <div class="row-form"><input class="field" id="day-item-detail" placeholder="تفاصيل اختيارية"><select class="field" id="day-item-type"><option value="study">مذاكرة</option><option value="food">وجبة</option><option value="work">شغل</option><option value="uni">جامعة</option><option value="rest">راحة</option><option value="online">أونلاين</option></select><button class="primary-button" type="button" id="day-item-add">إضافة لليوم</button></div>
+ <div class="sub" style="margin-top:16px">🤖 اشرح المشكلة ليقترح تعديلًا لهذا اليوم</div>
+ <textarea class="field" id="day-ai-problem" rows="3" placeholder="مثلاً: تأخرت عن الجامعة ساعة، وبدي أنقل المذاكرة لوقت مناسب…"></textarea>
+ <button class="primary-button" type="button" id="day-ai-suggest" style="margin-top:8px">تحليل المشكلة واقتراح تعديل</button><div id="day-ai-result"></div>
+ <div class="sub" style="margin-top:16px">📋 إنجازات اليوم</div><div id="day-checklist"></div>
+</section>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+// ---------- Data ----------
+const MEAL = { bf:'', sn:'', lu:'', sa:'', di:'' };
+// dur is in minutes. An event without a stated duration keeps dur undefined and is never given an invented one.
+const ev = (time, title, type, detail, dur) => ({
+  time, title, type, detail: type === 'food' ? '' : detail,
+  // lectures last 1 hour; the programming lab lasts 2 hours
+  dur: dur ?? (type === 'uni' ? (title.includes('مختبر') ? 120 : 60) : undefined)
+});
+// Each day builds its own item objects (factories), so Tuesday and Thursday never share state.
+const campusItems = () => [
+  ev('7:15 AM','استيقاظ','rest'), ev('9:00 AM','محاضرة المنطق الرقمي','uni'), ev('10:00 AM','محاضرة الجبر الخطي','uni'),
+  ev('11:00 AM','فطور (وقت الفراغ بعد الجبر)','food',MEAL.bf)
+];
+const workTuesdayItems = () => [
+  ...campusItems(),
+  ev('11:50 AM','راحة وتجهيز للمحاضرة التالية','rest'), ev('1:00 PM','محاضرة البرمجة الكينونية','uni'),
+  ev('2:00 PM','وجبة خفيفة بعد الجامعة','food'),
+  ev('2:15 PM','انتقال إلى الشغل','rest','45 دقيقة', 45), ev('3:00–11:00 PM','شغل (3:00 PM – 11:00 PM)','work'),
+  ev('5:00–7:00 PM','غداء (بعد الجامعة في استراحة الشغل)','food',MEAL.lu),
+  ev('7:00 PM','وجبة محمولة (في الاستراحة)','food'),
+  ev('11:00 PM','العودة إلى البيت (5–10 دقائق)','rest','تُحسب 10 دقائق (الحد الأعلى)', 10),
+  ev('11:10 PM','عشاء خفيف','food','بيضة مسلوقة (حبة) + لبن قليل الدسم أو زبادي غير محلى (150غ) · 200 سعرة · 15غ بروتين'),
+  ev('11:30 PM','تحضير للنوم','rest'), ev('12:30 AM','نوم','sleep')
+];
+const homeWorkday = (studyTitle, studyDetail, extraSlot) => [
+  ev('8:30 AM','استيقاظ','rest'), ev('9:00 AM–7:00 PM','شغل حتى 7:00 PM','work'),
+  ...(extraSlot ? [ev('11:00 AM','التربية الوطنية أونلاين','online','أثناء الشغل')] : []),
+  ev('12:00 PM','فطور متأخر (في الاستراحة)','food',MEAL.bf),
+  ev('4:30 PM','وجبة خفيفة (في الاستراحة)','food'),
+  ev('5:00 PM','مهارات الحاسوب الاستدراكي أونلاين','online','أثناء الشغل'),
+  ev('7:00 PM','انتقال إلى البيت، ثم غداء في البيت','food'),
+  ev('8:15 PM', studyTitle, 'study', studyDetail, 90),
+  ev('9:45 PM','عشاء (بعد المذاكرة)','food',MEAL.di),
+  ev('10:15 PM','وجبة خفيفة','food'),
+  ev('10:45 PM','وقت شخصي','rest'), ev('12:00 AM','نوم','sleep')
+];
+const DAYS = [
+  { name:'الأحد', tag:'جدول فارغ — أضف مهامك', total:'', items:[] },
+  { name:'الاثنين', tag:'جدول فارغ — أضف مهامك', total:'', items:[] },
+  { name:'الثلاثاء', tag:'جدول فارغ — أضف مهامك', total:'', items:[] },
+  { name:'الأربعاء', tag:'جدول فارغ — أضف مهامك', total:'', items:[] },
+  { name:'الخميس', tag:'جدول فارغ — أضف مهامك', total:'', items:[] },
+  { name:'الجمعة', tag:'جدول فارغ — أضف مهامك', total:'', items:[] },
+  { name:'السبت', tag:'جدول فارغ — أضف مهامك', total:'', items:[] }
+];
+const TYPE_LABELS = [['uni','جامعة'],['work','شغل'],['online','أونلاين'],['study','مذاكرة'],['food','وجبة'],['rest','راحة'],['sleep','نوم']];
+const ALTERNATIVES = [
+  ['الفطور','تُعرض المحتويات والقيم الغذائية عند تسجيل الوجبة في تطبيق مساعدي الغذائي.'],
+  ['الوجبة الخفيفة','تُعرض المحتويات والقيم الغذائية عند تسجيل الوجبة في تطبيق مساعدي الغذائي.'],
+  ['الغداء','تُعرض المحتويات والقيم الغذائية عند تسجيل الوجبة في تطبيق مساعدي الغذائي.'],
+  ['العشاء','تُعرض المحتويات والقيم الغذائية عند تسجيل الوجبة في تطبيق مساعدي الغذائي.']
+];
+const SCENARIOS = [
+  { id:'overeat', title:'تناولت وجبة إضافية أو أكلت أكثر من المعتاد', advice:['لا تحتاج إلى تعويض قاسٍ أو تخطي وجبات؛ عد إلى وجبتك التالية المعتادة.','اختر ماءً ووجبة متوازنة عندما يحين وقتها، واترك مساحة لمرونة اليوم.','إن كان مناسباً لك، خذ استراحة قصيرة أو مشياً هادئاً.'] },
+  { id:'missed_lecture', title:'فاتتني محاضرة', advice:['تواصل مع زميل لطلب الملاحظات أو التسجيل.','اختر 30–45 دقيقة في وقت متاح لمراجعة النقاط الأساسية.'] },
+  { id:'missed_study', title:'لم أتمكن من المذاكرة', advice:['اليوم لم يضع؛ اختر خطوة صغيرة الآن أو انقل جزءاً واحداً لوقت أهدأ.','ابدأ بـ 15 دقيقة أو ثلاثة أسئلة، ثم قرر إن كنت تريد المتابعة.'] },
+  { id:'late_sleep', title:'سهرت أو لم أستيقظ في الوقت المخطط', advice:['تعامل مع بقية اليوم بهدوء، واختر موعد نوم واقعي الليلة.','عدّل التوقعات لليوم بدلاً من محاولة تعويض كل شيء دفعة واحدة.'] }
+];
+const DEFAULT_ACHIEVEMENTS = ['الالتزام بجلسات المذاكرة المحددة في الجدول الأسبوعي','المحافظة على نظام التغذية المستهدف (1800–2000 سعرة)','التوفيق بين دوام الشغل والمحاضرات اليومية والأونلاين'];
+
+// ---------- Helpers ----------
+const $ = (id) => document.getElementById(id);
+const pad = (n) => String(n).padStart(2, '0');
+const dateKey = (d) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const dateFromKey = (k) => { const [y,m,d] = k.split('-').map(Number); return new Date(y, m-1, d); };
+const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// Minutes after midnight for "11:00 PM", "11 مساءً", "10:45 مساءً", "23:00", "00:30" (-1 when unclear).
+// Hours 1–12 with no AM/PM keep the old meaning (24-hour), so existing rows parse exactly as before.
+const eventStart = (time) => {
+  let s = String(time || '').replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+  s = s.replace(/مساء\S*/g, ' PM').replace(/صباح\S*/g, ' AM');
+  const m = s.match(/(\d{1,2})(?::(\d{2}))?/);
+  if (!m) return -1;
+  let h = Number(m[1]);
+  const min = m[2] === undefined ? 0 : Number(m[2]);
+  if (min > 59) return -1;
+  const ap = (s.match(/(AM|PM)/i) || [])[1];
+  if (ap) {
+    if (h < 1 || h > 12) return -1;
+    if (ap.toUpperCase() === 'PM' && h < 12) h += 12;
+    if (ap.toUpperCase() === 'AM' && h === 12) h = 0;
+  } else if (h > 23) return -1;
+  return h * 60 + min;
+};
+// Length in minutes from start to end. An end before 6 AM is read as after midnight; otherwise the window is invalid (-1).
+const spanOf = (st, en) => (en > st ? en - st : (en < 360 ? en + 1440 - st : -1));
+const TYPE_COLORS = { uni:'var(--c-uni)', work:'var(--c-work)', online:'var(--c-online)', study:'var(--c-study)', food:'var(--c-food)', rest:'var(--c-rest)', sleep:'var(--c-sleep)' };
+
+const fmtTime = (m) => { const h = Math.floor(m / 60) % 24, mm = m % 60; return `${h % 12 || 12}:${String(mm).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`; };
+// Returns { s, e, explicit, it }. explicit=false means the length is unknown: e is set to s and nothing is invented.
+const rangeOf = (items, i) => {
+  const it = items[i];
+  let s = eventStart(it.time);
+  if (s < 0) return null;
+  if (s < 360) s += 1440;
+  const ap = (it.time.match(/(AM|PM)/i) || [''])[0];
+  let end = null;
+  const parts = it.time.split('–');
+  if (parts.length === 2) {
+    const endTxt = /(AM|PM)/i.test(parts[1]) ? parts[1] : parts[1] + ' ' + ap;
+    const e = eventStart(endTxt);
+    if (e >= 0) end = e < 360 ? e + 1440 : e;
+  }
+  if (end === null && it.dur) end = s + it.dur;
+  if (end === null) return { s, e: s, explicit: false, it };
+  return { s, e: end, explicit: true, it };
+};
+// Work hours are not free time, but some items are explicitly allowed during work (online sessions, meals in the break).
+const allowedDuringWork = (r) => r.it.type === 'online' || (r.it.type === 'food' && /استراحة/.test(`${r.it.title} ${r.it.detail || ''}`));
+const WINDOW_START = 420, WINDOW_END = 1380; // 7:00 AM to 11:00 PM
+function analyzeDay(items) {
+  const ranges = items.map((_, i) => rangeOf(items, i)).filter(Boolean);
+  const known = ranges.filter(r => r.explicit);
+  const conflicts = [];
+  for (let i = 0; i < known.length; i++) {
+    for (let j = i + 1; j < known.length; j++) {
+      const a = known[i], b = known[j];
+      if (!(a.s < b.e && b.s < a.e)) continue;
+      const work = a.it.type === 'work' ? a : (b.it.type === 'work' ? b : null);
+      if (work && allowedDuringWork(work === a ? b : a)) continue;
+      conflicts.push(`${a.it.title} (${a.it.time}) يتعارض مع ${b.it.title} (${b.it.time})`);
+    }
+  }
+  // Unknown-length items block until the next scheduled item, so they never create false free time.
+  const starts = ranges.map(r => r.s).sort((x, y) => x - y);
+  const busy = ranges.map(r => {
+    if (r.explicit) return [r.s, r.e];
+    const next = starts.find(x => x > r.s);
+    return [r.s, next === undefined ? WINDOW_END : next];
+  }).sort((x, y) => x[0] - y[0]);
+  const merged = [];
+  busy.forEach(([s, e]) => {
+    const last = merged[merged.length - 1];
+    if (last && s <= last[1]) last[1] = Math.max(last[1], e); else merged.push([s, e]);
+  });
+  // Keep 15-minute gaps: the planner must support short tasks, not silently discard them.
+  const MIN_FREE_SLOT_MINUTES = 15;
+  const freeSlots = [];
+  let cursor = WINDOW_START;
+  merged.forEach(([s, e]) => {
+    const to = Math.min(s, WINDOW_END);
+    if (to - cursor >= MIN_FREE_SLOT_MINUTES) freeSlots.push(`${fmtTime(cursor)} – ${fmtTime(to)}`);
+    cursor = Math.max(cursor, e);
+  });
+  if (WINDOW_END - cursor >= MIN_FREE_SLOT_MINUTES) freeSlots.push(`${fmtTime(cursor)} – ${fmtTime(WINDOW_END)}`);
+  return { conflicts, freeSlots };
+}
+
+// ---------- State & storage ----------
+const GOALS = {
+  balanced: { title: 'متوازن: 1900–2000 سعرة', kcal: '1900 – 2000 kcal', prot: '135 – 150 g', note: 'نزول تدريجي حوالي 0.5–0.7 كغم أسبوعياً، مع حرمان أقل.' },
+  fast: { title: 'نزول أسرع: 1700–1850 سعرة', kcal: '1700 – 1850 kcal', prot: '135 – 150 g', note: 'نزول أسرع، لكن الجوع والتعب قد يكونان أكبر.' }
+};
+const DEFAULT_GOAL = 'balanced';
+const EMPTY = () => ({ done:{}, checkins:[], weights:[], incidents:[], achievements:[...DEFAULT_ACHIEVEMENTS], notes:[], overrides:{}, dayMeals:{}, dayPlans:{}, theme:'light', goal: DEFAULT_GOAL });
+const LOCAL_KEY = 'weekly-planner-blank-v1';      // same key as before, so existing data is kept
+const BACKUP_KEY = 'weekly-planner-blank-v1-backup';
+let state = EMPTY();
+let selected = new Date().getDay();
+// false when saved data exists but could not be read: writes are then blocked so defaults never overwrite it
+let storageWritable = true;
+let blockedReason = '';
+const SAVE_ERRORS = {
+  blocked: 'تعذّر قراءة بياناتك المحفوظة، ولن نكتب فوقها. التغيير الحالي لم يُحفظ.',
+  quota: 'مساحة التخزين في المتصفح ممتلئة. التغيير الحالي لم يُحفظ.',
+  write: 'تعذّر الحفظ على هذا المتصفح. التغيير الحالي لم يُحفظ.'
+};
+const isPlain = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
+function normalize(x) {
+  if (!isPlain(x)) throw new Error('shape');
+  const e = EMPTY();
+  for (const k of Object.keys(e)) {
+    if (x[k] === undefined) continue;
+    const ok = Array.isArray(e[k]) ? Array.isArray(x[k]) : isPlain(e[k]) ? isPlain(x[k]) : typeof x[k] === typeof e[k];
+    if (!ok) throw new Error('field ' + k);
+    e[k] = x[k];
+  }
+  return e;
+}
+const isQuotaError = (e) => !!e && (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED' || e.code === 22);
+function setSync(text, warn) {
+  const el = $('syncStatus');
+  el.textContent = text;
+  $('saveNote').classList.toggle('warn', !!warn);
+}
+function saveLocal() {
+  if (!storageWritable) return { ok: false, reason: 'blocked' };
+  try { localStorage.setItem(LOCAL_KEY, JSON.stringify(state)); return { ok: true }; }
+  catch (e) { return { ok: false, reason: isQuotaError(e) ? 'quota' : 'write' }; }
+}
+// Shows the success message only after the write actually succeeded.
+function scheduleSave() {
+  const r = saveLocal();
+  if (r.ok) setSync('تم الحفظ على هذا الجهاز ✓', false);
+  else setSync(SAVE_ERRORS[r.reason], true);
+  return r;
+}
+function commit(fn) {
+  state = fn(state);
+  const r = scheduleSave();
+  render();
+  if (!r.ok) toast(SAVE_ERRORS[r.reason]);
+  return r.ok;
+}
+function loadState() {
+  let raw = null;
+  try { raw = localStorage.getItem(LOCAL_KEY); }
+  catch (e) { storageWritable = false; blockedReason = 'تعذّر الوصول إلى التخزين في هذا المتصفح. التغييرات لن تُحفظ بعد إغلاق الصفحة.'; }
+  if (storageWritable && raw !== null) {
+    try { state = normalize(JSON.parse(raw)); }
+    catch (e) {
+      // Keep the unreadable copy aside and stop writing over it.
+      storageWritable = false;
+      blockedReason = SAVE_ERRORS.blocked;
+      try { localStorage.setItem(BACKUP_KEY, raw); } catch (_) {}
+    }
+  }
+  applyTheme(); render();
+  if (storageWritable) setSync('يُحفظ على هذا الجهاز فقط');
+  else setSync(blockedReason, true);
+}
+
+// ---------- Derived values ----------
+function derived() {
+  const today = new Date();
+  const todayKey = dateKey(today);
+  const weekStart = addDays(today, -today.getDay());
+  const selectedDate = addDays(weekStart, selected);
+  const selectedKey = dateKey(selectedDate);
+  const sorted = [...new Set(state.checkins)].sort();
+  const yesterday = dateKey(addDays(today, -1));
+  let streak = 0;
+  let cursor = sorted.includes(todayKey) ? todayKey : (sorted.includes(yesterday) ? yesterday : '');
+  while (cursor && sorted.includes(cursor)) { streak++; cursor = dateKey(addDays(dateFromKey(cursor), -1)); }
+  const monthPrefix = `${today.getFullYear()}-${pad(today.getMonth()+1)}`;
+  // Only days up to today count, and each day is counted once (checkins is a set).
+  const monthCheckins = sorted.filter(k => k.startsWith(monthPrefix) && k <= todayKey).length;
+  return { today, todayKey, weekStart, selectedDate, selectedKey, sorted, streak, monthPrefix, monthCheckins,
+    elapsedDays: today.getDate() };
+}
+function currentEventIndex(items, isToday, now) {
+  if (!isToday) return -1;
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  let best = -1, bestStart = -1;
+  items.forEach((it, i) => {
+    const s = eventStart(it.time);
+    if (s >= 0 && s <= nowMin && s >= bestStart) { best = i; bestStart = s; }
+  });
+  return best;
+}
+
+// ---------- Render ----------
+// Meals added from the cloud list (per day) are shown after the base items of that day.
+function extraRowsHTML(key) {
+  const list = ((state.dayMeals || {})[key] || []).filter(m => !/خبز\s*اسمر.*لبنة.*بندورة.*زعتر/i.test(String(m.title||'')+' '+String(m.detail||'')) && !/460\s*سعر/.test(String(m.title||'')+' '+String(m.detail||'')));
+  return list.map(m => `<div class="event-row" style="--event-color:#b8862b"><div class="event-copy"><div class="event-title">🍽️ ${esc(m.title)}</div>${m.detail ? `<div class="event-detail">${esc(m.detail)}</div>` : ''}</div><span class="event-time">${esc(m.time)}</span></div>`).join('');
+}
+function render() {
+  const d = derived();
+  const isDark = state.theme === 'dark';
+  $('themeBtn').textContent = isDark ? '☀️' : '🌙';
+  $('monthLabel').textContent = new Intl.DateTimeFormat('ar', { month:'long', year:'numeric' }).format(d.today);
+
+  $('streak').textContent = d.streak;
+  const checkedToday = state.checkins.includes(d.todayKey);
+  $('checkinBtn').hidden = checkedToday;
+  $('undoBtn').hidden = !checkedToday;
+
+  $('strip').innerHTML = DAYS.map((day, i) => {
+    const date = addDays(d.weekStart, i);
+    return `<button type="button" class="day-chip ${i === d.today.getDay() ? 'today' : ''} ${i === selected ? 'selected' : ''}" aria-pressed="${i === selected}" data-day="${i}">
+      <strong>${esc(day.name)}</strong><span>${new Intl.DateTimeFormat('ar',{day:'numeric'}).format(date)} ${esc(day.tag.split(' ')[0])}</span></button>`;
+  }).join('');
+
+  // Rows always show in time order; rows with the same start keep their order.
+  const plan = {...DAYS[selected], items: sortChronological((state.dayPlans && state.dayPlans[d.selectedKey]) || DAYS[selected].items)};
+  const sharedMeals = Array.isArray(window.sharedMealRecords) ? window.sharedMealRecords : [];
+  const mealKey = value => {
+    const s = String(value || '').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي');
+    if (/فطور|افطار|breakfast/.test(s)) return 'breakfast';
+    if (/غداء|غدا|lunch/.test(s)) return 'lunch';
+    if (/عشاء|عشا|dinner/.test(s)) return 'dinner';
+    if (/سناك|خفيف|snack|وجبه خفيفه/.test(s)) return 'snack';
+    return '';
+  };
+  const displayItems = plan.items.map(it => {
+    if (it.type !== 'food') return it;
+    const kind = mealKey(it.title);
+    if (!kind) return it;
+    const matches = sharedMeals.filter(m => {
+      if (!m.starts_at || !m.meal_type) return false;
+      const dt = new Date(m.starts_at);
+      const dateKey = dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');
+      return dateKey === d.selectedKey && mealKey(m.meal_type) === kind;
+    });
+    if (!matches.length) return {...it, detail:''};
+    const detail = matches.map(m => {
+      const ingredients = m.ingredients || m.details || '';
+      const macros = [Number(m.calories)>0 ? Math.round(Number(m.calories))+' سعرة' : '', Number(m.protein)>0 ? Number(m.protein)+'غ بروتين' : '', Number(m.carbs)>0 ? Number(m.carbs)+'غ كربوهيدرات' : '', Number(m.fat)>0 ? Number(m.fat)+'غ دهون' : ''].filter(Boolean).join(' · ');
+      return (m.title ? m.title+' — ' : '')+(ingredients || 'المكونات غير محددة')+(macros ? ' · '+macros : '');
+    }).join(' | ');
+    return {...it, detail};
+  });
+  const isToday = d.selectedKey === d.todayKey;
+  const doneCount = displayItems.reduce((n, _it, i) => n + (state.done[`${d.selectedKey}-${i}`] ? 1 : 0), 0);
+  const cur = currentEventIndex(displayItems, isToday, d.today);
+  $('dayTitle').textContent = `${plan.name}، ${new Intl.DateTimeFormat('ar',{day:'numeric', month:'long'}).format(d.selectedDate)}`;
+  $('dayTag').textContent = plan.tag + (isToday ? ' · هذا اليوم' : '');
+  $('dayCount').textContent = `${doneCount} من ${plan.items.length} مهام`;
+  $('legend').innerHTML = TYPE_LABELS.map(([t,l]) => `<span><i style="--event-color:${TYPE_COLORS[t]}"></i>${l}</span>`).join('');
+
+  const goal = GOALS[state.goal] ? state.goal : DEFAULT_GOAL;
+  $('goalGrid').innerHTML = Object.keys(GOALS).map(k => `<button type="button" data-goal="${k}" aria-pressed="${goal === k}">${esc(GOALS[k].title)}</button>`).join('');
+  $('goalKcal').textContent = GOALS[goal].kcal;
+  $('goalProt').textContent = GOALS[goal].prot;
+  $('goalNote').textContent = GOALS[goal].note;
+
+  const analysis = analyzeDay(plan.items);
+  $('conflicts').innerHTML = analysis.conflicts.length
+    ? `<div class="response-box warn" role="alert"><strong>⚠️ تعارض حقيقي في ${esc(plan.name)}</strong><ul>${analysis.conflicts.map(c => `<li>${esc(c)}</li>`).join('')}</ul></div>`
+    : '';
+
+  const ov = state.overrides[d.selectedKey];
+  renderPrayerTimes(d);
+  $('override').innerHTML = ov ? `<div class="response-box"><strong>خطة مرنة لهذا اليوم</strong><p>${esc(ov)} — تُسجّل لهذا اليوم فقط ولا تغيّر الجدول الأصلي.</p></div>` : '';
+
+  ensureLinkedMeals(d.selectedKey);
+  const linkedBySlot = linkMealsToSlots(plan.items, linkedMealsFor(d.selectedKey));
+  $('timeline').innerHTML = displayItems.map((it, i) => {
+    const done = !!state.done[`${d.selectedKey}-${i}`];
+    return `<div class="event-row ${done ? 'done' : ''} ${cur === i ? 'now' : ''}" style="--event-color:${TYPE_COLORS[it.type]}">
+      <input type="checkbox" class="event-check" data-task="${i}" ${done ? 'checked' : ''} aria-label="إنجاز: ${esc(it.title)}">
+      <div class="event-copy"><div class="event-title">${esc(it.title)}${cur === i ? ' <span class="tag-pill">الآن</span>' : ''}</div>${it.detail && !(linkedBySlot[i]||[]).length ? `<div class="event-detail">${esc(it.detail)}</div>` : ''}${linkedMealHTML(linkedBySlot[i])}</div>
+      <span class="event-time">${esc(it.time)}</span><button type="button" class="quiet-button" data-main-edit="${i}" aria-label="تعديل ${esc(it.title)}">✏️</button><button type="button" class="quiet-button" data-main-delete="${i}" aria-label="حذف ${esc(it.title)}">🗑️</button></div>`;
+  }).join('') + extraRowsHTML(d.selectedKey) + unmatchedMealsHTML(linkedBySlot.unmatched);
+  renderDayChecklist();
+
+  renderDayNotes();
+  $('alts').innerHTML = ALTERNATIVES.map(([t, x]) => `<div class="alt"><strong>${esc(t)}</strong>${esc(x)}</div>`).join('');
+  $('scenarioGrid').innerHTML = SCENARIOS.map(s => `<button type="button" data-scenario="${esc(s.id)}">${esc(s.title)}</button>`).join('');
+}
+
+// ---------- Meals from مساعدي الغذائي (shown inside their meal slot, read from the shared meals table) ----------
+const LINKED_MEALS_KEY = 'linked-meals-v1';
+const linkedMemory = {};    // dateKey -> rows from the last successful load
+const linkedFetchedAt = {}; // dateKey -> time of the last attempt
+const linkedInflight = {};
+function linkedCacheRead(){try{return JSON.parse(localStorage.getItem(LINKED_MEALS_KEY)||'{}')}catch{return {}}}
+function linkedCacheWrite(key,rows){try{const o=linkedCacheRead();o[key]=rows;const keep={};Object.keys(o).sort().slice(-14).forEach(k=>keep[k]=o[k]);localStorage.setItem(LINKED_MEALS_KEY,JSON.stringify(keep))}catch{}}
+// Rows for a day: the last load in this page, else the copy saved on this device (kept when offline).
+function linkedMealsFor(key){if(linkedMemory[key])return linkedMemory[key];const c=linkedCacheRead()[key];return Array.isArray(c)?c:[]}
+// Meal category from a slot title ("غداء (بعد الجامعة)") or from the food app's meal type ("الغداء").
+function mealCategoryOf(text){const t=String(text||'');if(/فطور|إفطار/.test(t))return 'breakfast';if(/غداء/.test(t))return 'lunch';if(/عشاء/.test(t))return 'dinner';if(/سناك/.test(t))return 'snack';return ''}
+function mealCategoryOfType(type){return {'الفطور':'breakfast','الغداء':'lunch','العشاء':'dinner','وجبة خفيفة':'snack'}[String(type||'').trim()]||''}
+async function fetchLinkedMeals(key){
+  const c=cloudDayClient(); const uid=await cloudUserId();
+  if(!c||!uid) return null; // not signed in: keep what this device already has
+  const [y,m,d]=key.split('-').map(Number);
+  const from=new Date(y,m-1,d).toISOString(), to=new Date(y,m-1,d+1).toISOString();
+  const {data,error}=await c.from('meals')
+    .select('client_id,meal_name,meal_type,meal_date,calories,protein,carbs,fat,ingredients,notes')
+    .eq('user_id',uid).gte('meal_date',from).lt('meal_date',to).order('meal_date',{ascending:true});
+  if(error) throw error;
+  return data||[];
+}
+// Loads a day at most once a minute. Re-renders only when new rows arrive.
+function ensureLinkedMeals(key){
+  if(linkedInflight[key]) return;
+  if(linkedFetchedAt[key] && Date.now()-linkedFetchedAt[key] < 60000) return;
+  linkedInflight[key]=true;
+  fetchLinkedMeals(key).then(rows=>{
+    linkedFetchedAt[key]=Date.now();
+    if(rows){linkedMemory[key]=rows;linkedCacheWrite(key,rows)}
+  }).catch(()=>{linkedFetchedAt[key]=Date.now()-30000}).finally(()=>{delete linkedInflight[key];render()});
+}
+// Each meal goes to one food slot: same category, nearest time. A meal is never shown twice.
+function linkMealsToSlots(items, meals){
+  const slots=[];
+  items.forEach((it,i)=>{
+    if(it.type!=='food') return;
+    const cat=mealCategoryOf(it.title);
+    const r=rangeOf(items,i);
+    if(cat && r) slots.push({i,cat,start:r.s%1440});
+  });
+  const bySlot={}, used=new Set(), unmatched=[];
+  for(const meal of meals){
+    const cat=mealCategoryOfType(meal.meal_type);
+    const id=meal.client_id||`${meal.meal_date}|${meal.meal_name}`;
+    if(!cat||used.has(id)) continue;
+    const when=new Date(meal.meal_date);
+    if(isNaN(when)) continue;
+    const mm=when.getHours()*60+when.getMinutes();
+    const cands=slots.filter(s=>s.cat===cat).sort((a,b)=>Math.abs(a.start-mm)-Math.abs(b.start-mm));
+    if(!cands.length){unmatched.push(meal);used.add(id);continue}
+    (bySlot[cands[0].i]||(bySlot[cands[0].i]=[])).push(meal);
+    used.add(id);
+  }
+  // Meals with no matching slot (or unknown type) are listed below the timeline, not dropped.
+  for(const meal of meals){const id=meal.client_id||`${meal.meal_date}|${meal.meal_name}`;if(!used.has(id)){unmatched.push(meal);used.add(id)}}
+  bySlot.unmatched=unmatched;
+  return bySlot;
+}
+// Shows only values the food app actually has. Zero means "not recorded", so it is left out.
+function unmatchedMealsHTML(meals){
+  if(!meals||!meals.length) return '';
+  return `<div class="event-row" style="--event-color:#b8862b"><div class="event-copy"><div class="event-title">وجبات من مساعدي الغذائي بلا موعد مطابق في هذا اليوم</div>${linkedMealHTML(meals)}</div></div>`;
+}
+// Each meal from the food app is its own card: time picker, edit, and delete.
+function linkedMealHTML(meals){
+  if(!meals||!meals.length) return '';
+  return meals.map(m=>{
+    const id=esc(m.client_id||'');
+    const nums=[];
+    const cal=Number(m.calories)||0, pro=Number(m.protein)||0, carb=Number(m.carbs)||0, fat=Number(m.fat)||0;
+    if(cal) nums.push(`${Math.round(cal)} سعرة`);
+    if(pro) nums.push(`بروتين ${pro} غ`);
+    if(carb) nums.push(`كربوهيدرات ${carb} غ`);
+    if(fat) nums.push(`دهون ${fat} غ`);
+    const when=new Date(m.meal_date);
+    const hhmm=isNaN(when)?'':`${String(when.getHours()).padStart(2,'0')}:${String(when.getMinutes()).padStart(2,'0')}`;
+    const done=!!((state.mealDone||{})[derived().selectedKey]||{})[m.client_id];
+    return `<div class="meal-card ${done?'done':''}" data-meal-card="${id}">
+      <div class="meal-card-head"><label class="meal-done"><input type="checkbox" class="meal-check" data-meal-done="${id}" ${done?'checked':''} aria-label="تم: ${esc(m.meal_name||'وجبة')}"> تم</label><strong>${esc(m.meal_name||'وجبة')}</strong><span class="meal-card-type">${esc(m.meal_type||'')}</span></div>
+      ${m.ingredients?`<div class="meal-card-line">${esc(m.ingredients)}</div>`:''}
+      ${nums.length?`<div class="meal-card-line">${esc(nums.join(' · '))}</div>`:''}
+      ${m.notes?`<div class="meal-card-line">${esc(m.notes)}</div>`:''}
+      <div class="meal-card-controls">
+        <label>الوقت <input type="time" class="meal-time" value="${hhmm}"></label>
+        <button type="button" class="quiet-button" data-meal-time>حفظ الوقت</button>
+        <button type="button" class="quiet-button" data-meal-edit>تعديل</button>
+        <button type="button" class="quiet-button" data-meal-delete>حذف</button>
+      </div>
+      <div class="meal-card-edit" hidden>
+        <input data-f="meal_name" value="${esc(m.meal_name||'')}" placeholder="اسم الوجبة">
+        <textarea data-f="ingredients" rows="2" placeholder="المكونات والكميات">${esc(m.ingredients||'')}</textarea>
+        <div class="meal-card-nums">
+          <label>سعرات <input type="number" min="0" step="1" data-f="calories" value="${Number(m.calories)||0}"></label>
+          <label>بروتين <input type="number" min="0" step="0.1" data-f="protein" value="${Number(m.protein)||0}"></label>
+          <label>كربوهيدرات <input type="number" min="0" step="0.1" data-f="carbs" value="${Number(m.carbs)||0}"></label>
+          <label>دهون <input type="number" min="0" step="0.1" data-f="fat" value="${Number(m.fat)||0}"></label>
+        </div>
+        <textarea data-f="notes" rows="1" placeholder="ملاحظات">${esc(m.notes||'')}</textarea>
+        <div class="meal-card-controls">
+          <button type="button" class="primary-button" data-meal-save>حفظ التعديل</button>
+          <button type="button" class="quiet-button" data-meal-cancel>إلغاء</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+// Writes go straight to the shared meals table (RLS limits them to this user's rows).
+async function writeMealCloud(id, patch){
+  const c=cloudDayClient(), uid=await cloudUserId();
+  if(!c||!uid) throw new Error('سجّل الدخول أولًا لتعديل الوجبات.');
+  if(!navigator.onLine) throw new Error('تحتاج تعديل الوجبة إلى اتصال بالإنترنت.');
+  const {error}=await c.from('meals').update({...patch,updated_at:new Date().toISOString()}).eq('user_id',uid).eq('client_id',id);
+  if(error) throw error;
+}
+async function deleteMealCloud(id){
+  const c=cloudDayClient(), uid=await cloudUserId();
+  if(!c||!uid) throw new Error('سجّل الدخول أولًا لحذف الوجبات.');
+  if(!navigator.onLine) throw new Error('تحتاج حذف الوجبة إلى اتصال بالإنترنت.');
+  const {error}=await c.from('meals').delete().eq('user_id',uid).eq('client_id',id);
+  if(error) throw error;
+}
+// Local date of the shown day with the chosen HH:MM, as an ISO string.
+function mealIsoAt(hhmm){
+  const [y,mo,da]=derived().selectedKey.split('-').map(Number);
+  const [hh,mi]=hhmm.split(':').map(Number);
+  return new Date(y,mo-1,da,hh,mi).toISOString();
+}
+function refreshMealsNow(){const key=derived().selectedKey;linkedFetchedAt[key]=0;ensureLinkedMeals(key)}
+// Done tick on a meal card: kept on this device per day.
+document.addEventListener('change',e=>{
+  const box=e.target.closest&&e.target.closest('[data-meal-done]');
+  if(!box) return;
+  const id=box.dataset.mealDone, key=derived().selectedKey;
+  commit(st=>{
+    const md={...(st.mealDone||{})};
+    const day={...(md[key]||{})};
+    if(box.checked) day[id]=true; else delete day[id];
+    md[key]=day;
+    return {...st,mealDone:md};
+  });
+});
+document.addEventListener('click',async e=>{
+  const btn=e.target.closest('[data-meal-time],[data-meal-edit],[data-meal-cancel],[data-meal-save],[data-meal-delete]');
+  if(!btn) return;
+  const card=btn.closest('[data-meal-card]');
+  if(!card) return;
+  const id=card.dataset.mealCard;
+  const form=card.querySelector('.meal-card-edit');
+  try{
+    if(btn.hasAttribute('data-meal-edit')){form.hidden=false;return}
+    if(btn.hasAttribute('data-meal-cancel')){form.hidden=true;return}
+    if(btn.hasAttribute('data-meal-time')){
+      const v=card.querySelector('.meal-time').value;
+      if(!/^\d{2}:\d{2}$/.test(v)) return toast('اختر وقتًا صحيحًا');
+      await writeMealCloud(id,{meal_date:mealIsoAt(v)});
+      toast('تم تحديث وقت الوجبة');
+    } else if(btn.hasAttribute('data-meal-save')){
+      const f=name=>form.querySelector(`[data-f="${name}"]`).value;
+      const name=f('meal_name').trim();
+      if(!name) return toast('اكتب اسم الوجبة');
+      const num=k=>{const n=Number(f(k));return Number.isFinite(n)&&n>=0?n:0};
+      await writeMealCloud(id,{meal_name:name,ingredients:f('ingredients').trim(),calories:num('calories'),protein:num('protein'),carbs:num('carbs'),fat:num('fat'),notes:f('notes').trim()});
+      toast('تم حفظ تعديل الوجبة');
+    } else if(btn.hasAttribute('data-meal-delete')){
+      if(!confirm('حذف هذه الوجبة نهائيًا؟ ستُحذف من تطبيق مساعدي الغذائي أيضًا عند مزامنته.')) return;
+      await deleteMealCloud(id);
+      toast('تم حذف الوجبة');
+    }
+    refreshMealsNow();
+  }catch(err){
+    toast('تعذر الحفظ: '+(err&&err.message?err.message:err));
+  }
+});
+setInterval(()=>{if(document.visibilityState!=='hidden')ensureLinkedMeals(derived().selectedKey)},60000);
+
+// ---------- Prayer times (calculated locally, matched to دائرة الأوقاف الأردنية) ----------
+const PRAYER_LOCATION = { lat: 31.9539, lng: 35.9106, label: 'عمّان' };
+const PRAYER_NAMES = [['Fajr','الفجر'],['Dhuhr','الظهر'],['Asr','العصر'],['Maghrib','المغرب'],['Isha','العشاء']];
+// Official timetable of دائرة الأوقاف الأردنية (24-hour). Used first for every date it covers.
+// Columns: Fajr, Sunrise, Dhuhr, Asr, Maghrib, Isha. Add more rows here as the ministry publishes them.
+const AWQAF_TIMES = {
+  '2026-10-29': {Fajr:'05:28',Sunrise:'06:44',Dhuhr:'12:20',Asr:'15:26',Maghrib:'17:56',Isha:'19:12'},
+  '2026-10-30': {Fajr:'05:28',Sunrise:'06:45',Dhuhr:'12:20',Asr:'15:26',Maghrib:'17:55',Isha:'19:11'},
+  '2026-10-31': {Fajr:'05:29',Sunrise:'06:46',Dhuhr:'12:20',Asr:'15:25',Maghrib:'17:54',Isha:'19:10'},
+  '2026-11-01': {Fajr:'05:30',Sunrise:'06:46',Dhuhr:'12:20',Asr:'15:24',Maghrib:'17:53',Isha:'19:10'},
+  '2026-11-02': {Fajr:'05:30',Sunrise:'06:47',Dhuhr:'12:20',Asr:'15:24',Maghrib:'17:52',Isha:'19:09'},
+  '2026-11-03': {Fajr:'05:31',Sunrise:'06:48',Dhuhr:'12:20',Asr:'15:23',Maghrib:'17:51',Isha:'19:08'},
+  '2026-11-04': {Fajr:'05:32',Sunrise:'06:49',Dhuhr:'12:20',Asr:'15:22',Maghrib:'17:51',Isha:'19:07'},
+  '2026-11-05': {Fajr:'05:33',Sunrise:'06:50',Dhuhr:'12:20',Asr:'15:22',Maghrib:'17:50',Isha:'19:07'},
+  '2026-11-06': {Fajr:'05:33',Sunrise:'06:51',Dhuhr:'12:20',Asr:'15:21',Maghrib:'17:49',Isha:'19:06'},
+  '2026-11-07': {Fajr:'05:34',Sunrise:'06:51',Dhuhr:'12:20',Asr:'15:21',Maghrib:'17:48',Isha:'19:06'},
+};
+// Settings fitted to the table above: Fajr and Isha at 18°, Shafi Asr, sunrise/sunset at -1.95°.
+const PRAYER_CALC = { fajrAngle: 18, ishaAngle: 18, asrFactor: 1, horizon: -1.95, tzHours: 3 };
+const PRAYER_RAD = Math.PI / 180;
+// Solar declination and equation of time (NOAA approximation). g is the fractional year in radians.
+function prayerSun(doy, utcMin){
+  const g = 2*Math.PI/365*(doy-1+(utcMin/60-12)/24);
+  const eqt = 229.18*(0.000075+0.001868*Math.cos(g)-0.032077*Math.sin(g)-0.014615*Math.cos(2*g)-0.040849*Math.sin(2*g));
+  const decl = 0.006918-0.399912*Math.cos(g)+0.070257*Math.sin(g)-0.006758*Math.cos(2*g)+0.000907*Math.sin(2*g)-0.002697*Math.cos(3*g)+0.00148*Math.sin(3*g);
+  return {decl, eqt};
+}
+// Sun altitude in degrees at a local clock time (minutes after midnight, Jordan time).
+function prayerAltitude(doy, localMin){
+  const utc = localMin - PRAYER_CALC.tzHours*60;
+  const {decl, eqt} = prayerSun(doy, utc);
+  const tst = utc + eqt + 4*PRAYER_LOCATION.lng;
+  const ha = (tst/4 - 180)*PRAYER_RAD;
+  const lat = PRAYER_LOCATION.lat*PRAYER_RAD;
+  return Math.asin(Math.sin(lat)*Math.sin(decl)+Math.cos(lat)*Math.cos(decl)*Math.cos(ha))/PRAYER_RAD;
+}
+// Local minute of solar noon (highest altitude).
+function prayerNoon(doy){
+  let best=720, bestAlt=-99;
+  for(let m=690;m<=750;m+=0.25){const a=prayerAltitude(doy,m); if(a>bestAlt){bestAlt=a;best=m}}
+  return best;
+}
+// Bisection for the moment the sun crosses a target altitude, before or after noon.
+function prayerCross(doy, target, before){
+  const noon=prayerNoon(doy);
+  let a=before?noon-900:noon, b=before?noon:noon+900;
+  for(let i=0;i<80;i++){
+    const m=(a+b)/2;
+    const above=prayerAltitude(doy,m)>target;
+    if(before?!above:above) a=m; else b=m;
+  }
+  return (a+b)/2;
+}
+// Asr: shadow length = factor × object height + noon shadow.
+function prayerAsr(doy){
+  const {decl}=prayerSun(doy, 720-PRAYER_CALC.tzHours*60);
+  const lat=PRAYER_LOCATION.lat*PRAYER_RAD;
+  const target=Math.atan(1/(PRAYER_CALC.asrFactor+Math.tan(Math.abs(lat-decl))))/PRAYER_RAD;
+  return prayerCross(doy, target, false);
+}
+function prayerDayOfYear(key){const [y,m,d]=key.split('-').map(Number);return Math.floor((Date.UTC(y,m-1,d)-Date.UTC(y,0,1))/86400000)+1}
+// "17:42" -> minutes after midnight, -1 if not a clock time.
+function prayerMinutes(s){const m=String(s||'').match(/^(\d{1,2}):(\d{2})/);return m?Number(m[1])*60+Number(m[2]):-1}
+// "17:42" -> "5:42 PM" (same format as the planner).
+function prayerClock12(s){const total=prayerMinutes(s);if(total<0)return '';let h=Math.floor(total/60);const min=String(total%60).padStart(2,'0');const suffix=h<12?'AM':'PM';h=h%12||12;return `${h}:${min} ${suffix}`}
+function prayerHM(minutes){const t=Math.round(minutes)%1440;return String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0')}
+// Times for a date key ('YYYY-MM-DD'): official table first, otherwise the local calculation.
+function loadPrayerTimes(key){
+  if(AWQAF_TIMES[key]) return AWQAF_TIMES[key];
+  const doy=prayerDayOfYear(key);
+  return {
+    Fajr: prayerHM(prayerCross(doy,-PRAYER_CALC.fajrAngle,true)),
+    Sunrise: prayerHM(prayerCross(doy,PRAYER_CALC.horizon,true)),
+    Dhuhr: prayerHM(prayerNoon(doy)),
+    Asr: prayerHM(prayerAsr(doy)),
+    Maghrib: prayerHM(prayerCross(doy,PRAYER_CALC.horizon,false)),
+    Isha: prayerHM(prayerCross(doy,-PRAYER_CALC.ishaAngle,false)),
+  };
+}
+function renderPrayerTimes(d){
+  const box=$('prayerBox');if(!box)return;
+  const key=d.selectedKey;
+  const t=loadPrayerTimes(key);
+  let nextName='';
+  if(key===d.todayKey){const now=d.today.getHours()*60+d.today.getMinutes();const next=PRAYER_NAMES.find(([en])=>prayerMinutes(t[en])>now);nextName=next?next[0]:''}
+  const source=AWQAF_TIMES[key]?'حسب تقويم دائرة الأوقاف':'محسوبة بنفس إعدادات الأوقاف (الفجر والعشاء 18°)';
+  box.innerHTML=`<strong>مواقيت الصلاة · ${esc(PRAYER_LOCATION.label)}</strong><p class="muted" style="margin:4px 0 0">${esc(source)}</p><div class="prayer-grid">${PRAYER_NAMES.map(([en,ar])=>`<span class="${en===nextName?'prayer-next':''}">${ar}<b>${esc(prayerClock12(t[en]))}</b></span>`).join('')}</div>`;
+}
+// Keeps "next prayer" and the day switch current without a page reload.
+setInterval(()=>{if(document.visibilityState!=='hidden')renderPrayerTimes(derived())},60000);
+
+// ---------- Day-specific schedule editor and daily checklist ----------
+function currentDayItems(){const d=derived();const raw=(state.dayPlans&&state.dayPlans[d.selectedKey])||DAYS[selected].items;return sortChronological(raw);}
+// Stable sort by start time, so the day always reads in time order (indexes match what is shown).
+function sortChronological(list){return list.map((x,i)=>({x,i,k:rowStartKey(x)})).sort((a,b)=>(a.k-b.k)||(a.i-b.i)).map(o=>o.x);}
+function renderDayChecklist(){
+ const d=derived(), items=currentDayItems(), box=$('day-checklist');if(!box)return;
+ // Meals from مساعدي الغذائي count too, with the done tick kept on the meal card.
+ const meals=linkedMealsFor(d.selectedKey)||[], mealDoneMap=(state.mealDone||{})[d.selectedKey]||{};
+ const done=items.filter((it,i)=>!!state.done[d.selectedKey+'-'+i]).length+meals.filter(m=>!!mealDoneMap[m.client_id]).length;
+ const total=items.length+meals.length;
+ box.innerHTML='<p class="empty">'+done+' من '+total+' مهام مكتملة</p>'+items.map((it,i)=>'<div class="kv"><span>'+esc(it.title)+'</span><b>'+(state.done[d.selectedKey+'-'+i]?'✅ تم':'⏳ لم يتم')+'</b></div>').join('')+meals.map(m=>'<div class="kv"><span>🍽️ '+esc(m.meal_name||'وجبة')+'</span><b>'+(mealDoneMap[m.client_id]?'✅ تم':'⏳ لم يتم')+'</b></div>').join('');
+}
+// Keeps the day's rows before each applied plan, so the user can take a change back.
+function rememberBeforeChange(key, items){commit(st=>({...st,undo:[{key,at:Date.now(),items:items.map(x=>({...x}))},...(st.undo||[]).slice(0,9)]}))}
+// Rows removed by the latest change to this day (compared with the snapshot kept before it).
+function recentRemovedFor(key, items){
+  const last=(state.undo||[]).find(x=>x.key===key);
+  if(!last) return [];
+  return last.items.filter(o=>!items.some(n=>n.title===o.title&&n.time===o.time))
+    .map(o=>({time:o.time,title:o.title,type:o.type,detail:o.detail||'',dur:o.dur}));
+}
+function undoLastChange(){
+  const key=derived().selectedKey;
+  const last=(state.undo||[]).find(x=>x.key===key);
+  if(!last) return toast('لا يوجد تغيير يمكن التراجع عنه لهذا اليوم');
+  if(!confirm('ترجع جدول هذا اليوم إلى ما كان قبل آخر خطة معتمدة؟')) return;
+  if(!saveDayItems(last.items.map(x=>({...x})))) return;
+  commit(st=>({...st,undo:(st.undo||[]).filter(x=>x!==last)}));
+  $('day-ai-result').innerHTML='';
+  toast('تم التراجع عن آخر تغيير');
+}
+function saveDayItems(items){const d=derived();const ok=commit(st=>({...st,dayPlans:{...(st.dayPlans||{}),[d.selectedKey]:items}}));if(ok)pushDayPlan(d.selectedKey,items);return ok;}
+// ---------- Cloud copy of each day (table day_plans) ----------
+// Local storage stays the source on this device; the cloud copy lets other devices see the same day.
+function cloudDayClient(){return window.sharedScheduleClient||null;}
+async function cloudUserId(){const c=cloudDayClient();if(!c)return null;try{const {data}=await c.auth.getSession();return data.session?.user?.id||null;}catch(_){return null;}}
+async function pushDayPlan(key,items){
+  const c=cloudDayClient();if(!c)return;
+  const uid=await cloudUserId();if(!uid)return;
+  const {error}=await c.from('day_plans').upsert({user_id:uid,plan_date:key,items,updated_at:new Date().toISOString()},{onConflict:'user_id,plan_date'});
+  if(error)toast('تعذر حفظ هذا اليوم في السحابة، وبقي محفوظًا على هذا الجهاز');
+}
+async function pullDayPlans(){
+  const c=cloudDayClient();if(!c)return;
+  const uid=await cloudUserId();if(!uid)return;
+  const from=new Date();from.setDate(from.getDate()-30);const to=new Date();to.setDate(to.getDate()+60);
+  const {data,error}=await c.from('day_plans').select('plan_date,items').eq('user_id',uid).gte('plan_date',dateKey(from)).lte('plan_date',dateKey(to));
+  if(error||!data)return;
+  const plans={...(state.dayPlans||{})};
+  for(const row of data){if(Array.isArray(row.items)&&row.items.length)plans[row.plan_date]=row.items;}
+  state={...state,dayPlans:plans};
+  saveLocal();render();
+}
+function startCloudDayPlans(){
+  let tries=0;
+  const timer=setInterval(()=>{
+    const c=cloudDayClient();tries++;
+    if(c||tries>60){clearInterval(timer);if(!c)return;
+      pullDayPlans();
+      c.auth.onAuthStateChange(()=>{pullDayPlans();});}
+  },1000);
+}
+// ---------- Priority and progress notes for each task of the day ----------
+const PRIORITY_LABELS={high:'عالية',medium:'متوسطة',low:'منخفضة'};
+function renderDayNotes(){
+  const box=$('dayNotes');if(!box)return;
+  const items=currentDayItems();
+  box.innerHTML='<strong>الأولوية وملاحظات التقدم</strong>'+items.map((it,i)=>{
+    const p=it.priority||'medium';const last=(it.progress||[]).slice(-1)[0];
+    return '<div class="day-note-row" style="margin:8px 0;padding:10px;border-radius:12px;background:var(--surface,#f5f1e8)">'
+      +'<div><b>'+esc(it.title)+'</b> <small>'+esc(it.time||'')+'</small></div>'
+      +'<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap"><select data-prio="'+i+'" aria-label="الأولوية">'
+      +Object.keys(PRIORITY_LABELS).map(k=>'<option value="'+k+'"'+(k===p?' selected':'')+'>'+PRIORITY_LABELS[k]+'</option>').join('')
+      +'</select><input data-note-input="'+i+'" maxlength="200" placeholder="ملاحظة تقدم" style="flex:1;min-width:120px;padding:6px;border-radius:8px;border:1px solid #d9d2c3"><button type="button" data-note-add="'+i+'">حفظ</button></div>'
+      +(last?'<small>آخر ملاحظة: '+esc(last.text)+'</small>':'')
+      +'</div>';
+  }).join('');
+}
+function updateDayItem(index,patch){
+  const items=currentDayItems().map(x=>({...x}));
+  if(!items[index])return false;
+  items[index]={...items[index],...patch};
+  return saveDayItems(items);
+}
+window.addEventListener('shared-meals-updated',()=>render());
+startCloudDayPlans();
+document.addEventListener('change',e=>{const sel=e.target.closest&&e.target.closest('[data-prio]');if(!sel)return;updateDayItem(Number(sel.dataset.prio),{priority:sel.value});});
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-note-add]');if(!b)return;
+  const i=Number(b.dataset.noteAdd);const input=document.querySelector('[data-note-input="'+i+'"]');const text=(input&&input.value||'').trim();
+  if(!text)return toast('اكتب الملاحظة أولًا');
+  const items=currentDayItems();const old=items[i];if(!old)return;
+  if(updateDayItem(i,{progress:[...(old.progress||[]),{at:new Date().toISOString(),text}]})){toast('حُفظت ملاحظة التقدم');}
+});
+$('day-item-add').addEventListener('click',()=>{const title=$('day-item-title').value.trim(),time=$('day-item-time').value.trim(),detail=$('day-item-detail').value.trim(),type=$('day-item-type').value;if(!title||!time)return toast('اكتب اسم المهمة والوقت');const items=[...currentDayItems(),{time,title,type,detail,dur:undefined}];saveDayItems(items);$('day-item-title').value='';$('day-item-time').value='';$('day-item-detail').value='';toast('أُضيفت المهمة لهذا اليوم فقط');});
+$('day-ai-suggest').addEventListener('click', async () => {
+  const problem = $('day-ai-problem').value.trim();
+  const btn = $('day-ai-suggest');
+  const box = $('day-ai-result');
+  if (!problem) { toast('اشرح المشكلة أولاً'); $('day-ai-problem').focus(); return; }
+  if (!navigator.onLine) { box.innerHTML = '<div class="response-box warn">تحتاج ميزة الذكاء الاصطناعي إلى اتصال بالإنترنت. بقية التطبيق وبياناتك محفوظة.</div>'; return; }
+  const d = derived();
+  const items = currentDayItems();
+  btn.disabled = true;
+  btn.textContent = 'جارٍ تحليل المشكلة…';
+  box.innerHTML = '<div class="response-box">يتواصل مع المساعد الذكي…</div>';
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 90000);
+  try {
+    const response = await fetch('https://jadwali-ai.mohammedtareqabugosh.workers.dev', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        problem,
+        context: {
+          app: 'جدولي الأسبوعي',
+          task: 'حلّل الطلب والجدول، ثم أجب بالعربية باقتراح واضح. في نهاية الإجابة أضف كتلة PLAN_JSON تحتوي JSON صالحاً فقط بالشكل {"version":1,"date":"قيمة date المرسلة كما هي","actions":[...]}. كل action أحد: {"type":"add","title":"...","start":"6:00 PM","end":"7:00 PM","taskType":"study|work|uni|online|food|rest|sleep","detail":"..."} أو {"type":"update","index":0,"title":"...","start":"...","end":"...","taskType":"...","detail":"..."} أو {"type":"delete","index":0,"reason":"..."}. index هو index الأصلي للمهمة المرسلة، وليس فهرساً بعد التعديل. قاعدة مهمة للاستبدال: إذا طلب المستخدم إضافة مهمة في وقت مشغول وذكر أو أوضح أنه يريد استبدال مهمة موجودة (مثل: استبدل السناك الساعة 2)، فلا ترفض الطلب بسبب أن الفترة مشغولة، ولا تنشئ action من نوع add متداخلة مع المهمة القديمة. استخدم action من نوع update مع index الخاص بالمهمة القديمة، وغيّر عنوانها ووقتها ونوعها وتفاصيلها إلى المهمة الجديدة، مع الحفاظ على بقية المهام دون تغيير. إذا لم يحدد المستخدم المهمة المراد استبدالها بشكل كافٍ، اسأله ولا تنشئ خطة تنفيذ. عند الاستبدال، تحقّق من عدم تعارض وقت المهمة الجديدة مع أي مهمة أخرى غير المهمة التي يتم استبدالها. أرسل actions فارغة إذا كان الطلب استشارة فقط أو المعلومات غير كافية. لا تخترع مواعيد أو مدد؛ أي إضافة/تعديل يجب أن تكون لها بداية ونهاية واضحتان. إذا أعطى المستخدم وقت بداية ونهاية محددين صراحةً (مثل الخميس 2:00 PM إلى 2:15 PM)، فاعتبرهما الوقت المطلوب ولا ترفض الطلب لمجرد عدم وجود فترة مقترحة مسبقاً. افحص العناصر الحالية للتأكد من عدم وجود تداخل فعلي مع مهمة أخرى؛ إذا لم يوجد تداخل، أنشئ action من نوع add بالوقت المحدد حتى لو كانت مدة المهمة 15 دقيقة. لا تشترط أن تكون الفترة موجودة مسبقاً ضمن قائمة فترات الفراغ. إذا كان هناك تعارض فعلي، اذكر اسم المهمة المتعارضة ووقتها بدقة ولا تنشئ خطة غير آمنة. لا تنفّذ أي تغيير بنفسك؛ التطبيق سيعرض الخطة للموافقة قبل الحفظ. أخرج الكتلة بهذا الشكل الحرفي: PLAN_JSON ثم JSON في سطر/كتلة مستقلة.',
+          selectedDay: DAYS[selected].name,
+          date: d.selectedKey,
+          availability: analyzeDay(items),
+          recent_removed: recentRemovedFor(d.selectedKey, items),
+          items: items.map((it, i) => ({
+            index: i, time: it.time, title: it.title, type: it.type,
+            detail: it.detail || '', dur: Number.isFinite(Number(it.dur)) ? Number(it.dur) : null, priority: it.priority || 'medium', last_progress: ((it.progress||[]).slice(-1)[0]||{}).text || ''
+          }))
+        }
+      }),
+      signal: controller.signal
+    });
+    let data;
+    try { data = await response.json(); }
+    catch (_) { throw new Error('رد الخادم غير مفهوم. حاول مرة أخرى.'); }
+    if (!response.ok || !data || !data.ok || !data.answer) {
+      throw new Error((data && data.error) || 'تعذر الحصول على رد من المساعد.');
+    }
+    const answer = String(data.answer).replace(/\\n/g, '\n').replace(/\\r/g, '\r');
+    const planMatch = answer.match(/PLAN_JSON\s*(?:```json\s*)?(\{[\s\S]*\})(?:\s*```)?\s*$/i);
+    let plan = null, planError = '';
+    if (planMatch) { try { plan = JSON.parse(planMatch[1]); } catch (_) { planError = 'صيغة خطة التنفيذ غير صالحة.'; } }
+    const visibleAnswer = answer.replace(/PLAN_JSON[\s\S]*$/i, '').trim();
+    window.__jadwaliAiPlan = plan && plan.version === 1 && plan.date === d.selectedKey && Array.isArray(plan.actions) ? {plan, date:d.selectedKey, items:items.map(x=>({...x}))} : null;
+    box.innerHTML = '<div class="response-box"><strong>اقتراح ذكي لليوم المحدد</strong><p class="ai-answer" style="white-space:pre-wrap"></p><div class="ai-plan-status empty"></div><button type="button" class="primary-button" id="ai-add-proposal" style="margin-top:10px" disabled>اعتماد الخطة وتنفيذها</button><p class="empty">لن يتغير الجدول إلا بعد موافقتك. ستُطبّق الإضافات والتعديلات والحذف المذكورة صراحةً فقط.</p></div>';
+    box.querySelector('.ai-answer').textContent = visibleAnswer || answer;
+    const status = box.querySelector('.ai-plan-status');
+    const applyBtn = box.querySelector('#ai-add-proposal');
+    if (window.__jadwaliAiPlan && plan.actions.length) {
+      const counts = {add:0,update:0,delete:0};
+      const allowedTypes = ['study','work','uni','online','food','rest','sleep'];
+      const actionsValid = plan.actions.every(a => {
+        if (!a || !['add','update','delete'].includes(a.type)) return false;
+        if (a.type === 'delete') {
+          return Number.isInteger(a.index) && a.index >= 0 &&
+            a.index < items.length && typeof a.reason === 'string';
+        }
+        if (a.type === 'update' &&
+            (!Number.isInteger(a.index) || a.index < 0 || a.index >= items.length)) return false;
+        const start = eventStart(String(a.start || '').trim());
+        const end = eventStart(String(a.end || '').trim());
+        return typeof a.title === 'string' && !!a.title.trim() &&
+          start >= 0 && end >= 0 && spanOf(start, end) > 0 &&
+          spanOf(start, end) <= 1440 && allowedTypes.includes(String(a.taskType || '').toLowerCase()) &&
+          typeof a.detail === 'string';
+      });
+      if (actionsValid) {
+        plan.actions.forEach(a=>{if(a&&Object.prototype.hasOwnProperty.call(counts,a.type))counts[a.type]++;});
+        status.textContent = 'خطة جاهزة للمراجعة: إضافة '+counts.add+'، تعديل '+counts.update+'، حذف '+counts.delete+' مهمة. سيتم فحص التعارضات مرة أخرى قبل الحفظ.';
+        applyBtn.disabled = false;
+      } else {
+        window.__jadwaliAiPlan = null;
+        status.textContent = 'الخطة المنظمة تحتوي بيانات أو أوقاتًا غير صالحة؛ لم يتغير جدولك. أعد التحليل.';
+      }
+    } else {
+      const refusal = /لا يمكن إضافة|لا يمكن تنفيذ|لا توجد تغييرات|يتداخل|يتعارض|تعارض واضح|غير متاح|لن أقترح|لا أقترح/i.test(visibleAnswer);
+      const suggestsChange = !refusal && /(?:يمكن|اقترح|اقتراح|إضافة مهمة|إضافة:|التغييرات المقترحة)[^\\n]{0,100}(?:إضافة|مهمة|تعديل|حذف)|(?:إضافة مهمة|يمكن إضافة|التغييرات المقترحة)/i.test(visibleAnswer);
+      status.textContent = planError || (window.__jadwaliAiPlan
+        ? (suggestsChange
+          ? 'الرد النصي يقترح تغييرًا، لكن خطة التنفيذ المنظمة فارغة. لم يتم تفعيل التنفيذ حتى لا يتغير جدولك دون خطة موثوقة. أعد التحليل.'
+          : (refusal
+            ? 'المساعد رفض التغيير بسبب تعارض أو قيد في الجدول. لا توجد تغييرات للتنفيذ، ولم يتغير جدولك.'
+            : 'المساعد لم يقترح تغييرات فعلية. لا يوجد شيء لتنفيذه.'))
+        : 'لم تصل خطة تنفيذ منظمة وآمنة من المساعد؛ لم يتغير جدولك. أعد الطلب بصيغة واضحة للتعديل المطلوب.');
+    }
+  } catch (err) {
+    box.innerHTML = '<div class="response-box warn"></div>';
+    box.querySelector('.response-box').textContent = err && err.name === 'AbortError'
+      ? 'تأخر رد الخادم. جرّب مرة أخرى بعد قليل.'
+      : (err.message || 'تعذر الاتصال بالمساعد. تحقق من الإنترنت وحاول مرة أخرى.');
+  } finally {
+    clearTimeout(timer);
+    btn.disabled = false;
+    btn.textContent = 'تحليل المشكلة واقتراح تعديل';
+  }
+});
+// Start minute of a schedule row (times before 6 AM count as the night after). Unknown -> end of list.
+function rowStartKey(item) {
+  const first = String(item && item.time || '').split(/\s*[–—-]\s*/)[0];
+  const st = eventStart(first.trim());
+  if (st < 0) return Infinity;
+  return st < 360 ? st + 1440 : st;
+}
+// Puts a new task in chronological order; existing rows keep their own order.
+function insertChronological(list, task) {
+  const key = rowStartKey(task);
+  let idx = list.findIndex(row => rowStartKey(row) > key);
+  if (idx < 0) idx = list.length;
+  list.splice(idx, 0, task);
+  return list;
+}
+document.addEventListener('click',e=>{
+ if(e.target.closest('#day-ai-undo')){undoLastChange();return;}
+ const addProposal=e.target.closest('#ai-add-proposal');
+ if(addProposal){
+   const saved=window.__jadwaliAiPlan;
+   if(!saved||!saved.plan||!Array.isArray(saved.plan.actions))return toast('لا توجد خطة صالحة للتنفيذ');
+   const now=derived();
+   if(now.selectedKey!==saved.date)return toast('تغيّر اليوم المحدد. أعد تحليل المشكلة قبل التنفيذ');
+   const original=currentDayItems();
+   if(JSON.stringify(original)!==JSON.stringify(saved.items))return toast('تغيّر الجدول منذ التحليل. أعد التحليل حتى لا تُطبّق الخطة على بيانات قديمة');
+   const actions=saved.plan.actions;
+   if(!actions.length)return toast('لا توجد تغييرات لتنفيذها');
+   const allowed=['study','work','uni','online','food','rest','sleep'];
+   const updates=new Map(), deletes=new Set(), adds=[];
+   for(const a of actions){
+     if(!a||!['add','update','delete'].includes(a.type))return toast('الخطة تحتوي إجراءً غير معروف؛ لم يتغير الجدول');
+     if(a.type==='delete'||a.type==='update'){
+       if(!Number.isInteger(a.index)||a.index<0||a.index>=original.length)return toast('الخطة تشير إلى مهمة غير موجودة؛ لم يتغير الجدول');
+       if(a.type==='delete'){if(updates.has(a.index)||deletes.has(a.index))return toast('الخطة تكرر تعديل المهمة نفسها؛ لم يتغير الجدول');deletes.add(a.index);continue;}
+       if(deletes.has(a.index)||updates.has(a.index))return toast('الخطة تكرر تعديل المهمة نفسها؛ لم يتغير الجدول');
+     }
+     if(a.type==='add'||a.type==='update'){
+       const title=String(a.title||'').trim(), type=String(a.taskType||'').trim().toLowerCase();
+       const st=eventStart(String(a.start||'').trim()), en=eventStart(String(a.end||'').trim());
+       if(!title||st<0||en<0||spanOf(st,en)<=0||spanOf(st,en)>1440||!allowed.includes(type))return toast('الخطة فيها عنوان أو وقت أو نوع مهمة غير صالح؛ لم يتغير الجدول');
+       const span=spanOf(st,en);
+       const start=st<360?st+1440:st, end=start+span;
+       const task={time:fmtTime(st)+' – '+fmtTime(en),title,type,detail:String(a.detail||'').trim(),dur:span};
+       if(a.type==='add')adds.push({task,start,end}); else updates.set(a.index,{task,start,end});
+     }
+   }
+   let proposed=original.filter((_,i)=>!deletes.has(i)).map((it,i)=>({...it}));
+   // Preserve original-index targeting while applying edits/deletes.
+   proposed=[];
+   for(let i=0;i<original.length;i++){if(deletes.has(i))continue;proposed.push(updates.has(i)?updates.get(i).task:{...original[i]});}
+   adds.forEach(x=>insertChronological(proposed,x.task));
+   const check=analyzeDay(proposed);
+   const conflictText=check.conflicts.length?'\n\n⚠️ تعارضات ستبقى كما هي إن وافقت:\n'+check.conflicts.join('\n'):'';
+   const summary=actions.map(a=>a.type==='add'?'إضافة: '+a.title:a.type==='update'?'تعديل: '+original[a.index].title+' ← '+(a.title||original[a.index].title):'حذف: '+original[a.index].title).join('\n');
+   if(!confirm('هل تعتمد تنفيذ هذه الخطة على يوم '+DAYS[selected].name+'؟\n\n'+summary+conflictText+'\n\nلن تتغير المهام الأخرى.'))return;
+   const ok=saveDayItems(proposed);
+   if(!ok)return;
+   rememberBeforeChange(saved.date, original);
+   window.__jadwaliAiPlan=null;
+   $('day-ai-result').innerHTML='<div class="response-box">تم تنفيذ الخطة المعتمدة وحفظ التغييرات لليوم المحدد. <button type="button" class="quiet-button" id="day-ai-undo">تراجع عن هذا التغيير</button></div>';
+   toast('تم تنفيذ الخطة وحفظها');
+   return;
+ }
+ const mainDel=e.target.closest('[data-main-delete]');if(mainDel){const i=Number(mainDel.dataset.mainDelete),items=currentDayItems().slice();if(!Number.isInteger(i)||i<0||i>=items.length)return;if(!confirm('متأكد من حذف هذه المهمة من اليوم المحدد فقط؟'))return;items.splice(i,1);saveDayItems(items);toast('تم حذف المهمة من هذا اليوم فقط');return;}const mainEdit=e.target.closest('[data-main-edit]');if(mainEdit){const i=Number(mainEdit.dataset.mainEdit),items=currentDayItems().slice();if(!Number.isInteger(i)||i<0||i>=items.length)return;const it=items[i],title=prompt('اسم المهمة',it.title);if(title===null)return;if(!title.trim())return toast('اسم المهمة لا يمكن أن يكون فارغاً');const time=prompt('الوقت',it.time);if(time===null)return;if(!time.trim())return toast('الوقت لا يمكن أن يكون فارغاً');const detail=prompt('التفاصيل (اختياري)',it.detail||'');if(detail===null)return;items[i]={...it,title:title.trim(),time:time.trim(),detail:detail.trim()};saveDayItems(items);toast('تم تعديل المهمة لهذا اليوم فقط');return;}const del=e.target.closest('[data-day-remove]');if(del){const i=Number(del.dataset.dayRemove),items=currentDayItems().slice();items.splice(i,1);saveDayItems(items);$('day-ai-result').innerHTML='';toast('تم حذف المهمة من هذا اليوم فقط');return;}const edit=e.target.closest('[data-day-time]');if(edit){const i=Number(edit.dataset.dayTime),v=$('day-edit-time-'+i).value.trim();if(!v)return toast('أدخل الوقت الجديد');const items=currentDayItems().slice();items[i]={...items[i],time:v};saveDayItems(items);toast('تم تعديل وقت المهمة لهذا اليوم فقط');}});
+// ---------- Modals & toast ----------
+function openModal(id) { $(id).hidden = false; }
+function closeModal(id) { $(id).hidden = true; }
+document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => closeModal(b.dataset.close)));
+document.querySelectorAll('.modal').forEach(m => m.addEventListener('click', (e) => {
+  if (e.target !== m) return;
+  if (m.id === 'confirmModal') closeConfirm(false); else m.hidden = true;
+}));
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  const open = [...document.querySelectorAll('.modal')].reverse().find(m => !m.hidden);
+  if (!open) return;
+  if (open.id === 'confirmModal') closeConfirm(false); else open.hidden = true;
+});
+let toastTimer;
+function toast(msg) {
+  const t = $('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+let confirmResolve = null;
+function askConfirm(msg) {
+  return new Promise((resolve) => {
+    if (confirmResolve) confirmResolve(false);
+    confirmResolve = resolve;
+    $('confirmText').textContent = msg;
+    openModal('confirmModal');
+  });
+}
+function closeConfirm(value) {
+  closeModal('confirmModal');
+  if (confirmResolve) { const r = confirmResolve; confirmResolve = null; r(value); }
+}
+$('confirmYes').addEventListener('click', () => closeConfirm(true));
+$('confirmNo').addEventListener('click', () => closeConfirm(false));
+
+function applyTheme() { document.documentElement.dataset.theme = state.theme === 'dark' ? 'dark' : 'light'; }
+
+// ---------- Actions ----------
+document.addEventListener('change', (e) => {
+  const cb = e.target.closest('.event-check');
+  if (!cb) return;
+  const d = derived();
+  const key = `${d.selectedKey}-${cb.dataset.task}`;
+  commit(s => ({ ...s, done: { ...s.done, [key]: cb.checked } }));
+});
+document.addEventListener('click', (e) => {
+  const goalBtn = e.target.closest('[data-goal]');
+  if (goalBtn && GOALS[goalBtn.dataset.goal]) { commit(s => ({ ...s, goal: goalBtn.dataset.goal })); return; }
+  const day = e.target.closest('[data-day]');
+  if (day) { selected = Number(day.dataset.day); render(); $('scenarioResult').innerHTML = ''; return; }
+  const sc = e.target.closest('[data-scenario]');
+  if (sc) { const s = SCENARIOS.find(x => x.id === sc.dataset.scenario); if (s) applyScenario(s, null); }
+});
+
+function applyScenario(s, custom) {
+  const d = derived();
+  const text = (custom && custom.trim()) || s.title;
+  const advice = custom ? ['خذ نفساً؛ ليس عليك معالجة كل شيء الآن.', 'اختر خطوة صغيرة واقعية، ثم عد إلى جدولك عندما يناسبك.'] : s.advice;
+  // The same incident on the same day is recorded once, however many times the button is pressed.
+  const ok = commit(st => {
+    const exists = st.incidents.some(x => x.date === d.selectedKey && x.text === text);
+    return {
+      ...st,
+      incidents: exists ? st.incidents : [...st.incidents, { id: `${Date.now()}-${Math.random().toString(36).slice(2,7)}`, date: d.selectedKey, text }],
+      overrides: { ...st.overrides, [d.selectedKey]: text }
+    };
+  });
+  $('scenarioResult').innerHTML = `<div class="response-box"><strong>${esc(text)}</strong><ul>${advice.map(a => `<li>${esc(a)}</li>`).join('')}</ul></div>`;
+  if (ok) toast('تم حفظ الخطة لهذا اليوم فقط');
+}
+$('customBtn').addEventListener('click', () => {
+  const t = $('customInput').value.trim();
+  if (!t) return toast('اكتب ما حدث أولاً');
+  applyScenario(null, t);
+  $('customInput').value = '';
+});
+
+$('themeBtn').addEventListener('click', () => {
+  commit(s => ({ ...s, theme: s.theme === 'dark' ? 'light' : 'dark' }));
+  applyTheme();
+});
+
+$('resetBtn').addEventListener('click', async () => {
+  if (!(await askConfirm(`إعادة ضبط ${DAYS[selected].name} وإلغاء أي تعديل له؟`))) return;
+  const d = derived();
+  const ok = commit(s => {
+    const done = { ...s.done };
+    Object.keys(done).forEach(k => { if (k.startsWith(`${d.selectedKey}-`)) delete done[k]; });
+    const overrides = { ...s.overrides }; delete overrides[d.selectedKey];
+    const dayMeals = { ...(s.dayMeals || {}) }; delete dayMeals[d.selectedKey];
+    return { ...s, done, overrides, dayMeals };
+  });
+  $('scenarioResult').innerHTML = '';
+  if (ok) toast('عاد اليوم إلى جدوله الأصلي');
+});
+
+$('checkinBtn').addEventListener('click', () => {
+  const d = derived();
+  const w = state.weights.find(x => x.date === d.todayKey);
+  $('weightInput').value = w ? w.value : '';
+  openModal('checkinModal');
+});
+$('saveCheckinBtn').addEventListener('click', () => {
+  const d = derived();
+  const raw = $('weightInput').value.trim();
+  const v = raw === '' ? null : Number(raw);
+  if (v !== null && !(v >= 20 && v <= 400)) return toast('أدخل وزناً صحيحاً بين 20 و400 كغم');
+  const ok = commit(s => ({
+    ...s,
+    checkins: [...new Set([...s.checkins, d.todayKey])],
+    weights: v === null ? s.weights : [...s.weights.filter(x => x.date !== d.todayKey), { date: d.todayKey, value: v }]
+  }));
+  if (!ok) return;
+  closeModal('checkinModal');
+  toast('تم توثيق اليوم');
+});
+$('undoBtn').addEventListener('click', () => {
+  const d = derived();
+  const ok = commit(s => ({ ...s, checkins: s.checkins.filter(x => x !== d.todayKey), weights: s.weights.filter(x => x.date !== d.todayKey) }));
+  if (ok) toast('تم إلغاء توثيق اليوم');
+});
+
+$('monthBtn').addEventListener('click', () => { renderMonth(); openModal('monthModal'); });
+function renderMonth() {
+  const d = derived();
+  const elapsed = d.elapsedDays;
+  $('monthSub').textContent = `كل ما تم توثيقه ورصده خلال الشهر · الحساب من أول الشهر حتى اليوم (${elapsed} يوم)`;
+  const rate = elapsed ? Math.min(100, Math.round(d.monthCheckins / elapsed * 100)) : 0;
+  $('monthRate').textContent = rate + '%';
+  $('monthDays').textContent = d.monthCheckins;
+
+  $('achList').innerHTML = state.achievements.length
+    ? state.achievements.map((t, i) => `<li class="li"><span>✨ ${esc(t)}</span><button type="button" class="del" data-del="achievements" data-idx="${i}" aria-label="حذف">✕</button></li>`).join('')
+    : '<li class="empty">لا توجد إنجازات مسجلة.</li>';
+
+  const weights = state.weights.filter(w => w.date.startsWith(d.monthPrefix));
+  $('weightList').innerHTML = weights.length
+    ? weights.map(w => `<li class="li"><span>📅 ${esc(w.date)} — ⚖️ ${esc(w.value)} كغم</span></li>`).join('')
+    : '<li class="empty">لم يتم تسجيل أي وزن هذا الشهر.</li>';
+
+  const incs = state.incidents.map((x, i) => ({ x, i })).filter(({ x }) => x.date.startsWith(d.monthPrefix));
+  $('incList').innerHTML = incs.length
+    ? incs.map(({ x, i }) => `<li class="li"><span>📌 ${esc(x.date)}: ${esc(x.text)}</span><button type="button" class="del" data-del="incidents" data-idx="${i}" aria-label="حذف">✕</button></li>`).join('')
+    : '<li class="empty">لا توجد تجاوزات مرصودة هذا الشهر. عمل ممتاز! 🎉</li>';
+
+  $('noteList').innerHTML = state.notes.length
+    ? state.notes.map((n, i) => `<li class="li"><span>${esc(n)}</span><button type="button" class="del" data-del="notes" data-idx="${i}" aria-label="حذف">✕</button></li>`).join('')
+    : '<li class="empty">لا توجد ملاحظات.</li>';
+}
+$('addAchBtn').addEventListener('click', () => {
+  const t = $('achInput').value.trim(); if (!t) return;
+  if (state.achievements.includes(t)) return toast('هذا الإنجاز مسجل بالفعل');
+  if (commit(s => ({ ...s, achievements: [...s.achievements, t] }))) {
+    $('achInput').value = '';
+  }
+  renderMonth();
+});
+$('addNoteBtn').addEventListener('click', () => {
+  const t = $('noteInput').value.trim(); if (!t) return;
+  if (commit(s => ({ ...s, notes: [...s.notes, t] }))) {
+    $('noteInput').value = '';
+  }
+  renderMonth();
+});
+$('monthModal').addEventListener('click', async (e) => {
+  const b = e.target.closest('[data-del]');
+  if (!b) return;
+  const list = b.dataset.del, idx = Number(b.dataset.idx);
+  if (!['achievements', 'incidents', 'notes'].includes(list)) return;
+  if (!(await askConfirm('هل تريد حذف هذا السطر؟'))) return;
+  commit(s => ({ ...s, [list]: s[list].filter((_, i) => i !== idx) }));
+  renderMonth();
+});
+
+// ---------- Start ----------
+loadState();
+setInterval(render, 60000);
+</script>
+
+<script>
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+  window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(() => {}); });
+}
+</script>
+
+<!-- مخرج الطوارئ: محادثة محلية بقواعد مبرمجة (بدون إنترنت) -->
+<style>
+  .chat-log { display: grid; gap: 8px; max-height: 380px; overflow-y: auto; padding: 4px 2px; margin-bottom: 10px; }
+  .msg { max-width: 92%; padding: 10px 12px; border-radius: 16px; font-size: 14px; line-height: 1.7; white-space: pre-line; overflow-wrap: anywhere; }
+  .msg.bot { justify-self: start; background: var(--bg); border: 1px solid var(--line); }
+  .msg.user { justify-self: end; background: color-mix(in srgb, var(--accent) 18%, transparent); border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent); }
+  .chat-options { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+  .chat-opt { min-height: 44px; padding: 8px 12px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); font-weight: 800; font-size: 13px; }
+  .chat-opt:hover { border-color: var(--accent); }
+</style>
+<section class="panel" id="emergencyChat" aria-labelledby="chatTitle" style="margin:24px 0">
+  <div class="section-head">
+    <div>
+      <h2 id="chatTitle">⚡ مخرج الطوارئ: محادثة</h2>
+      <p>أجب خطوة بخطوة، وتُحسب الخطة من جدولك على هذا الجهاز. تعمل بدون إنترنت، ولا تُرسل بياناتك إلى أي مكان.</p>
+    </div>
+  </div>
+  <div class="chat-log" id="chatLog" aria-live="polite"></div>
+  <div class="chat-options" id="chatOptions"></div>
+  <div class="row-form">
+    <input class="field" id="chatFree" type="text" placeholder="أو اكتب ما حدث باختصار…" maxlength="200">
+    <button type="button" class="primary-button" id="chatSend">إرسال</button>
+  </div>
+  <div class="row-form">
+    <button type="button" class="ghost-button" id="chatRestart">ابدأ من جديد</button>
+  </div>
+</section>
+
+<script>
+(() => {
+  "use strict";
+  const $c = (id) => document.getElementById(id);
+  const log = $c("chatLog"), opts = $c("chatOptions"), freeIn = $c("chatFree");
+  if (!log || !opts || !freeIn) return;
+
+  const PROBLEMS = [
+    { id: "study", label: "ما ذاكرت / متأخر بالمذاكرة" },
+    { id: "lecture", label: "فاتتني محاضرة" },
+    { id: "time", label: "ما عندي وقت لليوم" },
+    { id: "sleep", label: "سهرت أو نمت متأخراً" },
+    { id: "food", label: "أكلت أكثر من المعتاد" }
+  ];
+  const KEYWORDS = [
+    ["lecture", /محاضر/],
+    ["sleep", /نوم|نمت|سهر|استيقظ/],
+    ["food", /أكل|اكل|وجبة|شبعان/],
+    ["study", /ذاكر|دراس|واجب|امتحان|تمرين|مراجع/],
+    ["time", /وقت|دوام|شغل|مشغول|ضغط/]
+  ];
+  const MINUTES = [30, 60, 90, 120];
+  const MAX_BLOCK = 60;   // one block is at most one hour, then a break
+  const MIN_BLOCK = 15;
+  const NEEDS_MINUTES = { study: true, lecture: true, time: true, sleep: false, food: false };
+  const LABEL = Object.fromEntries(PROBLEMS.map(p => [p.id, p.label]));
+
+  let flow = null;
+
+  function say(text) {
+    const div = document.createElement("div");
+    div.className = "msg bot";
+    div.textContent = text;
+    log.appendChild(div);
+    log.scrollTop = log.scrollHeight;
+  }
+  function tell(text) {
+    const div = document.createElement("div");
+    div.className = "msg user";
+    div.textContent = text;
+    log.appendChild(div);
+    log.scrollTop = log.scrollHeight;
+  }
+  function options(list) {
+    opts.innerHTML = "";
+    list.forEach((o) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "chat-opt";
+      b.textContent = o.label;
+      b.addEventListener("click", () => { tell(o.label); o.run(); });
+      opts.appendChild(b);
+    });
+  }
+  function ask(text, list) { say(text); options(list); }
+
+  // Free slots of a day as minute ranges (from the same analyzer the page uses).
+  function slotsOf(dayIndex) {
+    return analyzeDay(DAYS[dayIndex].items).freeSlots.map((txt) => {
+      const [a, b] = txt.split(" – ");
+      return { s: eventStart(a), e: eventStart(b) };
+    }).filter((x) => x.s >= 0 && x.e > x.s);
+  }
+  // Takes at most one block per free slot, never longer than MAX_BLOCK, never shorter than MIN_BLOCK.
+  function planBlocks(slots, need) {
+    const blocks = [];
+    let remaining = need;
+    for (const slot of slots) {
+      if (remaining <= 0) break;
+      const len = Math.min(remaining, MAX_BLOCK, slot.e - slot.s);
+      if (len < MIN_BLOCK) continue;
+      blocks.push({ s: slot.s, e: slot.s + len });
+      remaining -= len;
+    }
+    return blocks;
+  }
+  function totalMinutes(slots) { return slots.reduce((n, x) => n + (x.e - x.s), 0); }
+  function bestDay(exclude) {
+    let best = null;
+    DAYS.forEach((_, i) => {
+      if (i === exclude) return;
+      const t = totalMinutes(slotsOf(i));
+      if (!best || t > best.total) best = { i, total: t };
+    });
+    return best;
+  }
+
+  function start() {
+    log.innerHTML = "";
+    flow = { problem: null, day: new Date().getDay(), minutes: null };
+    freeIn.value = "";
+    ask("مرحباً! أنا أساعدك على إعادة ترتيب يومك خطوة بخطوة. ما الذي حدث؟ اختر من الأزرار أو اكتب باختصار.",
+      PROBLEMS.map((p) => ({ label: p.label, run: () => chooseProblem(p.id) })));
+  }
+
+  function chooseProblem(id) {
+    flow.problem = id;
+    askDay();
+  }
+
+  function askDay() {
+    ask("في أي يوم؟", DAYS.map((d, i) => ({ label: d.name, run: () => { flow.day = i; afterDay(); } })));
+  }
+
+  function afterDay() {
+    if (NEEDS_MINUTES[flow.problem]) {
+      ask("كم دقيقة تقدر تخصص لذلك في هذا اليوم؟",
+        MINUTES.map((m) => ({ label: m + " دقيقة", run: () => { flow.minutes = m; finish(); } })));
+    } else {
+      finish();
+    }
+  }
+
+  function finish() {
+    const p = flow.problem;
+    const day = DAYS[flow.day];
+    const slots = slotsOf(flow.day);
+    const lines = [];
+    let plan = null; // text saved to the day when the user applies it
+
+    if (p === "study" || p === "time") {
+      const need = p === "time" ? Math.min(flow.minutes, 45) : flow.minutes;
+      const blocks = planBlocks(slots, need);
+      const got = blocks.reduce((n, b) => n + (b.e - b.s), 0);
+      if (blocks.length) {
+        lines.push(`خطة ${day.name}:`);
+        blocks.forEach((b) => lines.push(`• مذاكرة من ${fmtTime(b.s)} إلى ${fmtTime(b.e)} (${b.e - b.s} دقيقة)`));
+        if (got < need) lines.push(`لم تتسع الفترات المتاحة إلا لـ ${got} دقيقة من ${need}.`);
+        lines.push("المهام الثابتة في الجدول لم تتغير.");
+        plan = `مذاكرة إضافية: ` + blocks.map((b) => `${fmtTime(b.s)}–${fmtTime(b.e)}`).join("، ");
+      } else {
+        lines.push(`لا توجد فترة متاحة كافية في ${day.name}.`);
+        const alt = bestDay(flow.day);
+        if (alt && alt.total >= MIN_BLOCK) {
+          lines.push(`أفضل يوم لذلك: ${DAYS[alt.i].name}، فيه ${alt.total} دقيقة متاحة.`);
+        } else {
+          lines.push("لا توجد فترة متاحة في الأسبوع كله. خذ خطوة صغيرة لعشر دقائق، أو انقل جزءاً من المذاكرة إلى يوم آخر.");
+        }
+      }
+      if (p === "time") lines.push("لم نضف إلا جزءاً صغيراً حتى لا يزيد الضغط.");
+    } else if (p === "lecture") {
+      const need = Math.min(flow.minutes, 45);
+      const blocks = planBlocks(slots, need);
+      lines.push("1) تواصل مع زميل للحصول على الملاحظات أو التسجيل.");
+      if (blocks.length) {
+        lines.push(`2) مراجعة النقاط الأساسية في ${day.name}: من ${fmtTime(blocks[0].s)} إلى ${fmtTime(blocks[0].e)}.`);
+        plan = `مراجعة المحاضرة: ${fmtTime(blocks[0].s)}–${fmtTime(blocks[0].e)}`;
+      } else {
+        lines.push(`2) لا توجد فترة مناسبة في ${day.name} للمراجعة. اختر يوماً آخر.`);
+      }
+    } else if (p === "sleep") {
+      lines.push("لا نضيف مذاكرة الليلة، حتى تحصل على نومك.");
+      lines.push("ابدأ الغد بالترتيب المعتاد، ولا تحاول تعويض كل شيء دفعة واحدة.");
+      const next = (flow.day + 1) % 7;
+      const ns = slotsOf(next);
+      if (ns.length) lines.push(`أول فترة متاحة يوم ${DAYS[next].name}: من ${fmtTime(ns[0].s)} إلى ${fmtTime(ns[0].e)}.`);
+      plan = "ليلة متأخرة: لا تعويض ليلاً، والبداية غداً بالجدول المعتاد";
+    } else if (p === "food") {
+      lines.push("لا تتخطَّ وجبتك التالية ولا تعوّض بالجوع.");
+      lines.push("عد إلى وجبتك التالية كما هي في الجدول، واشرب ماءً.");
+      if (slots.length) lines.push(`إن كان مناسباً، امشِ 15 دقيقة في أول فترة متاحة: ${fmtTime(slots[0].s)}.`);
+      plan = "أكل أكثر من المعتاد: العودة إلى الوجبة التالية كما في الجدول";
+    }
+
+    say(lines.join("\n"));
+    const actions = [];
+    if (plan) {
+      actions.push({ label: "طبّق على " + day.name + " فقط", run: () => apply(plan) });
+    }
+    actions.push({ label: "اختر يوماً آخر", run: () => askDay() });
+    actions.push({ label: "ابدأ من جديد", run: () => start() });
+    options(actions);
+  }
+
+  // Saves the plan for that day only. The main schedule is never changed.
+  function apply(text) {
+    const d = derived();
+    const key = dateKey(addDays(d.weekStart, flow.day));
+    const incidentText = LABEL[flow.problem] || "طوارئ";
+    selected = flow.day; // show the day the plan was applied to
+    const ok = commit((s) => {
+      const exists = s.incidents.some((x) => x.date === key && x.text === incidentText);
+      return {
+        ...s,
+        incidents: exists ? s.incidents : [...s.incidents, { id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, date: key, text: incidentText }],
+        overrides: { ...s.overrides, [key]: text }
+      };
+    });
+    if (ok) {
+      say(`تم حفظ الخطة ليوم ${DAYS[flow.day].name} فقط. جدولك الأصلي لم يتغير.`);
+      toast("تم حفظ الخطة لهذا اليوم فقط");
+    } else {
+      say("لم تُحفظ الخطة. راجع رسالة الحفظ أعلى الصفحة.");
+    }
+    options([{ label: "ابدأ من جديد", run: () => start() }]);
+  }
+
+  $c("chatSend").addEventListener("click", () => {
+    const text = freeIn.value.trim();
+    if (!text) return;
+    freeIn.value = "";
+    tell(text);
+    if (!flow) start();
+    const hit = KEYWORDS.find(([, re]) => re.test(text));
+    if (hit && flow.problem === null) {
+      chooseProblem(hit[0]);
+    } else if (flow.problem === null) {
+      ask("لم أفهم ذلك. اختر ما يناسبك من الأزرار:", PROBLEMS.map((p) => ({ label: p.label, run: () => chooseProblem(p.id) })));
+    } else {
+      say("اختر من الأزرار أعلاه، أو ابدأ من جديد.");
+    }
+  });
+  freeIn.addEventListener("keydown", (e) => { if (e.key === "Enter") $c("chatSend").click(); });
+  $c("chatRestart").addEventListener("click", start);
+
+  window.addEventListener('shared-schedule-refresh',()=>{if(user)pull()});
+setInterval(()=>{if(user)pull()},30000);
+start();
+})();
+</script>
+
+<!-- المساعد الذكي: اختياري، يحتاج إنترنت، ويعرض ما سيُرسل قبل الإرسال -->
+<details class="panel" id="aiBlock" style="margin:0 0 24px">
+  <summary>🤖 اسأل المساعد الذكي (اختياري، يحتاج إنترنت)</summary>
+  <div class="panel-body">
+    <p>المساعد الذكي خدمة خارجية. عند الإرسال تُرسل <b>مشكلتك</b> و<b>جدول الأسبوع</b> (الأوقات والمدد والتعارضات والفترات المتاحة فقط). لا تُرسل وزنك ولا ملاحظاتك ولا سجل إنجازاتك ولا تجاوزاتك. المحادثة أعلاه تعمل بدونه.</p>
+    <textarea id="emergencyProblem" rows="3" maxlength="8000" placeholder="مثال: تراكمت عليّ دراسة البرمجة وعندي دوام بكرا..." style="width:100%;box-sizing:border-box;padding:12px;border-radius:12px;font:inherit;background:var(--bg);color:var(--ink);border:1px solid var(--line)"></textarea>
+    <div class="top-actions" style="margin-top:10px">
+      <button id="emergencySolve" type="button" class="primary-button">أرسل إلى المساعد</button>
+    </div>
+    <p id="emergencyStatus" role="status" aria-live="polite" class="empty"></p>
+    <div id="emergencyAnswer" style="white-space:pre-wrap;line-height:1.8"></div>
+  </div>
+</details>
+
+<script>
+(() => {
+  "use strict";
+
+  const endpoint = "https://jadwali-ai.mohammedtareqabugosh.workers.dev";
+  const TIMEOUT_MS = 90000; // free servers can be slow on the first request
+
+  const button = document.getElementById("emergencySolve");
+  const problemInput = document.getElementById("emergencyProblem");
+  const status = document.getElementById("emergencyStatus");
+  const answer = document.getElementById("emergencyAnswer");
+
+  if (!button || !problemInput || !status || !answer) return;
+
+  function extractRanges(text, dayName) {
+    const out = [];
+    const re = /(\d{1,2}):(\d{2})\s*(?:–|-|إلى)\s*(\d{1,2}):(\d{2})\s*(صباحاً|صباحا|صباح|مساءً|مساءا|مساء)?/g;
+    let m;
+    while ((m = re.exec(text)) && out.length < 6) {
+      const period = m[5] ? (m[5].startsWith("ص") ? "AM" : "PM") : "PM";
+      out.push({
+        day: dayName,
+        start: m[1] + ":" + m[2] + " " + period,
+        end: m[3] + ":" + m[4] + " " + period,
+        title: "وقت مذكور في الرد"
+      });
+    }
+    return out;
+  }
+  function checkSuggestion(sg) {
+    const day = DAYS.findIndex(d => d.name === sg.day);
+    const s = eventStart(String(sg.start || ""));
+    const e = eventStart(String(sg.end || ""));
+    if (day < 0 || s < 0 || e < 0 || e <= s) return { ok: false, note: "اليوم أو الوقت غير صالح" };
+    const items = DAYS[day].items;
+    const overlapping = items
+      .map((_, i) => rangeOf(items, i))
+      .filter(r => r && r.explicit && s < r.e && r.s < e);
+    const same = overlapping.filter(r => r.s === s && r.e === e).map(r => r.it.title);
+    const hits = overlapping.filter(r => !(r.s === s && r.e === e)).map(r => r.it.title);
+    if (hits.length) return { ok: false, note: "يتعارض مع: " + hits.join("، ") };
+    if (same.length) return { ok: true, note: "هذه المهمة موجودة بالفعل في الجدول (" + same.join("، ") + ")" };
+    return { ok: true, note: "لا يتعارض مع مهام الجدول" };
+  }
+  function renderAnswer(text) {
+    let clean = String(text);
+    let suggestions = [];
+    const m = clean.match(/```json\s*([\s\S]*?)```/);
+    if (m) {
+      clean = clean.replace(m[0], "").trim();
+      try { suggestions = JSON.parse(m[1]).suggestions || []; } catch (e) { suggestions = []; }
+    }
+    answer.textContent = clean;
+    let fromText = false;
+    if (!Array.isArray(suggestions) || !suggestions.length) {
+      suggestions = extractRanges(clean, DAYS[selected].name);
+      fromText = true;
+    }
+    if (!suggestions.length) {
+      const note = document.createElement("div");
+      note.style.marginTop = "14px";
+      note.textContent = "لم يذكر الرد وقتاً محدداً (مثل 7:15–8:15 مساءً)، فلا يوجد ما يُفحص.";
+      answer.appendChild(note);
+      return;
+    }
+    const box = document.createElement("div");
+    box.style.marginTop = "14px";
+    const title = document.createElement("strong");
+    title.textContent = fromText ? "فحص الأوقات المذكورة في الرد على جدول اليوم المختار:" : "فحص الاقتراحات على الجدول:";
+    box.appendChild(title);
+    suggestions.forEach(sg => {
+      const r = checkSuggestion(sg);
+      const row = document.createElement("div");
+      row.style.margin = "6px 0";
+      row.textContent = (r.ok ? "✅ " : "⚠️ ") + sg.day + " " + sg.start + "–" + sg.end + ": " + (sg.title || "") + " — " + r.note;
+      box.appendChild(row);
+    });
+    answer.appendChild(box);
+  }
+
+  button.addEventListener("click", async () => {
+    const problem = problemInput.value.trim();
+
+    answer.textContent = "";
+
+    if (!problem) {
+      status.textContent = "اكتب المشكلة أولًا.";
+      problemInput.focus();
+      return;
+    }
+    if (!navigator.onLine) {
+      status.textContent = "أنت غير متصل بالإنترنت. المساعد الذكي يحتاج اتصالاً لإرسال طلبك؛ بقية التطبيق تعمل بدونه.";
+      return;
+    }
+
+    button.disabled = true;
+    status.textContent = "جاري تحليل جدولك وإعداد الخطة...";
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
+    try {
+      const now = new Date();
+      const todayKey = dateKey(now);
+      const d = derived();
+
+      // Only the schedule goes out: times, durations, computed conflicts and free slots.
+      // Weight, notes, achievements, incidents and completion records stay on this device.
+      const weeklySchedule = DAYS.map((day, dayIndex) => {
+        const key = dateKey(addDays(d.weekStart, dayIndex));
+        const analysis = analyzeDay(day.items);
+        return {
+          day: day.name,
+          date: key,
+          description: day.tag,
+          nutritionTarget: day.total,
+          conflicts: analysis.conflicts,
+          freeSlots: analysis.freeSlots,
+          events: day.items.map(item => ({
+            time: item.time,
+            task: item.title,
+            category: item.type,
+            details: item.detail || "",
+            duration: item.dur ? item.dur + " دقيقة" : "غير محددة"
+          }))
+        };
+      });
+
+      const context = {
+        app: "جدولي الأسبوعي",
+        currentDateTime: `${todayKey} ${pad(now.getHours())}:${pad(now.getMinutes())}`,
+        currentDay: DAYS[now.getDay()].name,
+        selectedDay: DAYS[selected].name,
+        weeklySchedule,
+        rules: [
+          "أجب باللغة العربية وبأسلوب واضح وعملي.",
+          "حلّل المشكلة بالاستناد إلى الجدول الأسبوعي المرسل، لا إلى جدول افتراضي.",
+          "استخدم أوقات المهام كما هي في الجدول، ولا تخترع مواعيد ثابتة.",
+          "راعِ الجامعة والشغل والمحاضرات الأونلاين والتنقل والوجبات والنوم.",
+          "انتبه إلى أن بعض المهام قد تتداخل في أوقاتها؛ نبّه المستخدم إلى التعارض بدل إخفائه.",
+          "استخدم قائمة التعارضات والفترات المتاحة المحسوبة لكل يوم كما هي، وتذكّر أن الفترات المتاحة مدتها 15 دقيقة أو أكثر تظهر في القائمة؛ لا ترفض مهمة قصيرة لمجرد أنها أقل من 30 دقيقة.",
+          "احسب مجموع المدد بنفسك بدقة قبل ذكر أي مدة إجمالية، وتأكد من صحة الجمع.",
+          "كل محاضرة جامعية مدتها ساعة، ومختبر البرمجة الكينونية مدته ساعتان؛ استخدم هذه المدد في حساب الفترات والتعارضات.",
+          "اكتب بالعربية فقط، ولا تذكر أسماء الحقول الداخلية مثل schedule_context أو conflicts أو events أو أي مفاتيح تقنية.",
+          "ابنِ اقتراحك على الجدول الحالي كما هو في البيانات، ولا تفترض وجود مشكلة إلا إذا ظهرت فعلاً في بيانات الجدول أو في وصف المستخدم.",
+          "في نهاية ردك أضف كتلة JSON داخل ```json وتحتوي على قائمة suggestions، وكل عنصر فيها له day و title و start و end بنفس صيغة أوقات الجدول، وهذه الكتلة للتحقق فقط.",
+          "وجبات الجدول ثابتة ولا تُنقل إلى وقت يتقاطع مع مهمة أخرى؛ فغداء الأحد ثابت بين 5:00 و7:00 مساءً، ولا تقترح مذاكرة أو أي مهمة داخل هذه الفترة.",
+          "قبل أن تقترح وقتاً لأي مهمة، تحقّق من أنه لا يتقاطع مع أي مهمة أخرى في اليوم نفسه، ومن أنه داخل إحدى الفترات المتاحة.",
+          "التنقل من الجامعة إلى الشغل 45 دقيقة، والعودة من الشغل إلى البيت 5–10 دقائق كما هو مذكور في الجدول.",
+          "اقترح خطة واقعية حسب الوقت المتاح والأولوية والموعد النهائي.",
+          "لا تقترح تعويض الطعام بتجويع النفس أو تخطي الوجبات.",
+          "لا تدّعِ أنك عدّلت الجدول أو حفظت أي تغيير.",
+          "إذا كانت معلومة ضرورية ناقصة، اسأل عنها أو وضّح الافتراض."
+        ]
+      };
+
+      let response;
+      try {
+        response = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ problem, context }),
+          signal: controller.signal
+        });
+      } catch (err) {
+        throw new Error(err && err.name === "AbortError"
+          ? "الخادم مشغول أو بطيء الآن. المحادثة المحلية أعلاه تعمل دائماً. اضغط أرسل مرة أخرى بعد قليل."
+          : "تعذّر الاتصال بالخادم. تحقق من الإنترنت وحاول مرة أخرى.");
+      }
+
+      let data;
+      try {
+        data = await response.json();
+      } catch {
+        throw new Error("وصل رد غير مفهوم من الخادم.");
+      }
+
+      if (!response.ok || !data || !data.ok || !data.answer) {
+        throw new Error((data && data.error) || "تعذّر الحصول على الخطة من الخادم.");
+      }
+
+      renderAnswer(data.answer);
+      status.textContent = "تم استلام الخطة المقترحة. الخطة مقترحة فقط، ولم يتغير جدولك.";
+
+    } catch (error) {
+      console.error("Smart emergency error:", error);
+      status.textContent = error.message || "تعذّر الاتصال بالخادم. تحقق من الاتصال وحاول مرة أخرى.";
+    } finally {
+      clearTimeout(timer);
+      button.disabled = false;
+    }
+  });
+})();
+</script>
+
+<!-- ربط جدولي الأسبوعي بمساعدي الغذائي عبر Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+  #food-sync-panel {
+    margin: 16px 0;
+    padding: 16px;
+    border: 1px solid var(--border, #ddd);
+    border-radius: 16px;
+    direction: rtl;
+    font-family: inherit;
+  }
+  #food-sync-panel input,
+  #food-sync-panel button {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 11px;
+    margin-top: 8px;
+    border-radius: 10px;
+    font: inherit;
+  }
+  #food-sync-panel input {
+    border: 1px solid #aaa;
+    background: transparent;
+    color: inherit;
+  }
+  #food-sync-panel button {
+    border: 0;
+    cursor: pointer;
+    background: var(--accent, #b8862b);
+    color: white;
+  }
+  #food-sync-panel .food-sync-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin: 14px 0;
+  }
+  #food-sync-panel .food-sync-stat {
+    padding: 12px 8px;
+    border-radius: 12px;
+    background: var(--panel, rgba(128,128,128,.10));
+    text-align: center;
+  }
+  #food-sync-panel .food-sync-number {
+    display: block;
+    font-size: 22px;
+    font-weight: 800;
+    margin-top: 5px;
+  }
+  #food-sync-message {
+    font-size: 13px;
+    line-height: 1.7;
+    overflow-wrap: anywhere;
+  }
+</style>
+
+<section id="food-sync-panel">
+  <h3>🍽️ وجباتي اليوم</h3>
+  <p>اربط حساب مساعدي الغذائي لعرض استهلاكك اليومي.</p>
+
+  <div id="food-sync-auth">
+    <label for="food-sync-email">البريد الإلكتروني</label>
+    <input id="food-sync-email" type="email"
+      autocomplete="username" placeholder="البريد المستخدم في مساعدي الغذائي">
+
+    <label for="food-sync-password">كلمة المرور</label>
+    <input id="food-sync-password" type="password"
+      autocomplete="current-password" placeholder="كلمة المرور">
+
+    <button id="food-sync-login">تسجيل الدخول</button>
+  </div>
+
+  <div class="food-sync-stats">
+    <div class="food-sync-stat">
+      السعرات المستهلكة
+      <span class="food-sync-number" id="food-sync-calories">—</span>
+      <small>kcal</small>
+    </div>
+    <div class="food-sync-stat">
+      البروتين المستهلك
+      <span class="food-sync-number" id="food-sync-protein">—</span>
+      <small>غرام</small>
+    </div>
+  </div>
+
+  <p id="food-sync-message" role="status">لم يتم تسجيل الدخول بعد.</p>
+
+  <ul id="food-sync-list" style="list-style:none;padding:0;margin:8px 0"></ul>
+  <button id="food-sync-refresh">تحديث وجبات اليوم</button>
+  <button id="food-sync-logout" hidden>تسجيل الخروج</button>
+</section>
+
+<script>
+(() => {
+  "use strict";
+
+  const SUPABASE_URL =
+    "https://chcapjgjvvwpljgdffpg.supabase.co";
+
+  const SUPABASE_KEY =
+    "sb_publishable_9dzltRprFtyXPyg0Iul3aQ_4SU1VTG9";
+
+  const panel = document.getElementById("food-sync-panel");
+  if (!panel || !window.supabase) return;
+
+  const client = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY,
+    {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true
+      }
+    }
+  );
+
+  const $ = id => document.getElementById(id);
+  const message = $("food-sync-message");
+  let requestNumber = 0;
+
+  function setMessage(text) {
+    message.textContent = text;
+  }
+
+  function localDateKey() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+
+  function showLoggedIn(isLoggedIn) {
+    $("food-sync-auth").hidden = isLoggedIn;
+    $("food-sync-logout").hidden = !isLoggedIn;
+  }
+
+  function dayRange() {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    return { from: start.toISOString(), to: end.toISOString() };
+  }
+
+  function timeText(iso) {
+    const d = new Date(iso);
+    return isNaN(d) ? "" : d.toLocaleTimeString("ar-JO", { hour: "2-digit", minute: "2-digit" });
+  }
+
+  let lastMeals = [];
+  function renderMeals(meals) {
+    lastMeals = meals;
+    const list = $("food-sync-list");
+    list.textContent = "";
+    meals.forEach(meal => {
+      const li = document.createElement("li");
+      li.style.cssText = "display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 10px;margin:6px 0;border-radius:12px;background:#f5f7f3";
+      const text = document.createElement("span");
+      text.textContent = (meal.meal_name || "وجبة") + " · " + (meal.meal_type || "") +
+        " · " + timeText(meal.meal_date) + " · " + (Number(meal.calories) || 0) + " سعرة · " +
+        (Number(meal.protein) || 0) + " غ بروتين";
+      const del = document.createElement("button");
+      del.type = "button";
+      del.textContent = "حذف";
+      del.dataset.id = String(meal.id);
+      del.style.cssText = "border:0;border-radius:10px;padding:6px 10px;background:#b44a4a;color:white;font:inherit";
+      const toDay = document.createElement("button");
+      toDay.type = "button";
+      toDay.textContent = "أضف للجدول";
+      toDay.dataset.addDay = String(meal.id);
+      toDay.style.cssText = "border:0;border-radius:10px;padding:6px 10px;background:#b8862b;color:white;font:inherit";
+      const toNote = document.createElement("button");
+      toNote.type = "button";
+      toNote.textContent = "أضف للملاحظات";
+      toNote.dataset.addNote = String(meal.id);
+      toNote.style.cssText = "border:0;border-radius:10px;padding:6px 10px;background:#6b7f70;color:white;font:inherit";
+      const actions = document.createElement("span");
+      actions.style.cssText = "display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end";
+      actions.append(toDay, toNote, del);
+      li.append(text, actions);
+      list.appendChild(li);
+    });
+  }
+
+  async function loadToday() {
+    const thisRequest = ++requestNumber;
+
+    const { data: sessionData, error: sessionError } =
+      await client.auth.getSession();
+
+    if (sessionError) {
+      setMessage("تعذّر التحقق من تسجيل الدخول: " + sessionError.message);
+      return;
+    }
+
+    const user = sessionData.session?.user;
+
+    if (!user) {
+      showLoggedIn(false);
+      $("food-sync-calories").textContent = "—";
+      $("food-sync-protein").textContent = "—";
+      renderMeals([]);
+      setMessage("سجّل الدخول باستخدام نفس حساب مساعدي الغذائي.");
+      return;
+    }
+
+    showLoggedIn(true);
+    setMessage("جارٍ تحميل وجبات اليوم…");
+
+    const range = dayRange();
+    const { data, error } = await client
+      .from("meals")
+      .select("id, client_id, meal_name, meal_type, calories, protein, meal_date")
+      .eq("user_id", user.id)
+      .gte("meal_date", range.from)
+      .lt("meal_date", range.to)
+      .order("meal_date", { ascending: true });
+
+    if (thisRequest !== requestNumber) return;
+
+    if (error) {
+      setMessage("تعذّر تحميل الوجبات: " + error.message);
+      return;
+    }
+
+    const meals = data || [];
+    const calories = meals.reduce((sum, meal) => sum + (Number(meal.calories) || 0), 0);
+    const protein = meals.reduce((sum, meal) => sum + (Number(meal.protein) || 0), 0);
+
+    $("food-sync-calories").textContent = Math.round(calories).toLocaleString("en-US");
+    $("food-sync-protein").textContent = Math.round(protein * 10) / 10;
+    renderMeals(meals);
+
+    setMessage(
+      meals.length
+        ? `تم تحميل ${meals.length} وجبة لهذا اليوم.`
+        : "لا توجد وجبات مسجّلة لهذا اليوم في الحساب."
+    );
+  }
+
+  function addCloudMealToPlanner(meal, mode) {
+    const when = new Date(meal.meal_date);
+    const key = dateKey(when);
+    const time = isNaN(when) ? "" : when.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+    const title = meal.meal_name || "وجبة";
+    const detail = (meal.meal_type || "") + " · " + (Number(meal.calories) || 0) + " سعرة · " + (Number(meal.protein) || 0) + " غ بروتين";
+
+    if (mode === "day") {
+      return toast("ستظهر الوجبة تلقائيًا في موعدها داخل الجدول");
+    }
+
+    const text = "🍽️ " + title + " — " + time + " — " + detail;
+    if (state.notes.includes(text)) return toast("الوجبة موجودة في الملاحظات");
+    if (commit(s => ({ ...s, notes: [...s.notes, text] }))) toast("أضيفت الوجبة إلى الملاحظات");
+    renderMonth();
+  }
+
+  $("food-sync-list").addEventListener("click", async (e) => {
+    const action = e.target.closest("[data-add-day],[data-add-note]");
+    if (action) {
+      const id = action.dataset.addDay || action.dataset.addNote;
+      const meal = lastMeals.find(m => String(m.id) === id);
+      if (meal) addCloudMealToPlanner(meal, action.dataset.addDay ? "day" : "note");
+      return;
+    }
+    const btn = e.target.closest("[data-id]");
+    if (!btn) return;
+    if (!window.confirm("حذف هذه الوجبة من السحابة؟ ستختفي من مساعدي الغذائي عند مزامنته.")) return;
+
+    const { data: sessionData } = await client.auth.getSession();
+    const user = sessionData.session?.user;
+    if (!user) {
+      setMessage("سجّل الدخول أولاً.");
+      return;
+    }
+
+    btn.disabled = true;
+    const { error } = await client
+      .from("meals")
+      .delete()
+      .eq("user_id", user.id)
+      .eq("id", btn.dataset.id);
+
+    if (error) {
+      btn.disabled = false;
+      setMessage("تعذّر حذف الوجبة: " + error.message);
+      return;
+    }
+
+    setMessage("تم حذف الوجبة من السحابة.");
+    await loadToday();
+  });
+
+  $("food-sync-login").addEventListener("click", async () => {
+    const email = $("food-sync-email").value.trim();
+    const password = $("food-sync-password").value;
+
+    if (!email || !password) {
+      setMessage("أدخل البريد الإلكتروني وكلمة المرور.");
+      return;
+    }
+
+    setMessage("جارٍ تسجيل الدخول…");
+
+    const { error } = await client.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (error) {
+      setMessage("تعذّر تسجيل الدخول: " + error.message);
+      return;
+    }
+
+    $("food-sync-password").value = "";
+    await loadToday();
+  });
+
+  $("food-sync-refresh").addEventListener("click", loadToday);
+
+  $("food-sync-logout").addEventListener("click", async () => {
+    const { error } = await client.auth.signOut();
+
+    if (error) {
+      setMessage("تعذّر تسجيل الخروج: " + error.message);
+      return;
+    }
+
+    $("food-sync-calories").textContent = "—";
+    $("food-sync-protein").textContent = "—";
+    showLoggedIn(false);
+    setMessage("تم تسجيل الخروج.");
+  });
+
+  client.auth.onAuthStateChange((event, session) => {
+    if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
+      loadToday();
+    } else if (event === "SIGNED_OUT") {
+      showLoggedIn(false);
+      $("food-sync-calories").textContent = "—";
+      $("food-sync-protein").textContent = "—";
+    }
+  });
+
+  loadToday();
+})();
+</script>
+
+
+<style>
+.shared-schedule{direction:rtl;margin:18px 0;padding:18px;border:1px solid var(--border,#e4e7df);border-radius:24px;background:linear-gradient(145deg,rgba(255,255,255,.96),rgba(246,248,242,.96));box-shadow:0 12px 32px rgba(24,35,24,.07);color:var(--text,#202a22)}
+.shared-schedule *{box-sizing:border-box}.shared-schedule .ss-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:14px}
+.shared-schedule .ss-eyebrow{font-size:.75rem;letter-spacing:.04em;color:#9a7631;font-weight:800}.shared-schedule h2{font-size:1.25rem;margin:4px 0}.shared-schedule .ss-sub{font-size:.88rem;color:#778076;margin:0}
+.shared-schedule .ss-week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin:16px 0}
+.shared-schedule .ss-daybtn{border:1px solid #e0e5dc;border-radius:13px;background:#fff;padding:9px 2px;color:#495348;font:inherit;font-size:.77rem;min-width:0}
+.shared-schedule .ss-daybtn strong{display:block;font-size:1rem;margin-top:4px}.shared-schedule .ss-daybtn.active{background:#263b2d;color:#fff;border-color:#263b2d;box-shadow:0 5px 12px #263b2d22}
+.shared-schedule .ss-summary{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.shared-schedule .ss-chip{background:#eef2e9;color:#4c5e4d;padding:7px 10px;border-radius:999px;font-size:.8rem}
+.shared-schedule .ss-item{display:flex;gap:11px;align-items:flex-start;padding:13px;margin:9px 0;border:1px solid #e7ebe3;border-radius:16px;background:#fff}
+.shared-schedule .ss-time{min-width:64px;color:#8b6a2c;font-weight:800;font-size:.9rem;padding-top:2px}.shared-schedule .ss-itembody{flex:1;min-width:0}.shared-schedule .ss-title{font-weight:800;color:#26372b}.shared-schedule .ss-details{font-size:.82rem;color:#788176;margin-top:5px;line-height:1.55}.shared-schedule .ss-kind{font-size:.72rem;display:inline-block;margin-top:7px;padding:4px 8px;border-radius:999px;background:#f4f0e5;color:#80652e}
+.shared-schedule .ss-del{border:0;border-radius:9px;background:#f8ece9;color:#a14e42;padding:7px 9px;font:inherit;font-size:.8rem}
+.shared-schedule .ss-addbox{border-top:1px solid #e7ebe3;margin-top:16px;padding-top:15px}.shared-schedule .ss-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.shared-schedule input,.shared-schedule select,.shared-schedule textarea{width:100%;min-width:0;padding:11px;border:1px solid #dce2d7;border-radius:12px;background:#fff;color:#253329;font:inherit;font-size:.9rem}.shared-schedule .ss-full{grid-column:1/-1}.shared-schedule .ss-save{border:0;border-radius:12px;background:#b58a3a;color:#fff;font:inherit;font-weight:800;padding:12px}
+.shared-schedule .ss-status{font-size:.82rem;color:#738073;min-height:1.2em;margin:10px 0}.shared-schedule .ss-auth{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.shared-schedule .ss-auth button{border:0;border-radius:11px;background:#263b2d;color:white;padding:11px;font:inherit}.shared-schedule .ss-empty{padding:18px;text-align:center;border:1px dashed #dce2d7;border-radius:15px;color:#7d877a}
+@media(max-width:390px){.shared-schedule{padding:13px}.shared-schedule .ss-daybtn{font-size:.68rem}.shared-schedule .ss-daybtn strong{font-size:.9rem}.shared-schedule .ss-item{padding:10px;gap:7px}.shared-schedule .ss-time{min-width:53px;font-size:.8rem}}
+@media(prefers-color-scheme:dark){.shared-schedule{background:#1b241d;color:#edf2e8;border-color:#3c493d}.shared-schedule .ss-daybtn,.shared-schedule .ss-item,.shared-schedule input,.shared-schedule select,.shared-schedule textarea{background:#242f26;color:#edf2e8;border-color:#435045}.shared-schedule .ss-title{color:#edf2e8}.shared-schedule .ss-details{color:#b7c2b4}.shared-schedule .ss-chip{background:#303e31;color:#dce7d7}}
+</style>
+<div class="shared-schedule" id="shared-schedule">
+ <div class="ss-head"><div><div class="ss-eyebrow">YOUR WEEK · جدولك الموحد</div><h2>جدولك الأسبوعي</h2><p class="ss-sub">وجباتك ومهامك في مكان واحد، ومتزامنة بين التطبيقين.</p></div><span aria-hidden="true" style="font-size:1.7rem">✦</span></div>
+ <div id="ss-auth-area"></div>
+ <div id="ss-main" hidden>
+  <div class="ss-week" id="ss-week"></div>
+  <div class="ss-summary" id="ss-summary"></div>
+  <div id="ss-items"></div>
+  <div class="ss-addbox">
+   <h3 style="margin:0 0 10px;font-size:1rem">إضافة إلى الجدول</h3>
+   <form class="ss-form" id="ss-form">
+    <select id="ss-kind" aria-label="نوع العنصر"><option value="task">مهمة</option><option value="appointment">موعد</option><option value="meal">وجبة</option></select>
+    <input id="ss-date" type="date" required aria-label="التاريخ">
+    <input id="ss-title" class="ss-full" maxlength="140" required placeholder="اسم المهمة أو الوجبة">
+    <input id="ss-time" type="time" required aria-label="الوقت">
+    <input id="ss-calories" type="number" min="0" step="1" placeholder="السعرات (للوجبة)">
+    <input id="ss-protein" type="number" min="0" step="0.1" placeholder="البروتين غ (للوجبة)">
+    <textarea id="ss-details" class="ss-full" maxlength="400" rows="2" placeholder="تفاصيل أو مكونات الوجبة (اختياري)"></textarea>
+    <button class="ss-save ss-full" type="submit">حفظ في الجدول الموحد</button>
+   </form>
+  </div>
+  <p class="ss-status" id="ss-status" role="status"></p>
+ </div>
+</div>
+<script>
+(()=>{'use strict';
+const URL='https://chcapjgjvvwpljgdffpg.supabase.co',KEY='sb_publishable_9dzltRprFtyXPyg0Iul3aQ_4SU1VTG9',TABLE='shared_schedule';
+const $=id=>document.getElementById(id),root=$('shared-schedule');if(!root)return;
+const names=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'],pad=n=>String(n).padStart(2,'0');
+const key=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const localDate=iso=>{const d=new Date(iso);return isNaN(d)?'':key(d)};
+const parseDate=k=>{const a=k.split('-').map(Number);return new Date(a[0],a[1]-1,a[2],12)};
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const timeText=iso=>{const d=new Date(iso);return isNaN(d)?'':d.toLocaleTimeString('ar-JO',{hour:'2-digit',minute:'2-digit',hour12:true})};
+let client=null,user=null,selected=key(new Date()),rows=[];
+function status(t){const el=$('ss-status');if(el)el.textContent=t}
+function loadLibrary(){return new Promise((resolve,reject)=>{if(window.supabase)return resolve();const sc=document.createElement('script');sc.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';sc.onload=resolve;sc.onerror=reject;document.head.appendChild(sc)})}
+function showAuth(){ $('ss-auth-area').innerHTML='<p class="ss-sub">سجّل الدخول بنفس الحساب في التطبيقين حتى تظهر البيانات نفسها في كليهما.</p><input id="ss-email" type="email" autocomplete="username" placeholder="البريد الإلكتروني"><input id="ss-password" type="password" autocomplete="current-password" placeholder="كلمة المرور" style="margin-top:8px"><div class="ss-auth"><button type="button" id="ss-login">تسجيل الدخول</button><button type="button" id="ss-signup">إنشاء حساب</button></div><p class="ss-status" id="ss-auth-status"></p>';$('ss-login').onclick=async()=>{const {error}=await client.auth.signInWithPassword({email:$('ss-email').value.trim(),password:$('ss-password').value});$('ss-auth-status').textContent=error?error.message:'تم تسجيل الدخول.';await boot()};$('ss-signup').onclick=async()=>{const {data,error}=await client.auth.signUp({email:$('ss-email').value.trim(),password:$('ss-password').value});$('ss-auth-status').textContent=error?error.message:(data.session?'تم إنشاء الحساب.':'تحقق من بريدك الإلكتروني لتأكيد الحساب ثم سجّل الدخول.');if(data.session)await boot()}}
+function draw(){
+ const d=parseDate(selected),sun=new Date(d);sun.setDate(d.getDate()-d.getDay());
+ $('ss-week').innerHTML=Array.from({length:7},(_,i)=>{const x=new Date(sun);x.setDate(sun.getDate()+i);const k=key(x);return '<button type="button" class="ss-daybtn '+(k===selected?'active':'')+'" data-ss-day="'+k+'">'+names[i]+'<strong>'+x.getDate()+'</strong></button>'}).join('');
+ const day=rows.filter(r=>localDate(r.starts_at)===selected).sort((a,b)=>new Date(a.starts_at)-new Date(b.starts_at));
+ const meals=day.filter(x=>x.kind==='meal'),kcal=meals.reduce((a,x)=>a+(Number(x.calories)||0),0),protein=meals.reduce((a,x)=>a+(Number(x.protein)||0),0);
+ window.sharedMealRecords=rows.filter(r=>r.kind==='meal');
+ window.dispatchEvent(new Event('shared-meals-updated'));
+ $('ss-summary').innerHTML='<span class="ss-chip">'+day.length+' عناصر اليوم</span><span class="ss-chip">🔥 '+Math.round(kcal)+' سعرة</span><span class="ss-chip">💪 '+Math.round(protein*10)/10+' غ بروتين</span>';
+ $('ss-items').innerHTML=day.length?day.map(r=>'<div class="ss-item"><div class="ss-time">'+esc(timeText(r.starts_at))+'</div><div class="ss-itembody"><div class="ss-title">'+(r.kind==='meal'?'🍽️ ':'')+esc(r.title)+'</div>'+(r.details?'<div class="ss-details">'+esc(r.details)+'</div>':'')+(r.kind==='meal'?'<div class="ss-kind">'+Math.round(Number(r.calories)||0)+' سعرة · '+Math.round(Number(r.protein)||0)+'غ بروتين</div>':'<div class="ss-kind">'+(r.kind==='appointment'?'موعد':'مهمة')+'</div>')+'</div><button class="ss-del" data-ss-delete="'+esc(r.id)+'" type="button">حذف</button></div>').join(''):'<div class="ss-empty">ما في عناصر لهذا اليوم. أضف وجبة أو مهمة من النموذج بالأسفل.</div>';
+}
+async function syncMealsToLocal(){
+ if(!location.pathname.includes('my-food-assistant'))return;
+ try{
+  const db=await new Promise((resolve,reject)=>{const req=indexedDB.open('my-food-assistant-db',1);req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)});
+  if(!db.objectStoreNames.contains('meals'))return;
+  const all=await new Promise((resolve,reject)=>{const req=db.transaction('meals','readonly').objectStore('meals').getAll();req.onsuccess=()=>resolve(req.result||[]);req.onerror=()=>reject(req.error)});
+  const byId=new Map(all.filter(m=>m.clientId).map(m=>[String(m.clientId),m]));
+  const remoteMeals=rows.filter(r=>r.kind==='meal'),currentIds=new Set(remoteMeals.map(r=>String(r.id)));
+  const tx=db.transaction(['meals','settings'],'readwrite'),store=tx.objectStore('meals'),settings=tx.objectStore('settings');
+  const prevReq=settings.get('sharedScheduleIds');
+  prevReq.onsuccess=()=>{
+   const prev=Array.isArray(prevReq.result?.value)?prevReq.result.value:[];
+   for(const id of prev){if(!currentIds.has(String(id))){const old=byId.get(String(id));if(old)store.delete(old.id)}}
+   for(const r of remoteMeals){
+    const old=byId.get(String(r.id));
+    store.put({...(old&&old.id!==undefined?{id:old.id}:{}),clientId:String(r.id),name:r.title||'وجبة',type:r.meal_type||'وجبة خفيفة',date:r.starts_at,ingredients:r.ingredients||r.details||'',notes:r.details||'',calories:Number(r.calories)||0,protein:Number(r.protein)||0,carbs:Number(r.carbs)||0,fat:Number(r.fat)||0,updatedAt:r.updated_at||new Date().toISOString()});
+   }
+   settings.put({key:'sharedScheduleIds',value:[...currentIds]});
+  };
+  tx.oncomplete=()=>window.dispatchEvent(new Event('shared-schedule-updated'));
+ }catch(e){console.warn('Shared meal local sync failed',e)}
+}
+async function pull(){if(!user)return;status('جارٍ تحميل الجدول المشترك…');const {data,error}=await client.from(TABLE).select('*').eq('user_id',user.id).order('starts_at',{ascending:true});if(error){status('تعذر تحميل الجدول. تأكد من تنفيذ ملف shared_schedule.sql في Supabase: '+error.message);return}rows=data||[];await syncMealsToLocal();draw();$('ss-main').hidden=false;$('ss-auth-area').innerHTML='<p class="ss-sub">متصل بالحساب: '+esc(user.email||'')+' · مزامنة مباشرة من السحابة</p><button id="ss-refresh" type="button" class="ss-save" style="width:100%;margin-top:8px">تحديث الجدول</button>';$('ss-refresh').onclick=pull;status('الجدول المشترك جاهز.')}
+async function boot(){if(!client)return;const {data,error}=await client.auth.getSession();if(error){status(error.message);return}user=data.session?.user||null;if(!user){$('ss-main').hidden=true;showAuth();return}await pull()}
+$('ss-week').addEventListener('click',e=>{const b=e.target.closest('[data-ss-day]');if(b){selected=b.dataset.ssDay;$('ss-date').value=selected;draw()}});
+$('ss-items').addEventListener('click',async e=>{const b=e.target.closest('[data-ss-delete]');if(!b||!user)return;if(!confirm('حذف هذا العنصر من الجدول الموحد في التطبيقين؟'))return;const {error}=await client.from(TABLE).delete().eq('id',b.dataset.ssDelete).eq('user_id',user.id);if(error){status('تعذر الحذف: '+error.message);return}rows=rows.filter(r=>r.id!==b.dataset.ssDelete);await syncMealsToLocal();draw();status('تم الحذف من الجدول المشترك.');});
+$('ss-form').addEventListener('submit',async e=>{e.preventDefault();if(!user){status('سجّل الدخول أولاً.');return}const kind=$('ss-kind').value,title=$('ss-title').value.trim(),date=$('ss-date').value,time=$('ss-time').value;if(!title||!date||!time)return;const row={id:(crypto.randomUUID?crypto.randomUUID():'entry-'+Date.now()),user_id:user.id,kind,title,details:$('ss-details').value.trim(),starts_at:new Date(date+'T'+time+':00').toISOString(),meal_type:kind==='meal'?'وجبة':'',calories:kind==='meal'?Number($('ss-calories').value)||0:0,protein:kind==='meal'?Number($('ss-protein').value)||0:0,source_app:location.pathname.includes('my-food-assistant')?'my-food-assistant':'jadwali-weekly',updated_at:new Date().toISOString()};const {error}=await client.from(TABLE).upsert(row);if(error){status('تعذر الحفظ: '+error.message);return}selected=date;$('ss-title').value='';$('ss-details').value='';$('ss-calories').value='';$('ss-protein').value='';await pull();status('تم الحفظ في الجدول الموحد، وسيظهر في التطبيق الآخر عند فتحه أو تحديثه.');});
+async function start(){try{await loadLibrary();client=window.supabase.createClient(URL,KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});window.sharedScheduleClient=client;await boot();client.auth.onAuthStateChange(()=>setTimeout(boot,0));}catch(e){status('تعذر بدء المزامنة: '+(e.message||e))}}
+const dateField=$('ss-date');if(dateField)dateField.value=selected;
+start();
+})();
+</script>
+
+>
+
+
+<style>
+:root{--quickbar-h:68px}
+body{padding-bottom:calc(94px + env(safe-area-inset-bottom,0px))!important}
+
+/* Instagram-style independent app screens: show only the selected screen */
+body[data-app-page="home"] #shared-schedule,body[data-app-page="home"] #food-sync-panel{display:none!important}
+body[data-app-page="schedule"] .summary-grid,body[data-app-page="schedule"] #strip,body[data-app-page="schedule"] .content-grid,body[data-app-page="schedule"] #food-sync-panel{display:none!important}
+body[data-app-page="goals"] .summary-grid,body[data-app-page="goals"] #strip,body[data-app-page="goals"] #shared-schedule,body[data-app-page="goals"] #food-sync-panel{display:none!important}
+body[data-app-page="meals"] .summary-grid,body[data-app-page="meals"] #strip,body[data-app-page="meals"] #shared-schedule,body[data-app-page="meals"] #food-sync-panel{display:none!important}
+body[data-app-page="emergency"] .summary-grid,body[data-app-page="emergency"] #strip,body[data-app-page="emergency"] #shared-schedule,body[data-app-page="emergency"] #food-sync-panel{display:none!important}
+body[data-app-page="sync"] .summary-grid,body[data-app-page="sync"] #strip,body[data-app-page="sync"] .content-grid,body[data-app-page="sync"] #shared-schedule{display:none!important}
+body[data-app-page="home"] .content-grid{display:grid!important}
+body[data-app-page="home"] .side-stack{display:none!important}
+body[data-app-page="goals"] .content-grid,body[data-app-page="meals"] .content-grid,body[data-app-page="emergency"] .content-grid{display:block!important}
+body[data-app-page="goals"] .content-grid>section,body[data-app-page="meals"] .content-grid>section,body[data-app-page="emergency"] .content-grid>section{display:none!important}
+body[data-app-page="goals"] .side-stack,body[data-app-page="meals"] .side-stack,body[data-app-page="emergency"] .side-stack{display:block!important}
+body[data-app-page="goals"] .side-stack details:not(:has(#goalGrid)),body[data-app-page="meals"] .side-stack details:not(:has(#alts)),body[data-app-page="emergency"] .side-stack details:not(:has(#scenarioGrid)){display:none!important}
+body[data-app-page="goals"] .side-stack details:has(#goalGrid),body[data-app-page="meals"] .side-stack details:has(#alts),body[data-app-page="emergency"] .side-stack details:has(#scenarioGrid){display:block!important}
+body[data-app-page="schedule"] #shared-schedule,body[data-app-page="sync"] #food-sync-panel{display:block!important}
+body[data-app-page="schedule"] .wrap,body[data-app-page="sync"] .wrap{display:contents}
+body[data-app-page="schedule"] #shared-schedule,body[data-app-page="sync"] #food-sync-panel{margin:8px auto 24px;max-width:850px;width:100%}
+#quick-nav button.active{background:#263b2d;color:#fff}
+
+body[data-app-page]:not([data-app-page="home"]) #day-tools{display:none!important}
+#day-tools .field{min-width:0;max-width:100%;box-sizing:border-box}
+#day-tools .row-form{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+#day-tools .row-form>*{flex:1 1 140px}
+#day-tools textarea{width:100%;margin-top:8px}
+#day-tools .kv button{margin-inline-start:8px}
+#quick-nav{position:fixed;z-index:999;left:10px;right:10px;bottom:max(8px,env(safe-area-inset-bottom,0px));display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px;padding:8px 5px calc(8px + env(safe-area-inset-bottom,0px));border:1px solid rgba(180,190,174,.65);border-radius:22px;background:rgba(250,251,247,.94);box-shadow:0 12px 36px rgba(25,39,27,.18);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);direction:rtl}
+#quick-nav button{display:flex;min-width:0;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:6px 1px;border:0;border-radius:13px;background:transparent;color:#667164;font:inherit;cursor:pointer}
+#quick-nav button .qn-icon{font-size:19px;line-height:1.1}
+#quick-nav button .qn-label{font-size:10px;font-weight:800;white-space:nowrap}
+#quick-nav button.active{background:#263b2d;color:#fff}
+#quick-nav button:focus-visible{outline:2px solid #b58a3a;outline-offset:2px}
+@media(min-width:700px){#quick-nav{left:50%;right:auto;transform:translateX(-50%);width:min(680px,calc(100% - 30px));bottom:14px}.shared-schedule{margin-bottom:25px}}
+@media(prefers-color-scheme:dark){#quick-nav{background:rgba(27,36,29,.95);border-color:#465347}#quick-nav button{color:#c1cbbd}#quick-nav button.active{background:#b58a3a;color:#fff}}
+
+/* Mobile layout fix: keep task titles readable after adding edit/delete controls */
+@media (max-width: 600px) {
+  .timeline .event-row {
+    display: grid !important;
+    grid-template-columns: 24px minmax(0, 1fr) auto;
+    grid-template-areas:
+      "check copy time"
+      ". edit delete";
+    align-items: center;
+    column-gap: 9px;
+    row-gap: 10px;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 10px;
+    min-width: 0;
+  }
+  .timeline .event-row > .event-check { grid-area: check; }
+  .timeline .event-row > .event-copy {
+    grid-area: copy;
+    min-width: 0;
+    width: auto;
+    overflow-wrap: break-word;
+    word-break: normal;
+  }
+  .timeline .event-row .event-title {
+    font-size: 15px;
+    line-height: 1.5;
+    overflow-wrap: break-word;
+    word-break: normal;
+    white-space: normal;
+  }
+  .timeline .event-row .event-detail {
+    font-size: 12px;
+    line-height: 1.5;
+    overflow-wrap: break-word;
+    word-break: normal;
+  }
+  .timeline .event-row > .event-time {
+    grid-area: time;
+    justify-self: end;
+    align-self: start;
+    font-size: 11px;
+    padding: 5px 8px;
+    max-width: 132px;
+    white-space: normal;
+    text-align: center;
+  }
+  .timeline .event-row > [data-main-edit] {
+    grid-area: edit;
+    justify-self: end;
+    min-width: 42px;
+    padding: 8px 10px;
+  }
+  .timeline .event-row > [data-main-delete] {
+    grid-area: delete;
+    justify-self: end;
+    min-width: 42px;
+    padding: 8px 10px;
+  }
+  #quick-nav { bottom: max(6px, env(safe-area-inset-bottom, 0px)); }
+  body { padding-bottom: calc(150px + env(safe-area-inset-bottom, 0px)) !important; }
+}
+
+</style>
+<nav id="quick-nav" aria-label="التنقل بين صفحات التطبيق">
+ <button type="button" class="active" data-qtarget="timeline"><span class="qn-icon">⌂</span><span class="qn-label">الرئيسية</span></button>
+ <button type="button" data-qtarget="shared-schedule"><span class="qn-icon">▦</span><span class="qn-label">الجدول</span></button>
+ <button type="button" data-qtarget="goalGrid"><span class="qn-icon">◎</span><span class="qn-label">الأهداف</span></button>
+ <button type="button" data-qtarget="alts"><span class="qn-icon">♧</span><span class="qn-label">الوجبات</span></button>
+ <button type="button" data-qtarget="scenarioGrid"><span class="qn-icon">⚡</span><span class="qn-label">الطوارئ</span></button>
+ <button type="button" data-qtarget="food-sync-panel"><span class="qn-icon">☁</span><span class="qn-label">المزامنة</span></button>
+</nav>
+<script>
+(()=>{const nav=document.getElementById('quick-nav');if(!nav)return;
+const pages={timeline:'home','shared-schedule':'schedule',goalGrid:'goals',alts:'meals',scenarioGrid:'emergency','food-sync-panel':'sync'};
+const labels={home:'جدولي الأسبوعي',schedule:'الجدول المشترك',goals:'الأهداف اليومية',meals:'بدائل الوجبات',emergency:'مخرج الطوارئ',sync:'مزامنة الوجبات'};
+function showPage(page){if(!labels[page])page='home';document.body.dataset.appPage=page;nav.querySelectorAll('[data-qtarget]').forEach(b=>b.classList.toggle('active',pages[b.dataset.qtarget]===page));const title=document.querySelector('.brand h1');if(title)title.textContent=labels[page];window.scrollTo({top:0,behavior:'instant'});try{history.replaceState(null,'','#'+page)}catch(e){}}
+nav.addEventListener('click',e=>{const b=e.target.closest('[data-qtarget]');if(b)showPage(pages[b.dataset.qtarget]||'home')});
+window.addEventListener('hashchange',()=>showPage(location.hash.slice(1)));
+showPage('home');
+})();
+</script>
+
+</body>
+</html>
+
